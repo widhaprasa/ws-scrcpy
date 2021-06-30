@@ -2,6 +2,7 @@ import { BaseClient } from '../../client/BaseClient';
 import { ParamsStreamScrcpy } from '../../../types/ParamsStreamScrcpy';
 import { DroidMoreBox } from '../toolbox/DroidMoreBox';
 import { DroidToolBox } from '../toolbox/DroidToolBox';
+import { DroidToolBox2 } from '../toolbox/DroidToolBox2';
 import VideoSettings from '../../VideoSettings';
 import Size from '../../Size';
 import { ControlMessage } from '../../controlMessage/ControlMessage';
@@ -27,6 +28,7 @@ import { ACTION } from '../../../common/Action';
 import { ParsedUrlQuery } from 'querystring';
 import { StreamReceiverScrcpy } from './StreamReceiverScrcpy';
 import { ParamsDeviceTracker } from '../../../types/ParamsDeviceTracker';
+import KeyEvent from '../android/KeyEvent';
 
 type StartParams = {
     udid: string;
@@ -44,6 +46,7 @@ export class StreamClientScrcpy
     public static ACTION = 'stream';
     private static players: Map<string, PlayerClass> = new Map<string, PlayerClass>();
 
+    private udid = '';
     private controlButtons?: HTMLElement;
     private deviceName = '';
     private clientId = -1;
@@ -175,6 +178,11 @@ export class StreamClientScrcpy
         this.deviceName = stats.deviceName;
         this.clientId = stats.clientId;
         this.setTitle(`Stream ${this.deviceName}`);
+
+        const controlHeaderText = document.getElementById('control-header-text');
+        if (controlHeaderText) {
+            controlHeaderText.textContent = `${this.deviceName} (${this.udid})`;
+        }
     };
 
     public onDisplayInfo = (infoArray: DisplayCombinedInfo[]): void => {
@@ -252,10 +260,11 @@ export class StreamClientScrcpy
         this.touchHandler = undefined;
     };
 
-    public startStream({ udid, player, playerName, videoSettings, fitToScreen }: StartParams): void {
+    public startStream({udid, player, playerName, videoSettings, fitToScreen}: StartParams): void {
         if (!udid) {
             throw Error(`Invalid udid value: "${udid}"`);
         }
+        this.udid = udid;
 
         this.fitToScreen = fitToScreen;
         if (!player) {
@@ -281,6 +290,15 @@ export class StreamClientScrcpy
         if (!videoSettings) {
             videoSettings = player.getVideoSettings();
         }
+
+        const controlHeaderView = document.createElement('div');
+        controlHeaderView.className = 'control-header';
+
+        const droidToolBox2 = DroidToolBox2.createToolBox(this);
+        const controlButtons2 = droidToolBox2.getHolderElement();
+        controlHeaderView.appendChild(controlButtons2);
+
+        document.body.appendChild(controlHeaderView);
 
         const deviceView = document.createElement('div');
         deviceView.className = 'device-view';
@@ -336,7 +354,20 @@ export class StreamClientScrcpy
         streamReceiver.on('displayInfo', this.onDisplayInfo);
         streamReceiver.on('disconnected', this.onDisconnected);
         console.log(TAG, player.getName(), udid);
+
+        this.unlockScreen();
     }
+
+    private sendKeyEvent = (kk: number): void => {
+        const unlockEventActionDown = new KeyCodeControlMessage(KeyEvent.ACTION_DOWN, kk, 0, 0);
+        const unlockEventActionUp = new KeyCodeControlMessage(KeyEvent.ACTION_UP, kk, 0, 0);
+        this.sendMessage(unlockEventActionDown);
+        this.sendMessage(unlockEventActionUp);
+    };
+
+    private unlockScreen = (): void => {
+        setTimeout(() => this.sendKeyEvent(KeyEvent.KEYCODE_MENU), 1000);
+    };
 
     public sendMessage(e: ControlMessage): void {
         this.streamReceiver.sendEvent(e);
