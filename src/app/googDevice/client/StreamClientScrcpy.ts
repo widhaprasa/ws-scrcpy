@@ -355,7 +355,11 @@ export class StreamClientScrcpy
         streamReceiver.on('disconnected', this.onDisconnected);
         console.log(TAG, player.getName(), udid);
 
+        /*
+            HBsmith tunning
+        */
         this.unlockScreen();
+        KeyInputHandler.addEventListener(this);
     }
 
     private sendKeyEvent = (kk: number): void => {
