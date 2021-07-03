@@ -47,6 +47,7 @@ export class ToolBoxButton2 extends ToolBoxElement<HTMLButtonElement> {
 
         const img = document.createElement('img');
         img.src = icon;
+        img.classList.add('control-header-button-img');
 
         btn.appendChild(img);
         this.btn = btn;
