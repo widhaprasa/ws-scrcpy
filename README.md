@@ -1,3 +1,30 @@
+# HBsmith 참조
+안드로이드 리얼디바이스 장비 지원을 위해 NetrisTV의 ws-scrcpy를 Fork하였음.
+
+## 개발환경 설정
+- Pycharm Professional + node.js
+
+## 개발 정책
+- 주기적으로 원본 브렌치와 merge
+  ```bash
+  git remote add upstream https://github.com/NetrisTV/ws-scrcpy.git
+  git pull upstream master
+  # conflict 제거
+  git remote remove upstream
+  ```
+- code reformatting 사용 지양: 원본 브렌치와의 병합을 위함
+
+## 라인 디버깅 방법
+1. 컴파일 실행: `npm run dist:dev`
+2. 실행 환경 추가: Pycharm -> Edit Configurations -> Add New Configuration -> Node.js
+3. 설정
+    - Name: `ws-scrcpy` (임의로 설정)
+    - Working directory: `<PATH_TO_WORKING_DIR>/ws-scrcpy`
+    - JavaScript file: `dist/index.js`
+    - Before launch -> Add -> Run npm script -> command=`run`, script=`dist:dev`
+4. debug 실행
+
+
 # ws scrcpy
 
 Web client for [Genymobile/scrcpy][scrcpy] and more.
