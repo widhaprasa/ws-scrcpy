@@ -1,9 +1,6 @@
 # HBsmith 참조
 안드로이드 리얼디바이스 장비 지원을 위해 NetrisTV의 ws-scrcpy를 Fork하였음.
 
-## 개발환경 설정
-- Pycharm Professional + node.js
-
 ## 개발 정책
 - 주기적으로 원본 브렌치와 merge
   ```bash
@@ -14,15 +11,38 @@
   ```
 - code reformatting 사용 지양: 원본 브렌치와의 병합을 위함
 
-## 라인 디버깅 방법
-1. 컴파일 실행: `npm run dist:dev`
-2. 실행 환경 추가: Pycharm -> Edit Configurations -> Add New Configuration -> Node.js
-3. 설정
-    - Name: `ws-scrcpy` (임의로 설정)
-    - Working directory: `<PATH_TO_WORKING_DIR>/ws-scrcpy`
-    - JavaScript file: `dist/index.js`
-    - Before launch -> Add -> Run npm script -> command=`run`, script=`dist:dev`
-4. debug 실행
+## 개발환경에서 지원하는 것들
+- 라인 단위 디버깅 & 소스코드 추적
+- node 버전 격리: 메이저 버전 15대만 지원하여 격리된 환경을 구축하였음
+
+## 개발환경 구축
+- 사용 툴: Pycharm Professional + node.js
+- 격리 환경 구축 및 호환되는 node 설치:
+  ```bash
+  git clone git@github.com:HardBoiledSmith/ws-scrcpy.git
+
+  cd ws-scrcpy
+
+  virtualenv --python=python3.9 venv
+  source venv/bin/activate
+  pip install nodeenv
+  nodeenv --node='15.14.0' --python-virtualenv
+  ```
+- pycharm -> 프로젝트 폴더 선택
+- 파이썬 인터프리터 선택
+  - Preference -> 검색 -> Python Interpreter -> 새 인터프린터 추가
+  - Virtual Environment -> existing environment -> `<현 폴더>/venv/bin/python` -> 확인
+- 프로젝트 다시 열기 (모든 환경 적용 위함)
+  - Terminal -> `(venv)` 확인
+  - node 경로 확인: `which node` -> `<현재 폴더>/venv/bin/node` 확인
+- node 인터프리터 선택
+  - Preference -> 검색 -> Node Interpreter -> Node.js and NPM
+  - Node Interpreter -> ... -> 추가 -> 위에서 확인한 node 경로 붙여넣기
+- 실행 환경 추가: Pycharm -> Edit Configurations -> Add New Configuration -> Node.js
+  - Name: `ws-scrcpy` (임의로 설정)
+  - Working directory: `<PATH_TO_WORKING_DIR>/ws-scrcpy`
+  - JavaScript file: `dist/index.js`
+  - Before launch -> Add -> Run npm script -> command=`run`, script=`dist:dev`
 
 
 # ws scrcpy
