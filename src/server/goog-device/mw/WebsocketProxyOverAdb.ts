@@ -4,6 +4,10 @@ import WebSocket from 'ws';
 import { RequestParameters } from '../../mw/Mw';
 import { ACTION } from '../../../common/Action';
 
+// TODO: HBsmith DEV-12386
+import { Device } from '../Device';
+//
+
 export class WebsocketProxyOverAdb extends WebsocketProxy {
     public static processRequest(ws: WebSocket, params: RequestParameters): WebsocketProxy | undefined {
         const { parsedQuery, parsedUrl } = params;
@@ -43,6 +47,27 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             ws.close(4003, `[${this.TAG}] Invalid value "${path}" for "path" parameter`);
             return;
         }
+        // TODO: HBsmith DEV-12386
+        if (parsedQuery?.app_key !== null && parsedQuery?.app_key !== undefined) {
+            const appKey = parsedQuery['app_key'].toString();
+            const device = new Device(udid.toString(), 'device');
+            // send key event code 82 twice for deterministic unlock
+            device.runShellCommandAdbKit('82').then((output) => {
+                console.log(output);
+            });
+            device.runShellCommandAdbKit('82').then((output) => {
+                console.log(output);
+            });
+            device.runShellCommandAdbKit(`am force-stop '${appKey}'`).then((output) => {
+                console.log(output);
+            });
+            device
+                .runShellCommandAdbKit(`monkey -p '${appKey}' -c android.intent.category.LAUNCHER 1`)
+                .then((output) => {
+                    console.log(output);
+                });
+        }
+        //
         return this.createProxyOverAdb(ws, udid, remote, path);
     }
 
@@ -58,5 +83,12 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                 ws.close(4005, msg);
             });
         return service;
+    }
+
+    // HBsmith DEV-12386
+    public release(): void {
+        // TODO: app terminate & lock
+        // TODO: retrieve udid and appKey
+        super.release();
     }
 }
