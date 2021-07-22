@@ -9,6 +9,11 @@ import { Device } from '../Device';
 //
 
 export class WebsocketProxyOverAdb extends WebsocketProxy {
+    // TODO: HBsmith DEV-12386
+    private udid = '';
+    private appKey = '';
+    //
+
     public static processRequest(ws: WebSocket, params: RequestParameters): WebsocketProxy | undefined {
         const { parsedQuery, parsedUrl } = params;
         let udid: string | string[] = '';
@@ -48,31 +53,22 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             return;
         }
         // TODO: HBsmith DEV-12386
+        let appKey = '';
         if (parsedQuery?.app_key !== null && parsedQuery?.app_key !== undefined) {
-            const appKey = parsedQuery['app_key'].toString();
-            const device = new Device(udid.toString(), 'device');
-            // send key event code 82 twice for deterministic unlock
-            device.runShellCommandAdbKit('82').then((output) => {
-                console.log(output);
-            });
-            device.runShellCommandAdbKit('82').then((output) => {
-                console.log(output);
-            });
-            device.runShellCommandAdbKit(`am force-stop '${appKey}'`).then((output) => {
-                console.log(output);
-            });
-            device
-                .runShellCommandAdbKit(`monkey -p '${appKey}' -c android.intent.category.LAUNCHER 1`)
-                .then((output) => {
-                    console.log(output);
-                });
+            appKey = parsedQuery['app_key'].toString();
         }
+        return this.createProxyOverAdb(ws, udid, remote, path, appKey);
         //
-        return this.createProxyOverAdb(ws, udid, remote, path);
     }
 
-    public static createProxyOverAdb(ws: WebSocket, udid: string, remote: string, path?: string): WebsocketProxy {
-        const service = new WebsocketProxy(ws);
+    public static createProxyOverAdb(
+        ws: WebSocket,
+        udid: string,
+        remote: string,
+        path?: string,
+        appKey?: string, // TODO: HBsmith DEV-12386
+    ): WebsocketProxyOverAdb {
+        const service = new WebsocketProxyOverAdb(ws);
         AdbUtils.forward(udid, remote)
             .then((port) => {
                 return service.init(`ws://127.0.0.1:${port}${path ? path : ''}`);
@@ -82,13 +78,70 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                 console.error(msg);
                 ws.close(4005, msg);
             });
+        // TODO: HBsmith DEV-12386
+        service.setUpTest(udid, appKey);
+        //
         return service;
     }
 
-    // HBsmith DEV-12386
+    // TODO: HBsmith DEV-12386
     public release(): void {
-        // TODO: app terminate & lock
-        // TODO: retrieve udid and appKey
+        this.tearDownTest();
         super.release();
     }
+
+    private getDevice(): Device | null {
+        if (!this.udid) {
+            return null;
+        }
+        return new Device(this.udid, 'device');
+    }
+
+    private setUpTest(udid: string, appKey?: string): void {
+        if (udid) {
+            this.udid = udid;
+        }
+        if (appKey) {
+            this.appKey = appKey;
+        }
+
+        const device = this.getDevice();
+        if (!device) {
+            return;
+        }
+        // send key event code 82 twice for deterministic unlock
+        device.runShellCommandAdbKit('input keyevent 82').then((output) => {
+            console.log(output);
+        });
+        device.runShellCommandAdbKit('input keyevent 82').then((output) => {
+            console.log(output);
+        });
+
+        if (this.appKey) {
+            device.runShellCommandAdbKit(`am force-stop '${this.appKey}'`).then((output) => {
+                console.log(output);
+            });
+            device
+                .runShellCommandAdbKit(`monkey -p '${this.appKey}' -c android.intent.category.LAUNCHER 1`)
+                .then((output) => {
+                    console.log(output);
+                });
+        }
+    }
+
+    private tearDownTest(): void {
+        const device = this.getDevice();
+        if (!device) {
+            return;
+        }
+        if (this.appKey) {
+            device.runShellCommandAdbKit(`am force-stop '${this.appKey}'`).then((output) => {
+                console.log(output);
+            });
+        }
+        device.runShellCommandAdbKit('input keyevent 26').then((output) => {
+            console.log(output);
+        });
+    }
+    //
 }
