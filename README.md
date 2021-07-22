@@ -27,7 +27,7 @@
   virtualenv --python=python3.9 venv
   source venv/bin/activate
   pip install nodeenv
-  nodeenv --node='15.14.0' --python-virtualenv
+  nodeenv --node='14.17.3' --python-virtualenv
   ```
 - pycharm -> 프로젝트 폴더 선택
 - 파이썬 인터프리터 선택
