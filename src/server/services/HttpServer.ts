@@ -5,7 +5,7 @@ import { Utils } from '../Utils';
 import express, { Express } from 'express';
 
 // TODO: HBsmith DEV-11721
-import { createHmac } from "crypto";
+import { createHmac } from 'crypto';
 import qs from 'qs';
 
 const proto = 'http';
@@ -83,6 +83,7 @@ export class HttpServer implements Service {
                 const expireTimestampIn = 60;
 
                 const api = req.query['GET'];
+                const appKey = req.query.hasOwnProperty('app_key') ? req.query['app_key'] : null;
                 const timestamp = Number(req.query['timestamp']);
                 const signature = req.query['signature'];
 
@@ -93,10 +94,19 @@ export class HttpServer implements Service {
                     return;
                 }
 
-                const pp = {
-                    GET: api,
-                    timestamp: timestamp,
-                };
+                let pp = null;
+                if (appKey) {
+                    pp = {
+                        GET: api,
+                        app_key: appKey,
+                        timestamp: timestamp,
+                    };
+                } else {
+                    pp = {
+                        GET: api,
+                        timestamp: timestamp,
+                    };
+                }
                 let baseString = qs.stringify(pp);
                 baseString = encodeURIComponent(baseString);
                 baseString = '&&' + baseString;

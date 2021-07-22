@@ -28,7 +28,6 @@ import { ACTION } from '../../../common/Action';
 import { ParsedUrlQuery } from 'querystring';
 import { StreamReceiverScrcpy } from './StreamReceiverScrcpy';
 import { ParamsDeviceTracker } from '../../../types/ParamsDeviceTracker';
-import KeyEvent from '../android/KeyEvent';
 
 type StartParams = {
     udid: string;
@@ -358,20 +357,8 @@ export class StreamClientScrcpy
         /*
             HBsmith tunning
         */
-        this.unlockScreen();
         KeyInputHandler.addEventListener(this);
     }
-
-    private sendKeyEvent = (kk: number): void => {
-        const unlockEventActionDown = new KeyCodeControlMessage(KeyEvent.ACTION_DOWN, kk, 0, 0);
-        const unlockEventActionUp = new KeyCodeControlMessage(KeyEvent.ACTION_UP, kk, 0, 0);
-        this.sendMessage(unlockEventActionDown);
-        this.sendMessage(unlockEventActionUp);
-    };
-
-    private unlockScreen = (): void => {
-        setTimeout(() => this.sendKeyEvent(KeyEvent.KEYCODE_MENU), 1000);
-    };
 
     public sendMessage(e: ControlMessage): void {
         this.streamReceiver.sendEvent(e);
