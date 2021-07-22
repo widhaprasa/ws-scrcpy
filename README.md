@@ -28,6 +28,7 @@
   source venv/bin/activate
   pip install nodeenv
   nodeenv --node='14.17.3' --python-virtualenv
+  npm install
   ```
 - pycharm -> 프로젝트 폴더 선택
 - 파이썬 인터프리터 선택
