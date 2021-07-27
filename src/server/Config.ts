@@ -31,10 +31,18 @@ export class Config {
     }
 
     constructor(private fullConfig: Configuration) {
+        // TODO: DEV-12387
+        let configPath = process.env[EnvName.CONFIG_PATH];
+        if (!configPath) {
+            configPath = 'settings_local.json';
+        }
+        /* TODO: origin
         const configPath = process.env[EnvName.CONFIG_PATH];
         if (!configPath) {
             return;
         }
+        * */
+        //
         const isAbsolute = configPath.startsWith('/');
         const absolutePath = isAbsolute ? configPath : path.resolve(process.cwd(), configPath);
         if (!fs.existsSync(absolutePath)) {
@@ -78,4 +86,20 @@ export class Config {
         }
         return this.fullConfig.runApplTracker === true;
     }
+
+    // TODO: DEV-12387
+    public getAesKey(): string {
+        if (!this.fullConfig.aesKey) {
+            return '';
+        }
+        return this.fullConfig.aesKey[0] || '';
+    }
+
+    public getRamielApiServerEndpoint(): string {
+        if (!this.fullConfig.ramielApiServerEndpoint) {
+            return '';
+        }
+        return this.fullConfig.ramielApiServerEndpoint || 'http://127.0.0.1:28000';
+    }
+    //
 }

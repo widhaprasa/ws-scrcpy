@@ -52,6 +52,9 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             ws.close(4003, `[${this.TAG}] Invalid value "${path}" for "path" parameter`);
             return;
         }
+        // TODO: HBsmith DEV-12387
+        // create session
+        //
         // TODO: HBsmith DEV-12386
         let appKey = '';
         if (parsedQuery?.app_key !== null && parsedQuery?.app_key !== undefined) {
@@ -130,18 +133,23 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
     }
 
     private tearDownTest(): void {
-        const device = this.getDevice();
-        if (!device) {
-            return;
+        // TODO: HBsmith DEV-12387
+        if (this.udid) {
+            // delete session
         }
-        if (this.appKey) {
-            device.runShellCommandAdbKit(`am force-stop '${this.appKey}'`).then((output) => {
+        //
+
+        const device = this.getDevice();
+        if (device) {
+            if (this.appKey) {
+                device.runShellCommandAdbKit(`am force-stop '${this.appKey}'`).then((output) => {
+                    console.log(output);
+                });
+            }
+            device.runShellCommandAdbKit('input keyevent 26').then((output) => {
                 console.log(output);
             });
         }
-        device.runShellCommandAdbKit('input keyevent 26').then((output) => {
-            console.log(output);
-        });
     }
     //
 }

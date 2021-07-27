@@ -7,6 +7,10 @@ import express, { Express } from 'express';
 // TODO: HBsmith DEV-11721
 import { createHmac } from 'crypto';
 import qs from 'qs';
+//
+// TODO: HBsmith DEV-12387
+import { Config } from '../Config';
+//
 
 const proto = 'http';
 const DEFAULT_PORT = 28500;
@@ -78,7 +82,7 @@ export class HttpServer implements Service {
         if (Object.keys(req.query).length != 0) {
             try {
                 const algorithm = 'sha1';
-                const privateKey = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+                const privateKey = Config.getInstance().getAesKey();
                 const secretKey = privateKey + '&';
                 const expireTimestampIn = 60;
 
