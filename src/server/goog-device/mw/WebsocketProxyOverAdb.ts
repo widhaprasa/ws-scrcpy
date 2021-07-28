@@ -90,7 +90,10 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                 return resp.status;
             })
             .catch((error) => {
-                ws.close(4900, `[${this.TAG}] failed to create a session for ${udid}`);
+                let msg = `[${this.TAG}] failed to create a session for ${udid}`;
+                if (409 == error.response.status) msg = `사용 중인 장비입니다`;
+                if (503 == error.response.status) msg = `장비의 연결이 끊어져있습니다`;
+                ws.close(4900, msg);
                 throw error;
             });
     }

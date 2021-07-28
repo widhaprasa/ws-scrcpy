@@ -178,11 +178,20 @@ export class StreamClientScrcpy
         this.clientId = stats.clientId;
         this.setTitle(`Stream ${this.deviceName}`);
 
-        const controlHeaderText = document.getElementById('control-header-text');
+        const controlHeaderText = document.getElementById('control-header-device-name-text');
         if (controlHeaderText) {
             controlHeaderText.textContent = `${this.deviceName} (${this.udid})`;
         }
     };
+
+    // TODO: HBsmith DEV-12387
+    public onDeviceDisconnected = (ev: CloseEvent): void => {
+        const controlHeaderText = document.getElementById('control-header-device-status-text');
+        if (controlHeaderText) {
+            controlHeaderText.textContent = ev.reason;
+        }
+    };
+    //
 
     public onDisplayInfo = (infoArray: DisplayCombinedInfo[]): void => {
         if (!this.player) {
@@ -252,6 +261,9 @@ export class StreamClientScrcpy
         this.streamReceiver.off('clientsStats', this.onClientsStats);
         this.streamReceiver.off('displayInfo', this.onDisplayInfo);
         this.streamReceiver.off('disconnected', this.onDisconnected);
+        // TODO: HBsmith DEV-12387
+        this.streamReceiver.off('deviceDisconnected', this.onDeviceDisconnected);
+        //
 
         this.filePushHandler?.release();
         this.filePushHandler = undefined;
@@ -352,6 +364,9 @@ export class StreamClientScrcpy
         streamReceiver.on('clientsStats', this.onClientsStats);
         streamReceiver.on('displayInfo', this.onDisplayInfo);
         streamReceiver.on('disconnected', this.onDisconnected);
+        // TODO: HBsmith DEV-12387
+        streamReceiver.on('deviceDisconnected', this.onDeviceDisconnected);
+        //
         console.log(TAG, player.getName(), udid);
 
         /*

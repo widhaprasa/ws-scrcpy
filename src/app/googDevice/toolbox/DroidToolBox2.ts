@@ -75,9 +75,14 @@ export class DroidToolBox2 {
         });
 
         const controlHeaderText = document.createElement('div');
-        controlHeaderText.id = 'control-header-text';
-        controlHeaderText.className = 'control-header-text';
+        controlHeaderText.id = 'control-header-device-name-text';
+        controlHeaderText.className = 'control-header-device-name-text';
         this.holder.appendChild(controlHeaderText);
+
+        const controlHeaderStatusText = document.createElement('div');
+        controlHeaderStatusText.id = 'control-header-device-status-text';
+        controlHeaderStatusText.className = 'control-header-device-status-text';
+        this.holder.appendChild(controlHeaderStatusText);
     }
 
     public static createToolBox(client: StreamClientScrcpy): DroidToolBox2 {
