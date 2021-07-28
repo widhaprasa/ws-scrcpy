@@ -1,6 +1,12 @@
 # HBsmith 참조
 안드로이드 리얼디바이스 장비 지원을 위해 NetrisTV의 ws-scrcpy를 Fork하였음.
 
+## 설정
+- 설정파일 복사: `cp settings_local_sample.json settings_local.json`
+- 주요 설정 변경
+  - `aesKey`: aes key 목록
+  - `ramielApiServerEndpoint`: ramiel API 서버 엔트포인트
+
 ## 개발 정책
 - 주기적으로 원본 브렌치와 merge
   ```bash

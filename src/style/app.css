@@ -153,14 +153,25 @@ body.stream {
     opacity: 0.5;
 }
 
-.control-header-text {
-    float: none;
+.control-header-device-name-text {
+    float: right;
     border: none;
-    width: 100%;
+    width: 25%;
     height: 50px;
     margin: 5px;
     font-size: 20px;
     text-align: right;
+    color: white;
+}
+
+.control-header-device-status-text {
+    float: right;
+    border: none;
+    width: 50%;
+    height: 50px;
+    margin: 5px;
+    font-size: 20px;
+    text-align: center;
     color: white;
 }
 

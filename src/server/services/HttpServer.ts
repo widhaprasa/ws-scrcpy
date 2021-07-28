@@ -4,12 +4,12 @@ import { Service } from './Service';
 import { Utils } from '../Utils';
 import express, { Express } from 'express';
 
-// TODO: HBsmith DEV-11721
-import { createHmac } from 'crypto';
-import qs from 'qs';
+// TODO: HBsmith DEV-12387
+import { Config } from '../Config';
+//
 
 const proto = 'http';
-const DEFAULT_PORT = 28500;
+const DEFAULT_PORT = Config.getInstance().getServerPort();
 const DEFAULT_STATIC_DIR = path.join(__dirname, './public');
 
 export class HttpServer implements Service {
@@ -77,9 +77,6 @@ export class HttpServer implements Service {
 
         if (Object.keys(req.query).length != 0) {
             try {
-                const algorithm = 'sha1';
-                const privateKey = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
-                const secretKey = privateKey + '&';
                 const expireTimestampIn = 60;
 
                 const api = req.query['GET'];
@@ -87,7 +84,7 @@ export class HttpServer implements Service {
                 const timestamp = Number(req.query['timestamp']);
                 const signature = req.query['signature'];
 
-                const curTimestamp = new Date().getTime() / 1000;
+                const curTimestamp = Utils.getTimestamp();
                 const td = curTimestamp - timestamp;
                 if (td > expireTimestampIn) {
                     res.status(400).send('timestamp');
@@ -107,10 +104,7 @@ export class HttpServer implements Service {
                         timestamp: timestamp,
                     };
                 }
-                let baseString = qs.stringify(pp);
-                baseString = encodeURIComponent(baseString);
-                baseString = '&&' + baseString;
-                const serverSignature = createHmac(algorithm, secretKey).update(baseString).digest('base64');
+                const serverSignature = Utils.getSignature(pp);
                 if (serverSignature != signature) {
                     res.status(400).send('signature');
                     return;

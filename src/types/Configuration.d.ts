@@ -12,4 +12,10 @@ export interface Configuration {
     runGoogTracker?: boolean;
     announceGoogTracker?: boolean;
     hostList?: HostItem[];
+
+    // TODO: DEV-12387
+    serverPort?: number;
+    aesKey?: string[];
+    ramielApiServerEndpoint?: string;
+    //
 }

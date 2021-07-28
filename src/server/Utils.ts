@@ -1,4 +1,7 @@
 import * as os from 'os';
+import qs from 'qs';
+import { createHmac } from 'crypto';
+import { Config } from './Config';
 
 export class Utils {
     public static printListeningMsg(proto: string, port: number): void {
@@ -41,4 +44,24 @@ export class Utils {
             console.log('\t' + ipv6List.join(' '));
         }
     }
+
+    // TODO: HBsmith DEV-12387
+    public static getTimestamp(): number {
+        return new Date().getTime() / 1000;
+    }
+
+    public static getBaseString(params: Record<string, unknown>): string {
+        return qs.stringify(params);
+    }
+
+    public static getSignature(params: Record<string, unknown>): string {
+        const algorithm = 'sha1';
+        const privateKey = Config.getInstance().getAesKey();
+        const secretKey = privateKey + '&';
+        let baseString = this.getBaseString(params);
+        baseString = encodeURIComponent(baseString);
+        baseString = '&&' + baseString;
+        return createHmac(algorithm, secretKey).update(baseString).digest('base64');
+    }
+    //
 }

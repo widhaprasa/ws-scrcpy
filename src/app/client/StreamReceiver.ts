@@ -30,6 +30,9 @@ interface StreamReceiverEvents {
     encoders: string[];
     connected: void;
     disconnected: CloseEvent;
+    // TODO: HBsmith DEV-12387
+    deviceDisconnected: CloseEvent;
+    //
 }
 
 const TAG = '[StreamReceiver]';
@@ -120,6 +123,10 @@ export class StreamReceiver<P extends ParamsStream> extends ManagerClient<Params
     }
 
     protected onSocketClose(ev: CloseEvent): void {
+        // TODO: DEV-12387
+        // ev.code
+        this.emit('deviceDisconnected', ev);
+        //
         console.log(`${TAG}. WS closed: ${ev.reason}`);
         this.emit('disconnected', ev);
     }
