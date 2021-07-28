@@ -14,6 +14,7 @@ export interface Configuration {
     hostList?: HostItem[];
 
     // TODO: DEV-12387
+    serverPort?: number;
     aesKey?: string[];
     ramielApiServerEndpoint?: string;
     //

@@ -99,7 +99,17 @@ export class Config {
         if (!this.fullConfig.ramielApiServerEndpoint) {
             return '';
         }
-        return this.fullConfig.ramielApiServerEndpoint || 'http://127.0.0.1:28000';
+
+        let uu = this.fullConfig.ramielApiServerEndpoint || 'http://127.0.0.1:28000';
+        if (!uu.toLowerCase().startsWith('http')) {
+            // noinspection HttpUrlsUsage
+            uu = `http://${uu}`;
+        }
+        return uu;
+    }
+
+    getServerPort(): number {
+        return this.fullConfig.serverPort || 28500;
     }
     //
 }

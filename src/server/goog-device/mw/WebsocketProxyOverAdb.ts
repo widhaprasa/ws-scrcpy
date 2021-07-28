@@ -7,11 +7,19 @@ import { ACTION } from '../../../common/Action';
 // TODO: HBsmith DEV-12386
 import { Device } from '../Device';
 //
+// TODO: HBsmith DEV-12387
+import { Config } from '../../Config';
+import { Utils } from '../../Utils';
+import axios from 'axios';
+//
 
 export class WebsocketProxyOverAdb extends WebsocketProxy {
     // TODO: HBsmith DEV-12386
     private udid = '';
     private appKey = '';
+    //
+    // TODO: HBsmith DEV-12386
+    private apiSessionCreated = false;
     //
 
     public static processRequest(ws: WebSocket, params: RequestParameters): WebsocketProxy | undefined {
@@ -52,17 +60,66 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             ws.close(4003, `[${this.TAG}] Invalid value "${path}" for "path" parameter`);
             return;
         }
-        // TODO: HBsmith DEV-12387
-        // create session
-        //
         // TODO: HBsmith DEV-12386
         let appKey = '';
         if (parsedQuery?.app_key !== null && parsedQuery?.app_key !== undefined) {
             appKey = parsedQuery['app_key'].toString();
         }
+        // TODO: HBsmith DEV-12386
         return this.createProxyOverAdb(ws, udid, remote, path, appKey);
         //
     }
+
+    // TODO: HBsmith DEV-12387
+    private static async apiCreateSession(ws: WebSocket, udid: string) {
+        const host = Config.getInstance().getRamielApiServerEndpoint();
+        const api = `/devices/android/${udid}/control/`;
+        const pp = {
+            POST: api,
+            timestamp: Utils.getTimestamp(),
+        };
+        const url = `${host}${api}`;
+
+        await axios
+            .post(url, {
+                POST: api,
+                timestamp: Utils.getTimestamp(),
+                signature: Utils.getSignature(pp),
+            })
+            .then((resp) => {
+                return resp.status;
+            })
+            .catch((error) => {
+                ws.close(4900, `[${this.TAG}] failed to create a session for ${udid}`);
+                throw error;
+            });
+    }
+
+    private apiDeleteSession(udid: string) {
+        const host = Config.getInstance().getRamielApiServerEndpoint();
+        const api = `/devices/android/${udid}/control/`;
+        const p1 = {
+            DELETE: api,
+            timestamp: Utils.getTimestamp(),
+        };
+        const p2 = {
+            DELETE: api,
+            timestamp: Utils.getTimestamp(),
+            signature: Utils.getSignature(p1),
+        };
+        const queryString = Utils.getBaseString(p2);
+        const url = `${host}${api}?${queryString}`;
+        const tag = WebsocketProxyOverAdb.TAG;
+        axios
+            .delete(url)
+            .then((response) => {
+                console.log(`[${tag}] success to delete session. resp code: ${response.status}`);
+            })
+            .catch((error) => {
+                console.error(`[${tag}] failed to delete session. resp code: ${error.response.status}`);
+            });
+    }
+    //
 
     public static createProxyOverAdb(
         ws: WebSocket,
@@ -72,17 +129,23 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
         appKey?: string, // TODO: HBsmith DEV-12386
     ): WebsocketProxyOverAdb {
         const service = new WebsocketProxyOverAdb(ws);
-        AdbUtils.forward(udid, remote)
-            .then((port) => {
-                return service.init(`ws://127.0.0.1:${port}${path ? path : ''}`);
+        // TODO: HBsmith DEV-12387
+        this.apiCreateSession(ws, udid)
+            .then(() => {
+                AdbUtils.forward(udid, remote)
+                    .then((port) => {
+                        return service.init(`ws://127.0.0.1:${port}${path ? path : ''}`);
+                    })
+                    .catch((e) => {
+                        const msg = `[${this.TAG}] Failed to start service: ${e.message}`;
+                        console.error(msg);
+                        ws.close(4005, msg);
+                    });
+                service.setUpTest(udid, appKey);
             })
-            .catch((e) => {
-                const msg = `[${this.TAG}] Failed to start service: ${e.message}`;
-                console.error(msg);
-                ws.close(4005, msg);
+            .catch(() => {
+                // console.error(e);
             });
-        // TODO: HBsmith DEV-12386
-        service.setUpTest(udid, appKey);
         //
         return service;
     }
@@ -101,6 +164,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
     }
 
     private setUpTest(udid: string, appKey?: string): void {
+        this.apiSessionCreated = true;
         if (udid) {
             this.udid = udid;
         }
@@ -133,11 +197,11 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
     }
 
     private tearDownTest(): void {
-        // TODO: HBsmith DEV-12387
-        if (this.udid) {
-            // delete session
+        if (!this.apiSessionCreated || !this.udid) {
+            return;
         }
-        //
+
+        this.apiDeleteSession(this.udid);
 
         const device = this.getDevice();
         if (device) {
