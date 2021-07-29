@@ -9,4 +9,4 @@ cd "${PATH_TO_OPT}/_provisioning" || exit 1
 
 sudo launchctl remove "${SERVICE_NAME}"
 sudo rm -f "${PATH_TO_ROOT_DAEMONS}/${SERVICE_NAME}.plist"
-sudo rm -rf '/opt/ramiel/ws-scrcpy'
+sudo rm -rf "${PATH_TO_OPT}"

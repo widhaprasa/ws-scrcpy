@@ -20,7 +20,7 @@
         <string>/opt/ramiel/ws-scrcpy</string>
         <key>ProgramArguments</key>
         <array>
-            <string>./01.run.sh</string>
+            <string>./_provisioning/01.run.sh</string>
         </array>
 
         <key>StandardOutPath</key>

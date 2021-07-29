@@ -2,6 +2,7 @@
 
 export PATH_TO_OPT='/opt/ramiel/ws-scrcpy'
 export PATH_TO_LOG='/var/log/ramiel'
+export PATH_TO_CONFIG='/etc/ramiel/ws-scrcpy'
 export PATH_TO_SERVICE="/Users/${SYS_USER}/Library/LaunchAgents"
 export PATH_TO_ROOT_DAEMONS='/Library/LaunchDaemons'
 export SERVICE_NAME='ramiel.ws-scrcpy.hbsmith.io'

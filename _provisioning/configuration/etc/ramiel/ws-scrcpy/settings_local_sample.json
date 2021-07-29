@@ -1,0 +1,16 @@
+{
+  "serverPort": 28500,
+  "aesKey": [
+    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "cccccccccccccccccccccccccccccccc",
+    "dddddddddddddddddddddddddddddddd",
+    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "ffffffffffffffffffffffffffffffff",
+    "gggggggggggggggggggggggggggggggg",
+    "hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh",
+    "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii",
+    "jjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj"
+  ],
+  "ramielApiServerEndpoint": "http://127.0.0.1:28000"
+}
