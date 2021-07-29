@@ -67,6 +67,12 @@ body {
     height: 100%;
     width: 100%;
     overflow: hidden;
+
+    /* TODO: HBsmith DEV-12424 */
+    font-family: 'Muli', sans-serif;
+    font-size: 1rem;
+    font-weight: 400;
+    /* */
 }
 
 
@@ -75,7 +81,9 @@ body.shell {
 }
 
 body.stream {
-    background-color: var(--stream-bg-color);
+    /* TODO: HBsmith DEV-12424 */
+    background-color: black !important;
+    /* */
     display:flex;
     flex-direction: row;
     flex-wrap: wrap;
