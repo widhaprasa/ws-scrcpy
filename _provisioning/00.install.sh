@@ -32,7 +32,7 @@ sudo pip install --upgrade pip
 sudo pip install nodeenv
 
 if ! sudo nodeenv --node="${NODE_VERSION}" --python-virtualenv; then
-  # In M1 OSX, 404 error on prebuilt 15.14.0
+  # In M1 OSX, 404 error on prebuilt except the latest ver.
   # problem: installation with --source option takes too much time
   sudo nodeenv --node="${NODE_VERSION}" --python-virtualenv --source
 fi
@@ -47,4 +47,3 @@ cd "${PATH_TO_OPT}/_provisioning/configuration/etc/launchd" || exit 2
 sudo chmod 644 ./*.plist
 sudo cp "${SERVICE_NAME}.plist" "${PATH_TO_ROOT_DAEMONS}"
 sudo launchctl load -w "${PATH_TO_ROOT_DAEMONS}/${SERVICE_NAME}.plist"
-
