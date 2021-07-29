@@ -2,14 +2,17 @@
 안드로이드 리얼디바이스 장비 지원을 위해 NetrisTV의 ws-scrcpy를 Fork하였음.
 
 ## 설치 및 설정
-- 저장소 복제 및 설정파일 복사
+- 저장소 복제
   ```bash
   git clone git@github.com:HardBoiledSmith/ws-scrcpy.git
-  cd ws-scrcpy || exit -1
+  ```
+- 설정파일 복사
+  ```bash
+  cd ws-scrcpy/_provisioning/configuration/etc/ramiel/ws-scrcpy || exit -1
   cp settings_local_sample.json settings_local.json
   ```
 - 설정파일 수정: `vim settings_local.json`
-- 주요 설정 변경
+- 필수 설정 값 확인:
   - `serverPort`: 서버 포트 (default: `28500`)
   - `aesKey`: AES 키
   - `ramielApiServerEndpoint`: ramiel API 서버 엔트포인트. 예) `http://localhost:28000`

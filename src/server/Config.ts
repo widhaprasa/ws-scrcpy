@@ -31,17 +31,20 @@ export class Config {
     }
 
     constructor(private fullConfig: Configuration) {
-        // TODO: DEV-12387
+        // TODO: DEV-12387, DEV-12424
         let configPath = process.env[EnvName.CONFIG_PATH];
         if (!configPath) {
-            configPath = 'settings_local.json';
+            configPath = '/etc/ramiel/ws-scrcpy/settings_local.json';
+            let aa = configPath;
+            if (!fs.existsSync(aa)) {
+                configPath = '_provisioning/configuration/etc/ramiel/ws-scrcpy/settings_local.json';
+                aa = path.resolve(process.cwd(), configPath);
+                if (!fs.existsSync(aa)) {
+                    console.error(`Can't find configuration file "${aa}"`);
+                    return;
+                }
+            }
         }
-        /* TODO: origin
-        const configPath = process.env[EnvName.CONFIG_PATH];
-        if (!configPath) {
-            return;
-        }
-        * */
         //
         const isAbsolute = configPath.startsWith('/');
         const absolutePath = isAbsolute ? configPath : path.resolve(process.cwd(), configPath);
