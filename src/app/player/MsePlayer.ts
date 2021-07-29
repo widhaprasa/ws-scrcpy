@@ -3,6 +3,9 @@ import VideoConverter, { setLogger, mimeType } from 'h264-converter';
 import VideoSettings from '../VideoSettings';
 import Size from '../Size';
 import { DisplayInfo } from '../DisplayInfo';
+// TODO: DEV-12424
+import BtnRotatePng from '../../public/images/hbsmith-logo.png';
+//
 
 interface QualityStats {
     timestamp: number;
@@ -40,6 +43,9 @@ export class MsePlayer extends BasePlayer {
             tag.id = id;
         }
         tag.className = 'video-layer';
+        // TODO: DEV-12424
+        tag.poster = BtnRotatePng;
+        //
         return tag;
     }
 
