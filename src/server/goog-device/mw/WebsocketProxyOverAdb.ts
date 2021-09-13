@@ -12,6 +12,9 @@ import { Config } from '../../Config';
 import { Utils } from '../../Utils';
 import axios from 'axios';
 //
+// TODO: DEV-12826
+import qs from "qs";
+//
 
 export class WebsocketProxyOverAdb extends WebsocketProxy {
     // TODO: HBsmith DEV-12386
@@ -20,6 +23,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
     //
     // TODO: HBsmith DEV-12386
     private apiSessionCreated = false;
+
     //
 
     public static processRequest(ws: WebSocket, params: RequestParameters): WebsocketProxy | undefined {
@@ -70,21 +74,26 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
         //
     }
 
-    // TODO: HBsmith DEV-12387
+    // TODO: HBsmith DEV-12387, DEV-12826
     private static async apiCreateSession(ws: WebSocket, udid: string) {
         const host = Config.getInstance().getRamielApiServerEndpoint();
-        const api = `/devices/android/${udid}/control/`;
+        const api = `/real-devices/${udid}/control/`;
+        const hh = { 'Content-Type': 'application/x-www-form-urlencoded; charset=utf8' };
+        const tt = Utils.getTimestamp();
         const pp = {
             POST: api,
-            timestamp: Utils.getTimestamp(),
+            timestamp: tt,
         };
+        const data = qs.stringify({
+            POST: api,
+            timestamp: tt,
+            signature: Utils.getSignature(pp),
+        });
         const url = `${host}${api}`;
 
         await axios
-            .post(url, {
-                POST: api,
-                timestamp: Utils.getTimestamp(),
-                signature: Utils.getSignature(pp),
+            .post(url, data, {
+                headers: hh,
             })
             .then((resp) => {
                 return resp.status;
@@ -100,21 +109,26 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
 
     private apiDeleteSession(udid: string) {
         const host = Config.getInstance().getRamielApiServerEndpoint();
-        const api = `/devices/android/${udid}/control/`;
-        const p1 = {
+        const api = `/real-devices/${udid}/control/`;
+        const hh = { 'Content-Type': 'application/x-www-form-urlencoded; charset=utf8' };
+        const tt = Utils.getTimestamp();
+        const pp = {
             DELETE: api,
-            timestamp: Utils.getTimestamp(),
+            timestamp: tt,
         };
-        const p2 = {
+        const data = qs.stringify({
             DELETE: api,
-            timestamp: Utils.getTimestamp(),
-            signature: Utils.getSignature(p1),
-        };
-        const queryString = Utils.getBaseString(p2);
-        const url = `${host}${api}?${queryString}`;
+            timestamp: tt,
+            signature: Utils.getSignature(pp),
+        });
+        const url = `${host}${api}`;
         const tag = WebsocketProxyOverAdb.TAG;
+
         axios
-            .delete(url)
+            .delete(url, {
+                headers: hh,
+                data: data,
+            })
             .then((response) => {
                 console.log(`[${tag}] success to delete session. resp code: ${response.status}`);
             })
@@ -218,5 +232,6 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             });
         }
     }
+
     //
 }
