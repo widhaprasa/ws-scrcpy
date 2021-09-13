@@ -12,5 +12,5 @@
     "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii",
     "jjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj"
   ],
-  "ramielApiServerEndpoint": "http://dv-sachiel.hbsmith.io:8000"
+  "ramielApiServerEndpoint": "http://dv-sachiel.hbsmith.io"
 }
