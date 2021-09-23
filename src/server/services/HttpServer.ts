@@ -104,7 +104,7 @@ export class HttpServer implements Service {
                         timestamp: timestamp,
                     };
                 }
-                const serverSignature = Utils.getSignature(pp);
+                const serverSignature = Utils.getSignature(pp, timestamp);
                 if (serverSignature != signature) {
                     res.status(400).send('signature');
                     return;

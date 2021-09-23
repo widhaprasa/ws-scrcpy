@@ -90,14 +90,7 @@ export class Config {
         return this.fullConfig.runApplTracker === true;
     }
 
-    // TODO: DEV-12387
-    public getAesKey(): string {
-        if (!this.fullConfig.aesKey) {
-            return '';
-        }
-        return this.fullConfig.aesKey[0] || '';
-    }
-
+    // TODO: DEV-12387, DEV-12826
     public getRamielApiServerEndpoint(): string {
         if (!this.fullConfig.ramielApiServerEndpoint) {
             return '';

@@ -1,16 +1,4 @@
 {
   "serverPort": 28500,
-  "aesKey": [
-    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-    "cccccccccccccccccccccccccccccccc",
-    "dddddddddddddddddddddddddddddddd",
-    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
-    "ffffffffffffffffffffffffffffffff",
-    "gggggggggggggggggggggggggggggggg",
-    "hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh",
-    "iiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii",
-    "jjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj"
-  ],
-  "ramielApiServerEndpoint": "http://dv-sachiel.hbsmith.io:8000"
+  "ramielApiServerEndpoint": "http://dv-sachiel.hbsmith.io"
 }
