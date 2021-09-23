@@ -14,8 +14,7 @@
 - 설정파일 수정: `vim settings_local.json`
 - 필수 설정 값 확인:
   - `serverPort`: 서버 포트 (default: `28500`)
-  - `aesKey`: AES 키
-  - `ramielApiServerEndpoint`: ramiel API 서버 엔트포인트. 예) `http://localhost:28000`
+  - `ramielApiServerEndpoint`: ramiel API 서버 엔트포인트. 예) `http://dv-sachiel.hbsmith.io`
 
 ## 개발 정책
 - 주기적으로 원본 브렌치와 merge

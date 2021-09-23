@@ -87,7 +87,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
         const data = qs.stringify({
             POST: api,
             timestamp: tt,
-            signature: Utils.getSignature(pp),
+            signature: Utils.getSignature(pp, tt),
         });
         const url = `${host}${api}`;
 
@@ -100,8 +100,9 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             })
             .catch((error) => {
                 let msg = `[${this.TAG}] failed to create a session for ${udid}`;
-                if (409 == error.response.status) msg = `사용 중인 장비입니다`;
-                if (503 == error.response.status) msg = `장비의 연결이 끊어져있습니다`;
+                if (!('response' in error)) msg = msg = `undefined response in error`;
+                else if (409 == error.response.status) msg = `사용 중인 장비입니다`;
+                else if (503 == error.response.status) msg = `장비의 연결이 끊어져있습니다`;
                 ws.close(4900, msg);
                 throw error;
             });
@@ -119,7 +120,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
         const data = qs.stringify({
             DELETE: api,
             timestamp: tt,
-            signature: Utils.getSignature(pp),
+            signature: Utils.getSignature(pp, tt),
         });
         const url = `${host}${api}`;
         const tag = WebsocketProxyOverAdb.TAG;
