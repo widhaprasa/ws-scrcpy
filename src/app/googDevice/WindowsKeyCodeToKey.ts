@@ -1,5 +1,5 @@
 // TODO: DEV-13471
-import WindowsKeyCode from 'keycode-js';
+import * as WindowsKeyCode from 'keycode-js';
 import UIEventsCode from '../UIEventsCode';
 
 export const WindowsKeyCodeToKey = new Map([
