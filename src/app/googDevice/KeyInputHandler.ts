@@ -16,7 +16,7 @@ export class KeyInputHandler {
         const event = e as KeyboardEvent;
         // TODO: DEV-13327
         let keyCode = KeyToCodeMap.get(event.code);
-        if (!keyCode && event.hasOwnProperty('keyCode')) {
+        if (!keyCode) {
             const cc = WindowsKeyCodeToKey.get(event.keyCode);
             if (!cc) return;
             keyCode = KeyToCodeMap.get(cc);
