@@ -216,7 +216,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                 return device.runShellCommandAdbKit(cmdHome);
             })
             .then((output) => {
-                console.log(output ? output : `success to send 3rd KEYCODE_HOME: ${cmdHome}`);
+                console.log(output ? output : `success to send KEYCODE_HOME: ${cmdHome}`);
 
                 if (!this.appKey) {
                     return;
