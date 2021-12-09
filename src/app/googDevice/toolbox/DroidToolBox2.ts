@@ -6,7 +6,6 @@ import BtnBackPng from '../../../public/images/buttons/btn-back.png';
 import BtnHomePng from '../../../public/images/buttons/btn-home.png';
 import BtnRotatePng from '../../../public/images/buttons/btn-rotate.png';
 import BtnSendText from '../../../public/images/buttons/btn-send-text.png';
-import BtnGetClipboard from '../../../public/images/buttons/btn-get-clipboard.png';
 import {KeyCodeControlMessage} from '../../controlMessage/KeyCodeControlMessage';
 import {CommandControlMessage} from '../../controlMessage/CommandControlMessage';
 import {ControlMessage} from '../../controlMessage/ControlMessage';
@@ -40,12 +39,6 @@ const BUTTONS = [
         title: 'SendText',
         code: KeyEvent.KEYCODE_APP_SWITCH,
         icon: BtnSendText,
-        type: 'CommandControlMessage',
-    },
-    {
-        title: 'GetClipboard',
-        code: KeyEvent.KEYCODE_APP_SWITCH,
-        icon: BtnGetClipboard,
         type: 'CommandControlMessage',
     },
 ];
@@ -134,11 +127,6 @@ export class DroidToolBox2 {
                         client.sendMessage(eventPasteKey);
                         eventPasteKey = new KeyCodeControlMessage(KeyEvent.ACTION_UP, kk, 0, 0);
                         client.sendMessage(eventPasteKey);
-                        break;
-                    }
-                    case 'GetClipboard': {
-                        const aa = ControlMessage.TYPE_GET_CLIPBOARD;
-                        client.sendMessage(new CommandControlMessage(aa));
                         break;
                     }
                 }
