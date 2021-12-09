@@ -38,11 +38,13 @@ const BUTTONS = [
     },
     {
         title: 'SendText',
+        code: KeyEvent.KEYCODE_APP_SWITCH,
         icon: BtnSendText,
         type: 'CommandControlMessage',
     },
     {
         title: 'GetClipboard',
+        code: KeyEvent.KEYCODE_APP_SWITCH,
         icon: BtnGetClipboard,
         type: 'CommandControlMessage',
     },
@@ -112,7 +114,7 @@ export class DroidToolBox2 {
                 const event = new KeyCodeControlMessage(action, element.optional?.code, 0, 0);
                 client.sendMessage(event);
             } else if (element.optional?.type === 'CommandControlMessage') {
-                const title = element.optional?.id;
+                const title = element.optional?.title;
                 switch (title) {
                     case 'Rotate': {
                         const action = ControlMessage.TYPE_ROTATE_DEVICE;
