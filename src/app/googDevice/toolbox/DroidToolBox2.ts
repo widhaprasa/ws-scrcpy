@@ -13,42 +13,36 @@ import {ControlMessage} from '../../controlMessage/ControlMessage';
 
 const BUTTONS = [
     {
-        id: 'Unlock',
-        title: '잠금해제',
+        title: 'Unlock',
         code: KeyEvent.KEYCODE_MENU,
         icon: BtnUnlockPng,
         type: 'KeyCodeControlMessage',
     },
     {
-        id: 'Home',
-        title: '홈',
+        title: 'Home',
         code: KeyEvent.KEYCODE_HOME,
         icon: BtnHomePng,
         type: 'KeyCodeControlMessage',
     },
     {
-        id: 'Rotate',
-        title: '회전',
+        title: 'Rotate',
         code: KeyEvent.KEYCODE_APP_SWITCH,
         icon: BtnRotatePng,
         type: 'CommandControlMessage',
     },
     {
-        id: 'Back',
-        title: '뒤로가기',
+        title: 'Back',
         code: KeyEvent.KEYCODE_BACK,
         icon: BtnBackPng,
         type: 'KeyCodeControlMessage',
     },
     {
-        id: 'SendText',
-        title: '텍스트 전송',
+        title: 'SendText',
         icon: BtnSendText,
         type: 'CommandControlMessage',
     },
     {
-        id: 'GetClipboard',
-        title: '장비의 클립보드 가져오기',
+        title: 'GetClipboard',
         icon: BtnGetClipboard,
         type: 'CommandControlMessage',
     },
@@ -118,8 +112,8 @@ export class DroidToolBox2 {
                 const event = new KeyCodeControlMessage(action, element.optional?.code, 0, 0);
                 client.sendMessage(event);
             } else if (element.optional?.type === 'CommandControlMessage') {
-                const id = element.optional?.id;
-                switch (id) {
+                const title = element.optional?.id;
+                switch (title) {
                     case 'Rotate': {
                         const action = ControlMessage.TYPE_ROTATE_DEVICE;
                         const event = new CommandControlMessage(action);
