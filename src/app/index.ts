@@ -18,6 +18,8 @@ window.onload = async function (): Promise<void> {
     if (appKey) {
         parsedQuery['app_key'] = appKey;
         parsedQuery['ws'] = `${parsedQuery['ws']}&app_key=${appKey}&user-agent=${userAgent}`;
+    } else {
+        parsedQuery['ws'] = `${parsedQuery['ws']}&user-agent=${userAgent}`;
     }
     //
 
