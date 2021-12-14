@@ -66,18 +66,18 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             ws.close(4003, `[${this.TAG}] Invalid value "${path}" for "path" parameter`);
             return;
         }
-        // TODO: HBsmith DEV-12386
-        let appKey = '';
-        if (parsedQuery?.app_key !== null && parsedQuery?.app_key !== undefined) {
-            appKey = parsedQuery['app_key'].toString();
-        }
-        // TODO: HBsmith DEV-13549
-        let userAgent = '';
-        if (parsedQuery?.user_agent !== null && parsedQuery?.user_agent !== undefined) {
-            userAgent = parsedQuery['user-agent'].toString();
-        }
-        //
         // TODO: HBsmith DEV-12386, DEV-13549
+        let appKey = '';
+        let userAgent = '';
+        if (parsedQuery) {
+            if (parsedQuery['app_key']) {
+                appKey = parsedQuery['app_key'].toString();
+            }
+            if (parsedQuery['user-agent']) {
+                userAgent = parsedQuery['user-agent'].toString();
+            }
+        }
+
         return this.createProxyOverAdb(ws, udid, remote, path, appKey, userAgent);
         //
     }
