@@ -98,13 +98,13 @@ export class HttpServer implements Service {
                         GET: api,
                         app_key: appKey,
                         timestamp: timestamp,
-                        userAgent: userAgent,
+                        'user-agent': userAgent,
                     };
                 } else {
                     pp = {
                         GET: api,
                         timestamp: timestamp,
-                        userAgent: userAgent,
+                        'user-agent': userAgent,
                     };
                 }
                 const serverSignature = Utils.getSignature(pp, timestamp);

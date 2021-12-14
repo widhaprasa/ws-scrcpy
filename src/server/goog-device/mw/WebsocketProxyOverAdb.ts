@@ -91,12 +91,12 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
         const pp = {
             POST: api,
             timestamp: tt,
-            userAgent: userAgent,
+            'user-agent': userAgent,
         };
         const data = qs.stringify({
             POST: api,
             timestamp: tt,
-            userAgent: userAgent,
+            'user-agent': userAgent,
             signature: Utils.getSignature(pp, tt),
         });
         const url = `${host}${api}`;
@@ -132,12 +132,12 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
         const pp = {
             DELETE: api,
             timestamp: tt,
-            userAgent: this.userAgent,
+            'user-agent': this.userAgent,
         };
         const data = qs.stringify({
             DELETE: api,
             timestamp: tt,
-            userAgent: this.userAgent,
+            'user-agent': this.userAgent,
             signature: Utils.getSignature(pp, tt),
         });
         const url = `${host}${api}`;
