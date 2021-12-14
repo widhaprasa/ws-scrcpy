@@ -10,13 +10,17 @@ window.onload = async function (): Promise<void> {
     const parsedQuery = querystring.parse(hash);
     const action = parsedQuery.action;
 
-    // TODO: HBsmith DEV-12386
+    // TODO: HBsmith DEV-12386, DEV-13549
     const search = location.search.replace('?', '');
     const parsedSearch = querystring.parse(search);
     const appKey = parsedSearch.app_key || null;
+    const userAgent = parsedSearch['user-agent'] || null;
     if (appKey) {
         parsedQuery['app_key'] = appKey;
         parsedQuery['ws'] = `${parsedQuery['ws']}&app_key=${appKey}`;
+    }
+    if (userAgent) {
+        parsedQuery['user-agent'] = userAgent;
     }
     //
 
