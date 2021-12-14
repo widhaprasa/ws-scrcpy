@@ -278,6 +278,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
         const device = this.getDevice();
         if (!device) {
             console.error(Utils.getTimeISOString(), 'failed to get device at tearDownTest: ', this.udid);
+            this.apiDeleteSession(this.udid);
             return;
         }
         const cmdPower = `input keyevent ${KeyEvent.KEYCODE_POWER}`;

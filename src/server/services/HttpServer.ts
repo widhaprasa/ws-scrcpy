@@ -82,8 +82,8 @@ export class HttpServer implements Service {
                 const api = req.query['GET'];
                 const appKey = req.query.hasOwnProperty('app_key') ? req.query['app_key'] : null;
                 const timestamp = Number(req.query['timestamp']);
-                const signature = req.query['signature'];
                 const userAgent = req.query['user-agent'];
+                const signature = req.query['signature'];
 
                 const curTimestamp = Utils.getTimestamp();
                 const td = curTimestamp - timestamp;

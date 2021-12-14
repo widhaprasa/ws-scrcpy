@@ -14,13 +14,10 @@ window.onload = async function (): Promise<void> {
     const search = location.search.replace('?', '');
     const parsedSearch = querystring.parse(search);
     const appKey = parsedSearch.app_key || null;
-    const userAgent = parsedSearch['user-agent'] || null;
+    const userAgent = parsedSearch['user-agent'] || 'unknown';
     if (appKey) {
         parsedQuery['app_key'] = appKey;
-        parsedQuery['ws'] = `${parsedQuery['ws']}&app_key=${appKey}`;
-    }
-    if (userAgent) {
-        parsedQuery['user-agent'] = userAgent;
+        parsedQuery['ws'] = `${parsedQuery['ws']}&app_key=${appKey}&user-agent=${userAgent}`;
     }
     //
 
