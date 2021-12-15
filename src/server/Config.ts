@@ -121,7 +121,7 @@ export class Config {
     }
 
     getServerPort(): number {
-        return this.fullConfig.serverPort || 28500;
+        return this.fullConfig.serverPort || 28500 || DEFAULT_PORT;
     }
     //
 
