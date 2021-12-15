@@ -6,10 +6,6 @@ import { Utils } from '../Utils';
 import express, { Express } from 'express';
 import { Config } from '../Config';
 
-// TODO: HBsmith DEV-12387, DEV-13521
-import { Config } from '../Config';
-//
-
 const DEFAULT_STATIC_DIR = path.join(__dirname, './public');
 
 export type ServerAndPort = {
@@ -115,12 +111,10 @@ export class HttpServer implements Service {
     public start(): void {
         this.mainApp = express();
         if (HttpServer.SERVE_STATIC && HttpServer.PUBLIC_DIR) {
-
             // TODO: HBsmith DEV-11721
             this.mainApp.use(this.CheckPermission);
             //
             this.mainApp.use(express.static(HttpServer.PUBLIC_DIR));
-
         }
         const config = Config.getInstance();
         config.getServers().forEach((serverItem) => {
