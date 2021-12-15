@@ -75,7 +75,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
     }
 
     // TODO: HBsmith DEV-12387, DEV-12826, DEV-13214
-    private static async apiCreateSession(ws: WebSocket, udid: string) {
+    private static async apiCreateSession(ws: WS, udid: string) {
         const host = Config.getInstance().getRamielApiServerEndpoint();
         const api = `/real-devices/${udid}/control/`;
         const hh = { 'Content-Type': 'application/x-www-form-urlencoded; charset=utf8' };
@@ -142,11 +142,15 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
     }
     //
 
-    public static createProxyOverAdb(ws: WS, udid: string, remote: string, path?: string,
+    public static createProxyOverAdb(
+        ws: WS,
+        udid: string,
+        remote: string,
+        path?: string,
         appKey?: string, // TODO: HBsmith DEV-12386, DEV-13531
     ): WebsocketProxyOverAdb {
-        const service = new WebsocketProxyOverAdb(ws);
         // TODO: HBsmith DEV-12387, DEV-13521
+        const service = new WebsocketProxyOverAdb(ws);
         this.apiCreateSession(ws, udid)
             .then(() => {
                 AdbUtils.forward(udid, remote)
