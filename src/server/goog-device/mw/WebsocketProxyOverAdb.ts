@@ -1,6 +1,6 @@
 import { WebsocketProxy } from '../../mw/WebsocketProxy';
 import { AdbUtils } from '../AdbUtils';
-import WebSocket from 'ws';
+import WS from 'ws';
 import { RequestParameters } from '../../mw/Mw';
 import { ACTION } from '../../../common/Action';
 
@@ -24,10 +24,9 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
     //
     // TODO: HBsmith DEV-12386
     private apiSessionCreated = false;
-
     //
 
-    public static processRequest(ws: WebSocket, params: RequestParameters): WebsocketProxy | undefined {
+    public static processRequest(ws: WS, params: RequestParameters): WebsocketProxy | undefined {
         const { parsedQuery, parsedUrl } = params;
         let udid: string | string[] = '';
         let remote: string | string[] = '';
@@ -143,15 +142,11 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
     }
     //
 
-    public static createProxyOverAdb(
-        ws: WebSocket,
-        udid: string,
-        remote: string,
-        path?: string,
-        appKey?: string, // TODO: HBsmith DEV-12386
+    public static createProxyOverAdb(ws: WS, udid: string, remote: string, path?: string,
+        appKey?: string, // TODO: HBsmith DEV-12386, DEV-13531
     ): WebsocketProxyOverAdb {
         const service = new WebsocketProxyOverAdb(ws);
-        // TODO: HBsmith DEV-12387
+        // TODO: HBsmith DEV-12387, DEV-13521
         this.apiCreateSession(ws, udid)
             .then(() => {
                 AdbUtils.forward(udid, remote)
