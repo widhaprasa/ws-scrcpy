@@ -57,7 +57,7 @@ export class HttpServer implements Service {
         return `HTTP(s) Server Service`;
     }
 
-    // TODO: HBsmith DEV-11721
+    // TODO: HBsmith DEV-11721, DEV-13549
     public CheckPermission(req: express.Request, res: express.Response, next: express.NextFunction): void {
         if (req.url === '/') {
             res.status(400).send('BAD REQUEST');
@@ -71,6 +71,7 @@ export class HttpServer implements Service {
                 const api = req.query['GET'];
                 const appKey = req.query.hasOwnProperty('app_key') ? req.query['app_key'] : null;
                 const timestamp = Number(req.query['timestamp']);
+                const userAgent = req.query['user-agent'];
                 const signature = req.query['signature'];
 
                 const curTimestamp = Utils.getTimestamp();
@@ -86,11 +87,13 @@ export class HttpServer implements Service {
                         GET: api,
                         app_key: appKey,
                         timestamp: timestamp,
+                        'user-agent': userAgent,
                     };
                 } else {
                     pp = {
                         GET: api,
                         timestamp: timestamp,
+                        'user-agent': userAgent,
                     };
                 }
                 const serverSignature = Utils.getSignature(pp, timestamp);
