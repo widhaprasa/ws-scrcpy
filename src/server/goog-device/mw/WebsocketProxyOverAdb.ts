@@ -243,7 +243,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                 }
 
                 const cmdAppStop =
-                    'adb shell \'for pp in $(dumpsys window a | grep "/" | cut -d "{" -f2 | cut -d "/" -f1 | cut -d " " -f2); do am force-stop "${pp}"; done\'';
+                    'for pp in $(dumpsys window a | grep "/" | cut -d "{" -f2 | cut -d "/" -f1 | cut -d " " -f2); do am force-stop "${pp}"; done';
                 const cmdAppStart = `monkey -p '${this.appKey}' -c android.intent.category.LAUNCHER 1`;
 
                 device
@@ -288,7 +288,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                 console.log(Utils.getTimeISOString(), output ? output : `success to run a command: ${cmdPower}`);
 
                 const cmdAppStop =
-                    'adb shell \'for pp in $(dumpsys window a | grep "/" | cut -d "{" -f2 | cut -d "/" -f1 | cut -d " " -f2); do am force-stop "${pp}"; done\'';
+                    'for pp in $(dumpsys window a | grep "/" | cut -d "{" -f2 | cut -d "/" -f1 | cut -d " " -f2); do am force-stop "${pp}"; done';
                 device
                     .runShellCommandAdbKit(cmdAppStop)
                     .then((output) => {
