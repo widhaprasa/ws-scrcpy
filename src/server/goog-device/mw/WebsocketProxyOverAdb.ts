@@ -81,7 +81,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
         //
     }
 
-    // TODO: HBsmith DEV-12387, DEV-12826, DEV-13214, DEV-13549
+    // TODO: HBsmith DEV-12387, DEV-12826, DEV-13214, DEV-13549, DEV-13718
     private static async apiCreateSession(ws: WS, udid: string, userAgent?: string) {
         const host = Config.getInstance().getRamielApiServerEndpoint();
         const api = `/real-devices/${udid}/control/`;
@@ -116,8 +116,10 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                 );
                 let msg = `[${this.TAG}] failed to create a session for ${udid}`;
                 if (!('response' in error)) msg = msg = `undefined response in error`;
-                else if (409 == error.response.status) msg = `사용 중인 장비입니다`;
-                else if (503 == error.response.status) msg = `장비의 연결이 끊어져있습니다`;
+                else if (409 == error.response.status) {
+                    msg = `사용 중인 장비입니다`;
+                    if (userAgent) msg += ` (${userAgent})`;
+                } else if (503 == error.response.status) msg = `장비의 연결이 끊어져있습니다`;
                 ws.close(4900, msg);
                 throw error;
             });
