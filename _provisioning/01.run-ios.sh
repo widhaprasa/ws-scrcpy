@@ -6,4 +6,4 @@ source "${DIR}/env.sh"
 
 PATH_TO_OPT='/opt/ramiel/ws-scrcpy'
 cd "${PATH_TO_OPT}" || exit 1
-npm start
+WS_SCRCPY_CONFIG='/etc/ramiel/ws-scrcpy/ios_settings_local.json' npm start
