@@ -17,7 +17,7 @@
         <string>/opt/ramiel/ws-scrcpy-ios</string>
         <key>ProgramArguments</key>
         <array>
-            <string>./_provisioning/01.run.sh</string>
+            <string>./_provisioning/01.run-ios.sh</string>
         </array>
 
         <key>StandardOutPath</key>
