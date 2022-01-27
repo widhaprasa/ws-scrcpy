@@ -120,7 +120,11 @@ export class WDARunner extends TypedEmitter<WDARunnerEvents> {
                 deviceName: 'my iphone',
                 udid: this.udid,
                 wdaLocalPort: port,
-                usePrebuiltWDA: true,
+                // usePrebuiltWDA: true,
+                // TODO:
+                usePrebuiltWDA: false,
+                useNewWDA: true,
+                //
             });
             this.started = true;
             this.emit('started', true);
