@@ -57,14 +57,14 @@ export class HttpServer implements Service {
         return `HTTP(s) Server Service`;
     }
 
-    // TODO: HBsmith DEV-11721, DEV-13549
+    // TODO: HBsmith DEV-11721, DEV-13549, DEV-14061
     public CheckPermission(req: express.Request, res: express.Response, next: express.NextFunction): void {
-        if (req.url === '/') {
+        if (req.hostname === 'localhost') {
+            console.log(Utils.getTimeISOString(), 'Checking permission has been bypassed: host is', req.hostname);
+        } else if (req.url === '/') {
             res.status(400).send('BAD REQUEST');
             return;
-        }
-
-        if (Object.keys(req.query).length != 0) {
+        } else if (Object.keys(req.query).length != 0) {
             try {
                 const expireTimestampIn = 300;
 
