@@ -155,7 +155,9 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                 deviceName: 'my iphone',
                 udid: this.udid,
                 wdaLocalPort: this.wdaLocalPort,
-                usePrebuiltWDA: true,
+                // TODO: DEV-14061 experimental
+                usePrebuiltWDA: false,
+                // usePrebuiltWDA: true,
                 mjpegServerPort: remoteMjpegServerPort,
             });
             await server.driver.wda.xcodebuild.waitForStart(new timing.Timer().start());
