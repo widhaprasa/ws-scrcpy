@@ -5,7 +5,7 @@ import { Server, XCUITestDriver } from '../../../types/WdaServer';
 import * as XCUITest from 'appium-xcuitest-driver';
 import { DEVICE_CONNECTIONS_FACTORY } from 'appium-xcuitest-driver/build/lib/device-connections-factory';
 import { WDAMethod } from '../../../common/WDAMethod';
-import { timing } from 'appium-support';
+// import { timing } from 'appium-support'; // TODO: DEV-14061
 import { WdaStatus } from '../../../common/WdaStatus';
 
 const MJPEG_SERVER_PORT = 9100;
@@ -155,11 +155,13 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                 deviceName: 'my iphone',
                 udid: this.udid,
                 wdaLocalPort: this.wdaLocalPort,
-                // TODO: DEV-14061 experimental
-                usePrebuiltWDA: false,
-                // usePrebuiltWDA: true,
+                usePrebuiltWDA: true,
                 mjpegServerPort: remoteMjpegServerPort,
+                // TODO: DEV-14061
+                webDriverAgentUrl: 'http://169.254.71.131:8100', // TODO: retrieve the url from api server
+                //
             });
+            /* TODO: DEV-14061
             await server.driver.wda.xcodebuild.waitForStart(new timing.Timer().start());
             if (server.driver?.wda?.xcodebuild?.xcodebuild) {
                 server.driver.wda.xcodebuild.xcodebuild.on('exit', (code: number) => {
@@ -178,6 +180,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                 delete this.server;
                 throw new Error('xcodebuild process not found');
             }
+            */
             /// #if WDA_RUN_MJPEG_SERVER
             await DEVICE_CONNECTIONS_FACTORY.requestConnection(this.udid, this.mjpegServerPort, {
                 usePortForwarding: true,
