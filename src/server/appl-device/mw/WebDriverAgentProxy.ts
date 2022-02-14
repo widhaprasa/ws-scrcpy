@@ -34,6 +34,9 @@ export class WebDriverAgentProxy extends Mw {
     private runWda(command: ControlCenterCommand): void {
         const udid = command.getUdid();
         const id = command.getId();
+
+        // TODO: apiCreateSession
+
         if (this.wda) {
             const message: MessageRunWdaResponse = {
                 id,
@@ -126,6 +129,7 @@ export class WebDriverAgentProxy extends Mw {
     }
 
     public release(): void {
+        // TODO apiDeleteSession
         super.release();
         if (this.wda) {
             this.wda.release();

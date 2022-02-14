@@ -5,8 +5,15 @@ import { Server, XCUITestDriver } from '../../../types/WdaServer';
 import * as XCUITest from 'appium-xcuitest-driver';
 import { DEVICE_CONNECTIONS_FACTORY } from 'appium-xcuitest-driver/build/lib/device-connections-factory';
 import { WDAMethod } from '../../../common/WDAMethod';
-// import { timing } from 'appium-support'; // TODO: DEV-14061
+// TODO: DEV-14061
+// import { timing } from 'appium-support';
+//
 import { WdaStatus } from '../../../common/WdaStatus';
+// TODO: DEV-14061
+import { Config } from "../../Config";
+import { Utils } from "../../Utils";
+import axios from "axios";
+//
 
 const MJPEG_SERVER_PORT = 9100;
 
@@ -145,7 +152,13 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
         this.emit('status-change', { status: 'starting' });
         this.starting = true;
         const server = await WdaRunner.getServer(this.udid);
+
         try {
+            // TODO: DEV-14061
+            const data = await WdaRunner.apiGetDevice(this.udid);
+            console.log(data);
+            const webDriverAgentUrl = `http://${data['device_host']}:${data['device_port']}`;
+            //
             const remoteMjpegServerPort = MJPEG_SERVER_PORT;
             const ports = await Promise.all([portfinder.getPortPromise(), portfinder.getPortPromise()]);
             this.wdaLocalPort = ports[0];
@@ -158,7 +171,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                 usePrebuiltWDA: true,
                 mjpegServerPort: remoteMjpegServerPort,
                 // TODO: DEV-14061
-                webDriverAgentUrl: 'http://169.254.71.131:8100', // TODO: retrieve the url from api server
+                webDriverAgentUrl: webDriverAgentUrl,
                 //
             });
             /* TODO: DEV-14061
@@ -204,4 +217,38 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
     public release(): void {
         this.unlock();
     }
+
+    // TODO: DEV-14061
+    private static async apiGetDevice(udid: string) {
+        const host = Config.getInstance().getRamielApiServerEndpoint();
+        const api = `/real-devices/${udid}/`;
+        const hh = { 'Content-Type': 'application/x-www-form-urlencoded; charset=utf8' };
+        const tt = Utils.getTimestamp();
+        const pp = {
+            GET: api,
+            timestamp: tt,
+        };
+        const data = {
+            GET: api,
+            timestamp: tt,
+            signature: Utils.getSignature(pp, tt),
+        };
+        const url = `${host}${api}`;
+
+        try {
+            const rr = await axios.get(url, {
+                headers: hh,
+                params: data,
+            });
+            return rr.data;
+        } catch (error) {
+            console.error(
+                Utils.getTimeISOString(),
+                `[${WdaRunner.TAG}]`,
+                `Cannot retrieve the device ${udid}. resp code: ${error.response.status}`,
+            );
+            throw error;
+        }
+    }
+    //
 }
