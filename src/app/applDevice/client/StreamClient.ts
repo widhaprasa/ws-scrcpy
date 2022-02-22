@@ -15,7 +15,7 @@ import { ParamsDeviceTracker } from '../../../types/ParamsDeviceTracker';
 import { DeviceTracker } from './DeviceTracker';
 import { WdaStatus } from '../../../common/WdaStatus';
 import { MessageRunWdaResponse } from '../../../types/MessageRunWdaResponse';
-import {QVHackToolBox2} from "../toolbox/QVHackToolBox2";
+import { QVHackToolBox2 } from '../toolbox/QVHackToolBox2';
 
 const WAIT_CLASS = 'wait';
 const TAG = 'StreamClient';
@@ -89,8 +89,10 @@ export abstract class StreamClient<T extends ParamsStream> extends BaseClient<T,
             return;
         }
         const body = document.body;
-        const width = (body.clientWidth - controlButtons.clientWidth) & ~15;
-        const height = body.clientHeight & ~15;
+        // TODO: HBsmith DEV-14062
+        const width = ((body.clientWidth - controlButtons.clientWidth) & ~15) * 0.9;
+        const height = (body.clientHeight & ~15) * 0.9;
+        //
         return new Size(width, height);
     }
 
@@ -152,14 +154,26 @@ export abstract class StreamClient<T extends ParamsStream> extends BaseClient<T,
     }
 
     protected handleWdaStatus = (message: MessageRunWdaResponse): void => {
+        // TODO: HBsmith DEV-14062
+        const statusText = document.getElementById('control-header-device-status-text');
+        //
         const data = message.data;
         switch (data.status) {
             case 'starting':
             case 'started':
+                // TODO: HBsmith DEV-14062
+                this.emit('wda:status', data.status);
+                break; //
             case 'stopped':
+                // TODO: HBsmith DEV-14062
+                if (statusText) statusText.textContent = data.status;
+                //
                 this.emit('wda:status', data.status);
                 break;
             default:
+                // TODO: HBsmith DEV-14062
+                if (statusText) statusText.textContent = status;
+                //
                 throw Error(`Unknown WDA status: '${status}'`);
         }
     };
