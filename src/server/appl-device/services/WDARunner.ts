@@ -279,6 +279,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
         if (!installed) return;
 
         await this.server?.driver.mobileTerminateApp({ bundleId: this.appKey });
+        await this.server?.driver.lock();
     }
     //
 }
