@@ -21,6 +21,9 @@ export class StreamClientMJPEG extends StreamClient<ParamsStream> {
         this.runWebDriverAgent().then(() => {
             this.startStream();
             this.player?.play();
+            // TODO: DEV-14062
+            this.setBodyClass('stream');
+            //
         });
         this.on('wda:status', (status) => {
             if (status === 'stopped') {

@@ -15,6 +15,7 @@ import { ParamsDeviceTracker } from '../../../types/ParamsDeviceTracker';
 import { DeviceTracker } from './DeviceTracker';
 import { WdaStatus } from '../../../common/WdaStatus';
 import { MessageRunWdaResponse } from '../../../types/MessageRunWdaResponse';
+import {QVHackToolBox2} from "../toolbox/QVHackToolBox2";
 
 const WAIT_CLASS = 'wait';
 const TAG = 'StreamClient';
@@ -207,6 +208,17 @@ export abstract class StreamClient<T extends ParamsStream> extends BaseClient<T,
         }
         this.setTouchListeners(player);
         player.pause();
+
+        // TODO: DEV-14062
+        const controlHeaderView = document.createElement('div');
+        controlHeaderView.className = 'control-header';
+
+        const qvhackToolBox2 = QVHackToolBox2.createToolBox(this.wdaProxy);
+        const controlButtons2 = qvhackToolBox2.getHolderElement();
+        controlHeaderView.appendChild(controlButtons2);
+
+        document.body.appendChild(controlHeaderView);
+        //
 
         const deviceView = document.createElement('div');
         deviceView.className = 'device-view';

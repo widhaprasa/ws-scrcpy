@@ -303,6 +303,7 @@ export class StreamClientScrcpy
             videoSettings = player.getVideoSettings();
         }
 
+        // TODO: hbsmith DEV
         const controlHeaderView = document.createElement('div');
         controlHeaderView.className = 'control-header';
 
@@ -311,6 +312,7 @@ export class StreamClientScrcpy
         controlHeaderView.appendChild(controlButtons2);
 
         document.body.appendChild(controlHeaderView);
+        //
 
         const deviceView = document.createElement('div');
         deviceView.className = 'device-view';
