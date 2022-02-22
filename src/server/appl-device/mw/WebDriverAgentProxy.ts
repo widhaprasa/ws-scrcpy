@@ -139,7 +139,9 @@ export class WebDriverAgentProxy extends Mw {
     }
 
     public release(): void {
-        // TODO apiDeleteSession
+        // TODO: HBSmith DEV-14062
+        this.wda?.tearDownTest();
+        //
         super.release();
         if (this.wda) {
             this.wda.release();

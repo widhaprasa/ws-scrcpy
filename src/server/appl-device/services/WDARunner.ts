@@ -28,6 +28,8 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
     public static SHUTDOWN_TIMEOUT = 15000;
     private static servers: Map<string, Server> = new Map();
     private static cachedScreenWidth: Map<string, any> = new Map();
+    //
+    private appKey: string;
 
     public static getInstance(udid: string): WdaRunner {
         let instance = this.instances.get(udid);
@@ -88,6 +90,8 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
     constructor(private readonly udid: string) {
         super();
         this.name = `[${WdaRunner.TAG}][udid: ${this.udid}]`;
+        //
+        this.appKey = '';
     }
 
     protected lock(): void {
@@ -253,18 +257,28 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
         }
     }
 
-    public async setUpTest(appKey: string) {
+    public async setUpTest(appKey: string): Promise<void> {
         await this.server?.driver.mobilePressButton({ name: 'home' });
         await this.server?.driver.mobilePressButton({ name: 'home' });
         await this.server?.driver.mobilePressButton({ name: 'home' });
 
         if (!appKey) return;
+        this.appKey = appKey;
 
         const installed = await this.server?.driver.mobileIsAppInstalled({ bundleId: appKey });
         if (!installed) return;
 
         await this.server?.driver.mobileTerminateApp({ bundleId: appKey });
         await this.server?.driver.mobileLaunchApp({ bundleId: appKey });
+    }
+
+    public async tearDownTest(): Promise<void> {
+        if (!this.appKey) return;
+
+        const installed = await this.server?.driver.mobileIsAppInstalled({ bundleId: this.appKey });
+        if (!installed) return;
+
+        await this.server?.driver.mobileTerminateApp({ bundleId: this.appKey });
     }
     //
 }
