@@ -28,6 +28,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
     public static SHUTDOWN_TIMEOUT = 15000;
     private static servers: Map<string, Server> = new Map();
     private static cachedScreenWidth: Map<string, any> = new Map();
+
     public static getInstance(udid: string): WdaRunner {
         let instance = this.instances.get(udid);
         if (!instance) {
@@ -37,6 +38,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
         instance.lock();
         return instance;
     }
+
     public static async getServer(udid: string): Promise<Server> {
         let server = this.servers.get(udid);
         if (!server) {
@@ -218,7 +220,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
         this.unlock();
     }
 
-    // TODO: DEV-14061
+    // TODO: HBsmith DEV-14061, DEV-14062
     private static async apiGetDevice(udid: string) {
         const host = Config.getInstance().getRamielApiServerEndpoint();
         const api = `/real-devices/${udid}/`;
@@ -249,6 +251,20 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
             );
             throw error;
         }
+    }
+
+    public async setUpTest(appKey: string) {
+        await this.server?.driver.mobilePressButton({ name: 'home' });
+        await this.server?.driver.mobilePressButton({ name: 'home' });
+        await this.server?.driver.mobilePressButton({ name: 'home' });
+
+        if (!appKey) return;
+
+        const installed = await this.server?.driver.mobileIsAppInstalled({ bundleId: appKey });
+        if (!installed) return;
+
+        await this.server?.driver.mobileTerminateApp({ bundleId: appKey });
+        await this.server?.driver.mobileLaunchApp({ bundleId: appKey });
     }
     //
 }

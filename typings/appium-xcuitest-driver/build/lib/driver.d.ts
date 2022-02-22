@@ -25,6 +25,11 @@ declare class XCUITestDriver extends BaseDriver {
     public stop(): Promise<void>;
     public deleteSession(): Promise<void>;
     public wda: any;
+    // TODO: HBsmith DEV-14062
+    public mobileLaunchApp(args: { bundleId: string }): Promise<any>;
+    public mobileTerminateApp(args: { bundleId: string }): Promise<any>;
+    public mobileIsAppInstalled(args: { bundleId: string }): Promise<any>;
+    //
 }
 
 export default XCUITestDriver;

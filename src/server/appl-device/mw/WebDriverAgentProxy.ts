@@ -34,8 +34,15 @@ export class WebDriverAgentProxy extends Mw {
     private runWda(command: ControlCenterCommand): void {
         const udid = command.getUdid();
         const id = command.getId();
+        // TODO: HBsmith DEV-14062
+        const data = command.getData();
+        const appKey = data.appKey;
+        const userAgent = data.userAgent;
+        //
 
         // TODO: apiCreateSession
+        console.log('TODO: use this userAgent', udid, userAgent);
+        //
 
         if (this.wda) {
             const message: MessageRunWdaResponse = {
@@ -55,14 +62,14 @@ export class WebDriverAgentProxy extends Mw {
         this.wda.on('status-change', ({ status, code, text }) => {
             this.onStatusChange(command, status, code, text);
         });
-        // TODO: HBsmith DEV-14062
-        // this.wda.setUpTest(udid, appKey, userAgent);
-        //
         if (this.wda.isStarted()) {
             this.onStatusChange(command, 'started');
         } else {
             this.wda.start();
         }
+        // TODO: HBsmith DEV-14062
+        this.wda.setUpTest(appKey);
+        //
     }
 
     private onStatusChange = (command: ControlCenterCommand, status: WdaStatus, code?: number, text?: string): void => {

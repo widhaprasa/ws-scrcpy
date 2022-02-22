@@ -106,12 +106,20 @@ export abstract class StreamClient<T extends ParamsStream> extends BaseClient<T,
     protected deviceView?: HTMLDivElement;
     protected moreBox?: HTMLElement;
     protected player?: BasePlayer;
+    // TODO: HBsmith DEV-14062
+    protected appKey?: string;
+    protected userAgent?: string;
+    //
 
     protected constructor(params: ParsedUrlQuery | T) {
         super(params);
         this.udid = this.params.udid;
         this.wdaProxy = new WdaProxyClient({ ...this.params, action: ACTION.PROXY_WDA });
         this.name = `[${TAG}:${this.udid}]`;
+        // TODO: HBsmith DEV-14062
+        this.appKey = params.app_key?.toString();
+        this.userAgent = params.user_agent?.toString();
+        //
     }
 
     public get action(): string {
@@ -144,7 +152,7 @@ export abstract class StreamClient<T extends ParamsStream> extends BaseClient<T,
         if (!this.waitForWda) {
             this.wdaProxy.on('wda-status', this.handleWdaStatus);
             this.waitForWda = this.wdaProxy
-                .runWebDriverAgent()
+                .runWebDriverAgent(this.appKey, this.userAgent)
                 .then(this.handleWdaStatus)
                 .finally(() => {
                     this.videoWrapper?.classList.remove(WAIT_CLASS);

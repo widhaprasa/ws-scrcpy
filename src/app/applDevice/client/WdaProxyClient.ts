@@ -208,7 +208,7 @@ export class WdaProxyClient
         });
     }
 
-    public async runWebDriverAgent(): Promise<MessageRunWdaResponse> {
+    public async runWebDriverAgent(appKey?: string, userAgent?: string): Promise<MessageRunWdaResponse> {
         const message: Message = {
             id: this.getNextId(),
             type: ControlCenterCommand.RUN_WDA,
@@ -216,6 +216,10 @@ export class WdaProxyClient
                 udid: this.udid,
             },
         };
+        // TODO: HBsmith DEV-14062
+        if (appKey) message.data['appKey'] = appKey;
+        if (userAgent) message.data['userAgent'] = userAgent;
+        //
         const response = await this.sendMessage(message);
         this.hasSession = true;
         return response as MessageRunWdaResponse;

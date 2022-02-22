@@ -18,10 +18,6 @@ export class StreamClientMJPEG extends StreamClient<ParamsStream> {
         super(params);
         this.name = `[${TAG}:${this.udid}]`;
         this.udid = this.params.udid;
-        // TODO: HBsmith DEV-14062
-        // const appKey = this.params.app_key;
-        // const userAgent = this.params.user_agent;
-        //
         this.runWebDriverAgent().then(() => {
             this.startStream();
             this.player?.play();
