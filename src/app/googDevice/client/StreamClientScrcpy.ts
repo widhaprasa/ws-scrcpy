@@ -179,17 +179,17 @@ export class StreamClientScrcpy
         this.clientId = stats.clientId;
         this.setTitle(`Stream ${this.deviceName}`);
 
-        const controlHeaderText = document.getElementById('control-header-device-name-text');
-        if (controlHeaderText) {
-            controlHeaderText.textContent = `${this.deviceName} (${this.udid})`;
+        const headerText = document.getElementById('control-header-device-name-text');
+        if (headerText) {
+            headerText.textContent = `${this.deviceName} (${this.udid})`;
         }
     };
 
     // TODO: HBsmith DEV-12387
     public onDeviceDisconnected = (ev: CloseEvent): void => {
-        const controlHeaderText = document.getElementById('control-header-device-status-text');
-        if (controlHeaderText) {
-            controlHeaderText.textContent = ev.reason;
+        const statusText = document.getElementById('control-header-device-status-text');
+        if (statusText) {
+            statusText.textContent = ev.reason;
         }
     };
     //

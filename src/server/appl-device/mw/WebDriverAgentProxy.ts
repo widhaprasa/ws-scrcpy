@@ -55,6 +55,9 @@ export class WebDriverAgentProxy extends Mw {
         this.wda.on('status-change', ({ status, code, text }) => {
             this.onStatusChange(command, status, code, text);
         });
+        // TODO: HBsmith DEV-14062
+        // this.wda.setUpTest(udid, appKey, userAgent);
+        //
         if (this.wda.isStarted()) {
             this.onStatusChange(command, 'started');
         } else {

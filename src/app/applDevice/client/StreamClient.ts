@@ -162,6 +162,7 @@ export abstract class StreamClient<T extends ParamsStream> extends BaseClient<T,
             case 'starting':
             case 'started':
                 // TODO: HBsmith DEV-14062
+                this.videoWrapper?.classList.remove('wait');
                 this.emit('wda:status', data.status);
                 break; //
             case 'stopped':
@@ -244,7 +245,11 @@ export abstract class StreamClient<T extends ParamsStream> extends BaseClient<T,
         const controlButtons = qvhackToolBox.getHolderElement();
         deviceView.appendChild(controlButtons);
         const video = document.createElement('div');
-        video.className = `video ${WAIT_CLASS}`;
+        // TODO: HBsmith DEV-14062
+        // video.className = `video ${WAIT_CLASS}`;
+        video.classList.add('video');
+        video.classList.add(WAIT_CLASS);
+        //
         deviceView.appendChild(video);
         deviceView.appendChild(moreBox);
         player.setParent(video);

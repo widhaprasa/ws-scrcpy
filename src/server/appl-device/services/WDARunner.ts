@@ -10,9 +10,9 @@ import { WDAMethod } from '../../../common/WDAMethod';
 //
 import { WdaStatus } from '../../../common/WdaStatus';
 // TODO: DEV-14061
-import { Config } from "../../Config";
-import { Utils } from "../../Utils";
-import axios from "axios";
+import { Config } from '../../Config';
+import { Utils } from '../../Utils';
+import axios from 'axios';
 //
 
 const MJPEG_SERVER_PORT = 9100;
