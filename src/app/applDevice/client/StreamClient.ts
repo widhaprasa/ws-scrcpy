@@ -169,10 +169,6 @@ export abstract class StreamClient<T extends ParamsStream> extends BaseClient<T,
         switch (data.status) {
             case 'starting':
             case 'started':
-                // TODO: HBsmith DEV-14062
-                this.videoWrapper?.classList.remove('wait');
-                this.emit('wda:status', data.status);
-                break; //
             case 'stopped':
                 // TODO: HBsmith DEV-14062
                 if (statusText) statusText.textContent = data.status;
@@ -256,7 +252,6 @@ export abstract class StreamClient<T extends ParamsStream> extends BaseClient<T,
         // TODO: HBsmith DEV-14062
         // video.className = `video ${WAIT_CLASS}`;
         video.classList.add('video');
-        video.classList.add(WAIT_CLASS);
         //
         deviceView.appendChild(video);
         deviceView.appendChild(moreBox);
