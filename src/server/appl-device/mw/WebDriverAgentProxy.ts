@@ -64,12 +64,17 @@ export class WebDriverAgentProxy extends Mw {
         });
         if (this.wda.isStarted()) {
             this.onStatusChange(command, 'started');
+            // TODO: HBsmith DEV-14062
+            this.wda.setUpTest(appKey);
+            //
         } else {
-            this.wda.start();
+            // TODO: HBsmith DEV-14062
+            // this.wda.start()
+            this.wda.start().then(() => {
+                this.wda?.setUpTest(appKey);
+            });
+            //
         }
-        // TODO: HBsmith DEV-14062
-        this.wda.setUpTest(appKey);
-        //
     }
 
     private onStatusChange = (command: ControlCenterCommand, status: WdaStatus, code?: number, text?: string): void => {

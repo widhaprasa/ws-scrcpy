@@ -258,28 +258,37 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
     }
 
     public async setUpTest(appKey: string): Promise<void> {
-        await this.server?.driver.mobilePressButton({ name: 'home' });
-        await this.server?.driver.mobilePressButton({ name: 'home' });
-        await this.server?.driver.mobilePressButton({ name: 'home' });
+        if (!this.server) {
+            console.error(Utils.getTimeISOString(), 'No Server at setUpTest', this.udid);
+            return;
+        }
+
+        await this.server.driver.mobilePressButton({ name: 'home' });
+        await this.server.driver.mobilePressButton({ name: 'home' });
+        await this.server.driver.mobilePressButton({ name: 'home' });
 
         if (!appKey) return;
         this.appKey = appKey;
 
-        const installed = await this.server?.driver.mobileIsAppInstalled({ bundleId: appKey });
+        const installed = await this.server.driver.mobileIsAppInstalled({ bundleId: appKey });
         if (!installed) return;
 
-        await this.server?.driver.mobileTerminateApp({ bundleId: appKey });
-        await this.server?.driver.mobileLaunchApp({ bundleId: appKey });
+        await this.server.driver.mobileLaunchApp({ bundleId: appKey });
     }
 
     public async tearDownTest(): Promise<void> {
+        if (!this.server) {
+            console.error(Utils.getTimeISOString(), 'No Server at tearDownTest', this.udid);
+            return;
+        }
+
         if (!this.appKey) return;
 
-        const installed = await this.server?.driver.mobileIsAppInstalled({ bundleId: this.appKey });
+        const installed = await this.server.driver.mobileIsAppInstalled({ bundleId: this.appKey });
         if (!installed) return;
 
-        await this.server?.driver.mobileTerminateApp({ bundleId: this.appKey });
-        await this.server?.driver.lock();
+        await this.server.driver.mobileTerminateApp({ bundleId: this.appKey });
+        await this.server.driver.lock();
     }
     //
 }
