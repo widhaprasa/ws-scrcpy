@@ -270,9 +270,10 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
         if (!appKey) return;
         this.appKey = appKey;
 
-        const installed = await this.server.driver.mobileIsAppInstalled({ bundleId: appKey });
+        const installed = await this.server.driver.isAppInstalled(appKey);
         if (!installed) return;
 
+        await this.server.driver.terminateApp(appKey);
         await this.server.driver.mobileLaunchApp({ bundleId: appKey });
     }
 
@@ -283,11 +284,17 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
         }
 
         if (!this.appKey) return;
-
+        /*
         const installed = await this.server.driver.mobileIsAppInstalled({ bundleId: this.appKey });
         if (!installed) return;
 
         await this.server.driver.mobileTerminateApp({ bundleId: this.appKey });
+        await this.server.driver.lock();
+        */
+        const installed = await this.server.driver.isAppInstalled(this.appKey);
+        if (!installed) return;
+
+        await this.server.driver.terminateApp(this.appKey);
         await this.server.driver.lock();
     }
     //
