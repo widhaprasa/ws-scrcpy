@@ -69,7 +69,6 @@ export class WebDriverAgentProxy extends Mw {
             //
         } else {
             // TODO: HBsmith DEV-14062
-            // this.wda.start()
             this.wda.start().then(() => {
                 this.wda?.setUpTest(appKey);
             });

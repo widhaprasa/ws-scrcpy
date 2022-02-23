@@ -146,6 +146,10 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                     { action: 'moveTo', options: { x: to.x, y: to.y } },
                     { action: 'release', options: {} },
                 ]);
+            // TODO: HBsmith DEV-14062
+            case WDAMethod.UNLOCK:
+                return driver.unlock();
+            //
             default:
                 return `Unknown command: ${method}`;
         }
@@ -284,13 +288,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
         }
 
         if (!this.appKey) return;
-        /*
-        const installed = await this.server.driver.mobileIsAppInstalled({ bundleId: this.appKey });
-        if (!installed) return;
 
-        await this.server.driver.mobileTerminateApp({ bundleId: this.appKey });
-        await this.server.driver.lock();
-        */
         const installed = await this.server.driver.isAppInstalled(this.appKey);
         if (!installed) return;
 

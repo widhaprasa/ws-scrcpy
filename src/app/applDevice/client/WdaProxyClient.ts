@@ -1,17 +1,17 @@
-import { ManagerClient } from '../../client/ManagerClient';
-import { MessageRunWdaResponse } from '../../../types/MessageRunWdaResponse';
-import { Message } from '../../../types/Message';
-import { ControlCenterCommand } from '../../../common/ControlCenterCommand';
-import { ParamsWdaProxy } from '../../../types/ParamsWdaProxy';
-import { ParsedUrlQuery } from 'querystring';
-import { ACTION } from '../../../common/Action';
+import {ManagerClient} from '../../client/ManagerClient';
+import {MessageRunWdaResponse} from '../../../types/MessageRunWdaResponse';
+import {Message} from '../../../types/Message';
+import {ControlCenterCommand} from '../../../common/ControlCenterCommand';
+import {ParamsWdaProxy} from '../../../types/ParamsWdaProxy';
+import {ParsedUrlQuery} from 'querystring';
+import {ACTION} from '../../../common/Action';
 import Util from '../../Util';
-import { ChannelCode } from '../../../common/ChannelCode';
-import { WDAMethod } from '../../../common/WDAMethod';
+import {ChannelCode} from '../../../common/ChannelCode';
+import {WDAMethod} from '../../../common/WDAMethod';
 import ScreenInfo from '../../ScreenInfo';
 import Position from '../../Position';
 import Point from '../../Point';
-import { TouchHandlerListener } from '../../interactionHandler/SimpleInteractionHandler';
+import {TouchHandlerListener} from '../../interactionHandler/SimpleInteractionHandler';
 
 export type WdaProxyClientEvents = {
     'wda-status': MessageRunWdaResponse;
@@ -170,6 +170,15 @@ export class WdaProxyClient
             name,
         });
     }
+
+    // TODO: HBsmith DEV-14062
+    public async pressButton2(type: string): Promise<void> {
+        switch (type) {
+            case 'unlock':
+                return this.requestWebDriverAgent(WDAMethod.UNLOCK);
+        }
+    }
+    //
 
     public async performClick(position: Position): Promise<void> {
         if (!this.screenInfo) {

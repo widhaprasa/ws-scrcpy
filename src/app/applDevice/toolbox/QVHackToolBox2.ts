@@ -1,12 +1,20 @@
 import BtnHomePng from '../../../public/images/buttons/btn-home.png';
+import BtnUnlockPng from '../../../public/images/buttons/btn-unlock.png';
 import { Optional, ToolBoxElement } from '../../toolbox/ToolBoxElement';
 import { WdaProxyClient } from '../client/WdaProxyClient';
 
 const BUTTONS = [
     {
+        title: 'Unlock',
+        name: 'unlock',
+        icon: BtnUnlockPng,
+        type: 'unlock',
+    },
+    {
         title: 'Home',
         name: 'home',
         icon: BtnHomePng,
+        type: 'pressButton',
     },
 ];
 
@@ -61,7 +69,7 @@ export class QVHackToolBox2 {
 
     public static createToolBox(wdaConnection: WdaProxyClient): QVHackToolBox2 {
         const list = BUTTONS.slice();
-        const handler = <K extends keyof HTMLElementEventMap, T extends HTMLElement>(
+        const handler1 = <K extends keyof HTMLElementEventMap, T extends HTMLElement>(
             _: K,
             element: ToolBoxElement<T>,
         ) => {
@@ -71,11 +79,22 @@ export class QVHackToolBox2 {
             const { name } = element.optional;
             wdaConnection.pressButton(name);
         };
+        const handler2 = <K extends keyof HTMLElementEventMap, T extends HTMLElement>(
+            _: K,
+            element: ToolBoxElement<T>,
+        ) => {
+            if (!element.optional?.name) {
+                return;
+            }
+            const { name } = element.optional;
+            wdaConnection.pressButton2(name);
+        };
         const elements: ToolBoxElement<any>[] = list.map((item) => {
             const button = new ToolBoxButton2(item.title, item.icon, {
                 name: item.name,
             });
-            button.addEventListener('click', handler);
+            if (item.type === 'pressButton') button.addEventListener('click', handler1);
+            else if (item.type === 'unlock') button.addEventListener('click', handler2);
             return button;
         });
         return new QVHackToolBox2(elements);

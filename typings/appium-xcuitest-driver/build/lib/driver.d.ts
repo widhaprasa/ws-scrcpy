@@ -31,6 +31,7 @@ declare class XCUITestDriver extends BaseDriver {
     public terminateApp(bundleId: string): Promise<boolean>;
     public isAppInstalled(bundleId: string): Promise<boolean>;
     public lock(): Promise<void>;
+    public unlock(): Promise<void>;
     //
 }
 
