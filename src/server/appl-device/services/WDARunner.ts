@@ -279,6 +279,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
 
         await this.server.driver.terminateApp(appKey);
         await this.server.driver.mobileLaunchApp({ bundleId: appKey });
+        await this.server.driver.activateApp(appKey);
     }
 
     public async tearDownTest(): Promise<void> {
