@@ -288,12 +288,13 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
             return;
         }
 
-        if (!this.appKey) return;
+        if (this.appKey) {
+            const installed = await this.server.driver.isAppInstalled(this.appKey);
+            if (installed) {
+                await this.server.driver.terminateApp(this.appKey);
+            }
+        }
 
-        const installed = await this.server.driver.isAppInstalled(this.appKey);
-        if (!installed) return;
-
-        await this.server.driver.terminateApp(this.appKey);
         await this.server.driver.lock();
     }
     //
