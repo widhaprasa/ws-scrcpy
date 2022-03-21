@@ -302,6 +302,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
             }
         }
 
+        await this.server.driver.mobilePressButton({ name: 'home' });
         await this.server.driver.lock();
     }
     //
