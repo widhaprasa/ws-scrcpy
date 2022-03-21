@@ -107,7 +107,6 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             })
             .then((rr) => {
                 console.log(Utils.getTimeISOString(), `[${tag}] success to create session. resp code: ${rr.status}`);
-                return rr.status;
             })
             .catch((error) => {
                 console.error(
