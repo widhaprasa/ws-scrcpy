@@ -18,12 +18,10 @@ import KeyEvent from '../../../app/googDevice/android/KeyEvent';
 //
 
 export class WebsocketProxyOverAdb extends WebsocketProxy {
-    // TODO: HBsmith DEV-12386, DEV-13549
+    // TODO: HBsmith DEV-12386, DEV-13549, HBsmith DEV-12386
     private udid = '';
     private appKey = '';
     private userAgent = '';
-    //
-    // TODO: HBsmith DEV-12386
     private apiSessionCreated = false;
     //
 

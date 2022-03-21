@@ -101,6 +101,11 @@ export class WdaProxyClient
                 if (p) {
                     this.wait.delete(id);
                     p.resolve(json);
+                    // TODO: HBsmith DEV-14260
+                    if (json['type'] === 'run-wda') {
+                        this.emit('wda-status', json as MessageRunWdaResponse);
+                    }
+                    //
                     return;
                 }
                 switch (json['type']) {
