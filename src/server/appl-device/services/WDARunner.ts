@@ -146,9 +146,15 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                     { action: 'moveTo', options: { x: to.x, y: to.y } },
                     { action: 'release', options: {} },
                 ]);
-            // TODO: HBsmith DEV-14062
+            // TODO: HBsmith DEV-14062, DEV-14620
             case WDAMethod.UNLOCK:
                 return driver.unlock();
+            case WDAMethod.TERMINATE_APP:
+                const bundleId = args.bundleId;
+                if (!bundleId) return;
+                return driver.isAppInstalled(bundleId).then(() => {
+                    return driver.terminateApp(bundleId);
+                });
             //
             default:
                 return `Unknown command: ${method}`;
