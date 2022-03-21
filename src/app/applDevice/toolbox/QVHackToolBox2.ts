@@ -1,6 +1,7 @@
 import BtnHomePng from '../../../public/images/buttons/btn-home.png';
-import BtnUnlockPng from '../../../public/images/buttons/btn-unlock.png';
+import BtnSendTextPng from '../../../public/images/buttons/btn-send-text.png';
 import BtnTerminateAppPng from '../../../public/images/buttons/btn-terminate-app.png';
+import BtnUnlockPng from '../../../public/images/buttons/btn-unlock.png';
 import { Optional, ToolBoxElement } from '../../toolbox/ToolBoxElement';
 import { WdaProxyClient } from '../client/WdaProxyClient';
 
@@ -16,6 +17,12 @@ const BUTTONS = [
         name: 'home',
         icon: BtnHomePng,
         type: 'pressButton',
+    },
+    {
+        title: 'Send Text',
+        name: 'sendText',
+        icon: BtnSendTextPng,
+        type: 'sendText',
     },
     {
         title: 'Terminate App',
@@ -91,6 +98,7 @@ export class QVHackToolBox2 {
                     });
                     break;
                 case 'unlock':
+                case 'sendText':
                 case 'terminateApp':
                     button.addEventListener('click', (_, element) => {
                         if (!element.optional?.name) {

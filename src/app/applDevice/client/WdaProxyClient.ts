@@ -181,6 +181,9 @@ export class WdaProxyClient
         switch (type) {
             case 'unlock':
                 return this.requestWebDriverAgent(WDAMethod.UNLOCK);
+            case 'sendText':
+                const value = prompt('텍스트를 입력해 주세요');
+                return this.requestWebDriverAgent(WDAMethod.SEND_TEXT, { text: value });
             case 'terminateApp':
                 const bundleId = prompt('앱 키를 입력해 주세요');
                 return this.requestWebDriverAgent(WDAMethod.TERMINATE_APP, { bundleId: bundleId });
