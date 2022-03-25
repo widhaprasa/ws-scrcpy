@@ -4,25 +4,28 @@ import WS from 'ws';
 import { RequestParameters } from '../../mw/Mw';
 import { ACTION } from '../../../common/Action';
 
-// TODO: HBsmith DEV-12386
+// TODO: HBsmith DEV-12386, DEV-12387, DEV-12826, DEV-13493, DEV-14465
 import { Device } from '../Device';
-//
-// TODO: HBsmith DEV-12387
 import { Config } from '../../Config';
-import { Utils } from '../../Utils';
+import { Utils, Logger } from '../../Utils';
 import axios from 'axios';
-//
-// TODO: DEV-12826, DEV-13493
 import qs from 'qs';
 import KeyEvent from '../../../app/googDevice/android/KeyEvent';
+import { Multiplexer } from '../../../packages/multiplexer/Multiplexer';
 //
 
 export class WebsocketProxyOverAdb extends WebsocketProxy {
-    // TODO: HBsmith DEV-12386, DEV-13549, HBsmith DEV-12386
+    // TODO: HBsmith DEV-12386, DEV-13549, HBsmith DEV-12386, DEV-14465
     private udid = '';
     private appKey = '';
     private userAgent = '';
     private apiSessionCreated = false;
+    private logger: Logger;
+
+    constructor(ws: WS | Multiplexer, udid: string) {
+        super(ws);
+        this.logger = new Logger(udid, 'Android');
+    }
     //
 
     public static processRequest(ws: WS, params: RequestParameters): WebsocketProxy | undefined {
@@ -104,11 +107,16 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                 headers: hh,
             })
             .then((rr) => {
-                console.log(Utils.getTimeISOString(), `[${tag}] success to create session. resp code: ${rr.status}`);
+                console.log(
+                    Utils.getTimeISOString(),
+                    udid,
+                    `[${tag}] success to create session. resp code: ${rr.status}`,
+                );
             })
             .catch((error) => {
                 console.error(
                     Utils.getTimeISOString(),
+                    udid,
                     `[${tag}] failed to create a session. resp code: ${error.response.status}`,
                 );
                 let msg = `[${this.TAG}] failed to create a session for ${udid}`;
@@ -147,13 +155,10 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                 data: data,
             })
             .then((rr) => {
-                console.log(Utils.getTimeISOString(), `[${tag}] success to delete a session. resp code: ${rr.status}`);
+                this.logger.info(`[${tag}] success to delete a session. resp code: ${rr.status}`);
             })
             .catch((error) => {
-                console.error(
-                    Utils.getTimeISOString(),
-                    `[${tag}] failed to delete a session. resp code: ${error.response.status}`,
-                );
+                this.logger.error(`[${tag}] failed to delete a session. resp code: ${error.response.status}`);
             });
     }
     //
@@ -167,7 +172,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
         userAgent?: string, // TODO: HBsmith DEV-13549
     ): WebsocketProxyOverAdb {
         // TODO: HBsmith DEV-12387, DEV-13521, DEV-14465
-        const service = new WebsocketProxyOverAdb(ws);
+        const service = new WebsocketProxyOverAdb(ws, udid);
         this.apiCreateSession(ws, udid, userAgent)
             .then(() => {
                 return AdbUtils.forward(udid, remote);
@@ -180,7 +185,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             })
             .catch((e) => {
                 const msg = `[${this.TAG}] Failed to start service: ${e.message}`;
-                console.error(Utils.getTimeISOString(), msg);
+                console.error(Utils.getTimeISOString(), udid, msg);
                 ws.close(4005, msg);
             });
         //
@@ -226,34 +231,31 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
         device
             .runShellCommandAdbKit(cmdMenu)
             .then((output) => {
-                console.log(Utils.getTimeISOString(), output ? output : `success to send 1st KEYCODE_MENU: ${cmdMenu}`);
+                this.logger.info(output ? output : `success to send 1st KEYCODE_MENU: ${cmdMenu}`);
                 return device.runShellCommandAdbKit(cmdMenu);
             })
             .then((output) => {
-                console.log(Utils.getTimeISOString(), output ? output : `success to send 2nd KEYCODE_MENU: ${cmdMenu}`);
+                this.logger.info(output ? output : `success to send 2nd KEYCODE_MENU: ${cmdMenu}`);
                 return device.runShellCommandAdbKit(cmdMenu);
             })
             .then((output) => {
-                console.log(Utils.getTimeISOString(), output ? output : `success to send 3rd KEYCODE_MENU: ${cmdMenu}`);
+                this.logger.info(output ? output : `success to send 3rd KEYCODE_MENU: ${cmdMenu}`);
                 return device.runShellCommandAdbKit(cmdHome);
             })
             .then((output) => {
-                console.log(Utils.getTimeISOString(), output ? output : `success to send KEYCODE_HOME: ${cmdHome}`);
+                this.logger.info(output ? output : `success to send KEYCODE_HOME: ${cmdHome}`);
                 if (!this.appKey) return;
                 return device.runShellCommandAdbKit(cmdAppStop);
             })
             .then((output) => {
-                console.log(
-                    Utils.getTimeISOString(),
-                    output ? output : `success to stop all of the apps: ${cmdAppStop}`,
-                );
+                this.logger.info(output ? output : `success to stop all of the apps: ${cmdAppStop}`);
                 return device.runShellCommandAdbKit(cmdAppStart);
             })
             .then((output) => {
-                console.log(Utils.getTimeISOString(), output ? output : `success to start the app: ${cmdAppStart}`);
+                this.logger.info(output ? output : `success to start the app: ${cmdAppStart}`);
             })
             .catch((e) => {
-                console.error(Utils.getTimeISOString(), e);
+                this.logger.error(e);
             });
     }
 
@@ -264,7 +266,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
 
         const device = this.getDevice();
         if (!device) {
-            console.error(Utils.getTimeISOString(), 'failed to get device at tearDownTest: ', this.udid);
+            this.logger.error(`failed to get device at tearDownTest: ${this.udid}`);
             this.apiDeleteSession(this.udid);
             return;
         }
@@ -276,14 +278,14 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
         device
             .runShellCommandAdbKit(cmdPower)
             .then((output) => {
-                console.log(Utils.getTimeISOString(), output ? output : `success to run a command: ${cmdPower}`);
+                this.logger.info(output ? output : `success to run a command: ${cmdPower}`);
                 return device.runShellCommandAdbKit(cmdAppStop);
             })
             .then((output) => {
-                console.log(Utils.getTimeISOString(), output ? output : `success to stop all of running apps`);
+                this.logger.info(output ? output : `success to stop all of running apps`);
             })
             .catch((e) => {
-                console.error(Utils.getTimeISOString(), e);
+                this.logger.error(e);
             })
             .finally(() => {
                 this.apiDeleteSession(this.udid);
