@@ -154,12 +154,13 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                 if (!value) return;
                 return driver.keys(value);
             case WDAMethod.TERMINATE_APP:
-                const bundleId = args.bundleId;
-                if (!bundleId) return;
-                return driver.isAppInstalled(bundleId).then(() => {
+                return driver.mobileGetActiveAppInfo().then((appInfo) => {
+                    const bundleId = appInfo['bundleId'];
+                    if (bundleId === 'com.apple.springboard') {
+                        return true;
+                    }
                     return driver.terminateApp(bundleId);
                 });
-            //
             default:
                 return `Unknown command: ${method}`;
         }
