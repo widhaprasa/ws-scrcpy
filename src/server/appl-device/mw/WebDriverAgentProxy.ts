@@ -218,9 +218,10 @@ export class WebDriverAgentProxy extends Mw {
                 let msg = `[${WebDriverAgentProxy.TAG}] failed to create a session for ${this.udid}`;
                 if (!('response' in error)) msg = msg = `undefined response in error`;
                 else if (409 == error.response.status) {
+                    const userAgent = error.response.data['user-agent'];
                     msg = `사용 중인 장비입니다`;
-                    if (this.userAgent) msg += ` (${this.userAgent})`;
-                } else if (503 == error.response.status) msg = `장비의 연결이 끊어져있습니다`;
+                    if (userAgent) msg += ` (${userAgent})`;
+                } else if (503 == error.response.status) msg = `장비의 연결이 끊어져 있습니다`;
                 error.message = msg;
                 throw error;
             });
