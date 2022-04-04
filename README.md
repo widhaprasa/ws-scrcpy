@@ -28,33 +28,22 @@
 
 ## 개발환경에서 지원하는 것들
 - 라인 단위 디버깅 & 소스코드 추적
-- node 버전 격리: 14 LTS 버전을 권장함
 - 변경내용 감지 및 재구성은 지원하지 않음
 
 ## 개발환경 구축
 - 사용 툴: Pycharm Professional + node.js
-- 격리 환경 구축 및 호환되는 node 설치:
+- Node.js 설치
+  ```bash
+  brew install node@14
+  ```
+- 배포
   ```bash
   git clone git@github.com:HardBoiledSmith/ws-scrcpy.git
 
   cd ws-scrcpy
-
-  virtualenv --python=python3.9 venv
-  source venv/bin/activate
-  pip install nodeenv
-  nodeenv --node='14.17.3' --python-virtualenv
   npm install
   ```
-- pycharm -> 프로젝트 폴더 선택
-- 파이썬 인터프리터 선택
-  - Preference -> 검색 -> Python Interpreter -> 새 인터프린터 추가
-  - Virtual Environment -> existing environment -> `<현 폴더>/venv/bin/python` -> 확인
-- 프로젝트 다시 열기 (모든 환경 적용 위함)
-  - Terminal -> `(venv)` 확인
-  - node 경로 확인: `which node` -> `<현재 폴더>/venv/bin/node` 확인
-- node 인터프리터 선택
-  - Preference -> 검색 -> Node Interpreter -> Node.js and NPM
-  - Node Interpreter -> ... -> 추가 -> 위에서 확인한 node 경로 붙여넣기
+- PyCharm -> 프로젝트 폴더 선택
 - 실행 환경 추가: Pycharm -> Edit Configurations -> Add New Configuration -> Node.js
   - Name: `ws-scrcpy` (임의로 설정)
   - Working directory: `<PATH_TO_WORKING_DIR>/ws-scrcpy`
