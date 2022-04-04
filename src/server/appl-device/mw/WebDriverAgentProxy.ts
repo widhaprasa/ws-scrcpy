@@ -8,7 +8,7 @@ import { ChannelCode } from '../../../common/ChannelCode';
 import Util from '../../../app/Util';
 import { WdaStatus } from '../../../common/WdaStatus';
 import { Config } from '../../Config';
-import { Utils } from '../../Utils';
+import { Utils, Logger } from '../../Utils'; // TODO: HBsmith DEV-14465
 import qs from 'qs';
 import axios from 'axios';
 
@@ -16,10 +16,11 @@ export class WebDriverAgentProxy extends Mw {
     public static readonly TAG = 'WebDriverAgentProxy';
     protected name: string;
     private wda?: WdaRunner;
-    // TODO: HBsmith DEV-14620
+    // TODO: HBsmith DEV-14260, DEV-14465
     private appKey: string;
     private userAgent: string;
     private apiSessionCreated: boolean;
+    private logger: Logger;
     //
 
     public static processChannel(ws: Multiplexer, code: string, data: ArrayBuffer): Mw | undefined {
@@ -44,6 +45,7 @@ export class WebDriverAgentProxy extends Mw {
         this.appKey = '';
         this.userAgent = '';
         this.apiSessionCreated = false;
+        this.logger = new Logger(udid, 'iOS');
         //
     }
 
@@ -96,7 +98,7 @@ export class WebDriverAgentProxy extends Mw {
             .catch((e) => {
                 this.onStatusChange(command, 'error', -1, e.message);
                 this.ws.close(4900, e.message);
-                console.error(Utils.getTimeISOString(), e);
+                this.logger.error(e);
             });
         //
     }
@@ -208,7 +210,7 @@ export class WebDriverAgentProxy extends Mw {
                 headers: hh,
             })
             .then((rr) => {
-                console.log(Utils.getTimeISOString(), `[${tag}] success to create session. resp code: ${rr.status}`);
+                this.logger.info(`[${tag}] success to create session. resp code: ${rr.status}`);
             })
             .catch((error) => {
                 let status;
@@ -258,7 +260,7 @@ export class WebDriverAgentProxy extends Mw {
                 data: data,
             })
             .then((rr) => {
-                console.log(Utils.getTimeISOString(), `[${tag}] success to delete a session. resp code: ${rr.status}`);
+                this.logger.info(`[${tag}] success to delete a session. resp code: ${rr.status}`);
             })
             .catch((error) => {
                 let status;
