@@ -369,13 +369,10 @@ export class StreamClientScrcpy
         streamReceiver.on('disconnected', this.onDisconnected);
         // TODO: HBsmith DEV-12387
         streamReceiver.on('deviceDisconnected', this.onDeviceDisconnected);
+
+        KeyInputHandler.addEventListener(this);
         //
         console.log(TAG, player.getName(), udid);
-
-        /*
-            HBsmith tunning
-        */
-        KeyInputHandler.addEventListener(this);
     }
 
     public sendMessage(e: ControlMessage): void {

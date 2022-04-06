@@ -3,15 +3,27 @@ import { ACTION } from '../../../common/Action';
 import { ParsedUrlQuery } from 'querystring';
 import { StreamClient } from './StreamClient';
 import { BasePlayer, PlayerClass } from '../../player/BasePlayer';
+// TODO: HBsmith DEV-14440
+import { KeyInputHandler, KeyEventListener } from '../KeyInputHandler';
+import { WDAMethod } from '../../../common/WDAMethod';
+//
 
 const TAG = '[StreamClientMJPEG]';
 
-export class StreamClientMJPEG extends StreamClient<ParamsStream> {
+export class StreamClientMJPEG
+    extends StreamClient<ParamsStream>
+    // TODO: HBsmith DEV-14440
+    implements KeyEventListener {
+    //
     public static ACTION = ACTION.STREAM_MJPEG;
     protected static players: Map<string, PlayerClass> = new Map<string, PlayerClass>();
 
     public static start(params: ParsedUrlQuery | ParamsStream): StreamClientMJPEG {
-        return new StreamClientMJPEG(params);
+        // TODO: HBsmith DEV-14440
+        const cc = new StreamClientMJPEG(params);
+        KeyInputHandler.addEventListener(cc);
+        return cc;
+        //
     }
 
     constructor(params: ParsedUrlQuery | ParamsStream) {
@@ -34,8 +46,19 @@ export class StreamClientMJPEG extends StreamClient<ParamsStream> {
             } else if (status === 'started') {
                 this.player?.play();
             }
-        })
+        });
     }
+
+    // TODO: HBsmith DEV-14440
+    public onKeyEvent(value: string): void {
+        this.wdaProxy.requestWebDriverAgent(WDAMethod.SEND_TEXT, { text: value });
+    }
+
+    public onStop(ev?: string | Event): void {
+        KeyInputHandler.removeEventListener(this);
+        super.onStop(ev);
+    }
+    //
 
     public get action(): string {
         return StreamClientMJPEG.ACTION;
