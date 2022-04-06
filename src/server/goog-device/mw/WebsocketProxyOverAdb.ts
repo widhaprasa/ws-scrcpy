@@ -208,11 +208,20 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                     return;
                 }
 
+                let isLandscape = false;
                 device
-                    .runShellCommandAdbKit('wm size | tail -1')
+                    .runShellCommandAdbKit('dumpsys window displays | grep mCurrentRotation | tail -1')
                     .then((rr) => {
-                        // TODO: refer the current orientation
-                        const [, ww, hh] = rr.match(/(\d+)x(\d+)/);
+                        const [oo] = rr.match(/\d+/);
+                        isLandscape = oo === '90' || oo === '270';
+                        return device.runShellCommandAdbKit('wm size | tail -1');
+                    })
+                    .then((rr) => {
+                        let [, ww, hh] = rr.match(/(\d+)x(\d+)/);
+                        if (isLandscape) {
+                            [ww, hh] = [hh, ww];
+                        }
+
                         const xx = parseInt(ww) / 2;
                         const y1 = parseInt(hh) / 4;
                         const y2 = (parseInt(hh) * 4) / 5;
