@@ -4,7 +4,7 @@ import WS from 'ws';
 import { RequestParameters } from '../../mw/Mw';
 import { ACTION } from '../../../common/Action';
 
-// TODO: HBsmith DEV-12386 DEV-12387 DEV-12826 DEV-13493 DEV-14465
+// TODO: HBsmith
 import { Device } from '../Device';
 import { Config } from '../../Config';
 import { Utils, Logger } from '../../Utils';
@@ -12,6 +12,7 @@ import axios from 'axios';
 import qs from 'qs';
 import KeyEvent from '../../../app/googDevice/android/KeyEvent';
 import { Multiplexer } from '../../../packages/multiplexer/Multiplexer';
+import { ControlMessage } from '../../../app/controlMessage/ControlMessage';
 //
 
 export class WebsocketProxyOverAdb extends WebsocketProxy {
@@ -202,10 +203,54 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
         return service;
     }
 
-    // TODO: HBsmith DEV-12386, DEV-13493, DEV-13549, DEV-13561, DEV-14465
+    // TODO: HBsmith DEV-12386 DEV-13493 DEV-13549 DEV-13561 DEV-14465 DEV-14439
     public release(): void {
         this.tearDownTest();
         super.release();
+    }
+
+    protected onSocketMessage(event: WS.MessageEvent): void {
+        try {
+            const [type, value] = event.data;
+            if (type === ControlMessage.TYPE_ADB_CONTROL) {
+                const device = this.getDevice();
+                if (!device) {
+                    return;
+                }
+
+                let isLandscape = false;
+                device
+                    .runShellCommandAdbKit('dumpsys window displays | grep mCurrentRotation | tail -1')
+                    .then((rr) => {
+                        const [oo] = rr.match(/\d+/);
+                        isLandscape = oo === '90' || oo === '270';
+                        return device.runShellCommandAdbKit('wm size | tail -1');
+                    })
+                    .then((rr) => {
+                        let [, ww, hh] = rr.match(/(\d+)x(\d+)/);
+                        if (isLandscape) {
+                            [ww, hh] = [hh, ww];
+                        }
+
+                        const xx = parseInt(ww) / 2;
+                        const y1 = parseInt(hh) / 4;
+                        const y2 = (parseInt(hh) * 4) / 5;
+                        switch (value) {
+                            case ControlMessage.TYPE_ADB_CONTROL_SWIPE_UP:
+                                device.runShellCommandAdbKit(`input swipe ${xx} ${y2} ${xx} ${y1} 500`);
+                                break;
+                            case ControlMessage.TYPE_ADB_CONTROL_SWIPE_DOWN:
+                                device.runShellCommandAdbKit(`input swipe ${xx} ${y1} ${xx} ${y2} 500`);
+                                break;
+                        }
+                    })
+                    .catch((error) => {
+                        this.logger.error(error);
+                    });
+                return;
+            }
+        } catch {}
+        super.onSocketMessage(event);
     }
 
     private getDevice(): Device | null {
