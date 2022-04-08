@@ -114,22 +114,14 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                 );
             })
             .catch((error) => {
-<<<<<<< HEAD
                 let status;
                 try {
                     status = 'response' in error && 'status' in error.response ? error.response.status : 'unknown1';
                 } catch {
                     status = error.toString();
                 }
-                console.error(Utils.getTimeISOString(), `[${tag}] failed to create a session: ${status}`);
+                console.error(Utils.getTimeISOString(), udid, `[${tag}] failed to create a session: ${status}`);
 
-=======
-                console.error(
-                    Utils.getTimeISOString(),
-                    udid,
-                    `[${tag}] failed to create a session. resp code: ${error.response.status}`,
-                );
->>>>>>> d12b76c41446c3888721a5304e2b2944c175d158
                 let msg = `[${this.TAG}] failed to create a session for ${udid}`;
                 if (!('response' in error)) msg = `undefined response in error`;
                 else if (409 === status) {
@@ -176,7 +168,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                 } catch {
                     status = error.toString();
                 }
-                console.error(Utils.getTimeISOString(), `[${tag}] failed to create a session: ${status}`);
+                this.logger.error(`[${tag}] failed to create a session: ${status}`);
             });
     }
     //
