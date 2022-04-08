@@ -4,7 +4,7 @@ import WS from 'ws';
 import { RequestParameters } from '../../mw/Mw';
 import { ACTION } from '../../../common/Action';
 
-// TODO: HBsmith DEV-12386 DEV-12387 DEV-12826 DEV-13493 DEV-14465 DEV-14439
+// TODO: HBsmith
 import { Device } from '../Device';
 import { Config } from '../../Config';
 import { Utils, Logger } from '../../Utils';
@@ -115,17 +115,21 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                 );
             })
             .catch((error) => {
-                console.error(
-                    Utils.getTimeISOString(),
-                    udid,
-                    `[${tag}] failed to create a session. resp code: ${error.response.status}`,
-                );
+                let status;
+                try {
+                    status = 'response' in error && 'status' in error.response ? error.response.status : 'unknown1';
+                } catch {
+                    status = error.toString();
+                }
+                console.error(Utils.getTimeISOString(), udid, `[${tag}] failed to create a session: ${status}`);
+
                 let msg = `[${this.TAG}] failed to create a session for ${udid}`;
-                if (!('response' in error)) msg = msg = `undefined response in error`;
-                else if (409 == error.response.status) {
+                if (!('response' in error)) msg = `undefined response in error`;
+                else if (409 === status) {
+                    const userAgent = 'user-agent' in error.response ? error.response.data['user-agent'] : '';
                     msg = `사용 중인 장비입니다`;
                     if (userAgent) msg += ` (${userAgent})`;
-                } else if (503 == error.response.status) msg = `장비의 연결이 끊어져있습니다`;
+                } else if (503 === status) msg = `장비의 연결이 끊어져 있습니다`;
                 ws.close(4900, msg);
                 throw error;
             });
@@ -159,7 +163,13 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                 this.logger.info(`[${tag}] success to delete a session. resp code: ${rr.status}`);
             })
             .catch((error) => {
-                this.logger.error(`[${tag}] failed to delete a session. resp code: ${error.response.status}`);
+                let status;
+                try {
+                    status = 'response' in error && 'status' in error.response ? error.response.status : 'unknown1';
+                } catch {
+                    status = error.toString();
+                }
+                this.logger.error(`[${tag}] failed to create a session: ${status}`);
             });
     }
     //
