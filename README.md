@@ -2,6 +2,10 @@
 안드로이드 리얼디바이스 장비 지원을 위해 NetrisTV의 ws-scrcpy를 Fork하였음.
 
 ## 설치 및 설정
+- Homebrew 설치
+  ```bash
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  ```
 - 저장소 복제
   ```bash
   git clone git@github.com:HardBoiledSmith/ws-scrcpy.git
