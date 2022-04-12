@@ -135,9 +135,9 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             });
     }
 
-    private apiDeleteSession(udid: string) {
+    private apiDeleteSession() {
         const host = Config.getInstance().getRamielApiServerEndpoint();
-        const api = `/real-devices/${udid}/control/`;
+        const api = `/real-devices/${this.udid}/control/`;
         const hh = { 'Content-Type': 'application/x-www-form-urlencoded; charset=utf8' };
         const tt = Utils.getTimestamp();
         const pp = {
@@ -203,7 +203,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
         return service;
     }
 
-    // TODO: HBsmith DEV-12386 DEV-13493 DEV-13549 DEV-13561 DEV-14465 DEV-14439
+    // TODO: HBsmith
     public release(): void {
         this.tearDownTest();
         super.release();
@@ -322,7 +322,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
         const device = this.getDevice();
         if (!device) {
             this.logger.error(`failed to get device at tearDownTest: ${this.udid}`);
-            this.apiDeleteSession(this.udid);
+            this.apiDeleteSession();
             return;
         }
 
@@ -330,11 +330,13 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
         const cmdAppStop =
             'for pp in $(dumpsys window a | grep "/" | cut -d "{" -f2 | cut -d "/" -f1 | cut -d " " -f2); do am force-stop "${pp}"; done';
 
-        device
-            .runShellCommandAdbKit(cmdPower)
+        new Promise((resolve) => setTimeout(resolve, 3000))
             .then((output) => {
                 this.logger.info(output ? output : `success to run a command: ${cmdPower}`);
                 return device.runShellCommandAdbKit(cmdAppStop);
+            })
+            .then(() => {
+                return device.runShellCommandAdbKit(cmdPower);
             })
             .then((output) => {
                 this.logger.info(output ? output : `success to stop all of running apps`);
@@ -343,7 +345,9 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                 this.logger.error(e);
             })
             .finally(() => {
-                this.apiDeleteSession(this.udid);
+                setTimeout(() => {
+                    this.apiDeleteSession();
+                }, 3000);
             });
     }
     //
