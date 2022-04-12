@@ -222,8 +222,10 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                 device
                     .runShellCommandAdbKit('dumpsys window displays | grep mCurrentRotation | tail -1')
                     .then((rr) => {
-                        const [oo] = rr.match(/\d+/);
-                        isLandscape = oo === '90' || oo === '270';
+                        if (rr) {
+                            const [oo] = rr.match(/\d+/);
+                            isLandscape = oo === '90' || oo === '270';
+                        }
                         return device.runShellCommandAdbKit('wm size | tail -1');
                     })
                     .then((rr) => {
@@ -249,7 +251,9 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                     });
                 return;
             }
-        } catch {}
+        } catch (error) {
+            this.logger.error(error);
+        }
         super.onSocketMessage(event);
     }
 
