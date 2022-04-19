@@ -28,7 +28,10 @@ export class KeyInputHandler {
             return;
         }
 
-        if (event.getModifierState('Shift') || event.getModifierState('CapsLock')) {
+        if (
+            (!event.getModifierState('Shift') && event.getModifierState('CapsLock')) ||
+            (event.getModifierState('Shift') && !event.getModifierState('CapsLock'))
+        ) {
             const tt = ToUpperCodeMap.get(keyValue);
             if (tt) {
                 keyValue = tt;
