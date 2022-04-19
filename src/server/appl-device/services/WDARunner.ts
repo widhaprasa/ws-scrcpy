@@ -3,7 +3,6 @@ import { TypedEmitter } from '../../../common/TypedEmitter';
 import * as portfinder from 'portfinder';
 import { Server, XCUITestDriver } from '../../../types/WdaServer';
 import * as XCUITest from 'appium-xcuitest-driver';
-import { DEVICE_CONNECTIONS_FACTORY } from 'appium-xcuitest-driver/build/lib/device-connections-factory';
 import { WDAMethod } from '../../../common/WDAMethod';
 // TODO: DEV-14061
 // import { timing } from 'appium-support';
@@ -153,10 +152,12 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
             // TODO: HBsmith DEV-14062, DEV-14620
             case WDAMethod.UNLOCK:
                 return driver.unlock();
+            // TODO: REMOVE SEND_TEXT
             case WDAMethod.SEND_TEXT:
                 const value = args.text;
                 if (!value) return;
                 return driver.keys(value);
+            // TODO: end of SEND_TEXT
             case WDAMethod.TERMINATE_APP:
                 return driver.mobileGetActiveAppInfo().then((appInfo) => {
                     const bundleId = appInfo['bundleId'];
@@ -165,6 +166,10 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                     }
                     return driver.terminateApp(bundleId);
                 });
+            case WDAMethod.APPIUM_SETTINGS:
+                return driver.updateSettings(args.options);
+            case WDAMethod.SEND_KEYS:
+                return driver.keys(args.keys);
             default:
                 return `Unknown command: ${method}`;
         }
@@ -174,7 +179,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
         if (this.started || this.starting) {
             return;
         }
-        this.emit('status-change', { status: 'starting' });
+        this.emit('status-change', { status: WdaStatus.STARTING });
         this.starting = true;
         const server = await WdaRunner.getServer(this.udid);
 
@@ -204,7 +209,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                     this.starting = false;
                     server.driver.deleteSession();
                     delete this.server;
-                    this.emit('status-change', { status: 'stopped', code });
+                    this.emit('status-change', { status: WdaStatus.STOPPED, code });
                     if (this.holders > 0) {
                         this.start();
                     }
@@ -216,14 +221,17 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                 throw new Error('xcodebuild process not found');
             }
             */
-            /// #if WDA_RUN_MJPEG_SERVER
+            /// #if USE_WDA_MJPEG_SERVER
+            const { DEVICE_CONNECTIONS_FACTORY } = await import(
+                'appium-xcuitest-driver/build/lib/device-connections-factory'
+            );
             await DEVICE_CONNECTIONS_FACTORY.requestConnection(this.udid, this.mjpegServerPort, {
                 usePortForwarding: true,
                 devicePort: remoteMjpegServerPort,
             });
             /// #endif
             this.started = true;
-            this.emit('status-change', { status: 'started' });
+            this.emit('status-change', { status: WdaStatus.STARTED });
         } catch (e) {
             this.started = false;
             this.starting = false;

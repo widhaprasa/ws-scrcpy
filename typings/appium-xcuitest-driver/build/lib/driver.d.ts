@@ -24,6 +24,8 @@ declare class XCUITestDriver extends BaseDriver {
     public mobilePressButton(args: { name: string }): Promise<any>;
     public stop(): Promise<void>;
     public deleteSession(): Promise<void>;
+    public updateSettings(opts: any): Promise<void>;
+    public keys(value: string): Promise<void>;
     public wda: any;
     // TODO: HBsmith DEV-14062, DEV-14260
     public activateApp(bundleId: string): Promise<void>;
