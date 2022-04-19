@@ -3,8 +3,10 @@ import { ACTION } from '../../../common/Action';
 import { ParsedUrlQuery } from 'querystring';
 import { StreamClient } from './StreamClient';
 import { BasePlayer, PlayerClass } from '../../player/BasePlayer';
-// TODO: HBsmith DEV-14440
-import { KeyInputHandler, KeyEventListener } from '../KeyInputHandler';
+import { WdaStatus } from '../../../common/WdaStatus';
+import { ApplMjpegMoreBox } from '../toolbox/ApplMjpegMoreBox';
+// TODO: HBsmith
+import { KeyEventListener, KeyInputHandler } from '../KeyInputHandler';
 import { WDAMethod } from '../../../common/WDAMethod';
 //
 
@@ -33,7 +35,7 @@ export class StreamClientMJPEG
         this.runWebDriverAgent().then(() => {
             this.startStream();
             this.player?.play();
-            // TODO: HBsmith DEV-14062
+            // TODO: HBsmith
             this.setBodyClass('stream');
 
             const headerText = document.getElementById('control-header-device-name-text');
@@ -41,17 +43,17 @@ export class StreamClientMJPEG
             //
         });
         this.on('wda:status', (status) => {
-            if (status === 'stopped') {
+            if (status === WdaStatus.STOPPED) {
                 this.player?.stop();
-            } else if (status === 'started') {
+            } else if (status === WdaStatus.STARTED) {
                 this.player?.play();
             }
         });
     }
 
-    // TODO: HBsmith DEV-14440
-    public onKeyEvent(value: string): void {
-        this.wdaProxy.requestWebDriverAgent(WDAMethod.SEND_TEXT, { text: value });
+    // TODO: HBsmith
+    public onKeyEvent(keys: string): void {
+        this.wdaProxy.requestWebDriverAgent(WDAMethod.SEND_KEYS, { keys });
     }
 
     public onStop(ev?: string | Event): void {
@@ -70,5 +72,9 @@ export class StreamClientMJPEG
 
     public getDeviceName(): string {
         return this.deviceName;
+    }
+
+    protected createMoreBox(udid: string, player: BasePlayer): ApplMjpegMoreBox {
+        return new ApplMjpegMoreBox(udid, player, this.wdaProxy);
     }
 }

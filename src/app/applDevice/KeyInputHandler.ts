@@ -48,11 +48,9 @@ export class KeyInputHandler {
         e.preventDefault();
     };
     private static attachListeners(): void {
-        document.body.addEventListener('keydown', this.handler);
         document.body.addEventListener('keyup', this.handler);
     }
     private static detachListeners(): void {
-        document.body.removeEventListener('keydown', this.handler);
         document.body.removeEventListener('keyup', this.handler);
     }
     public static addEventListener(listener: KeyEventListener): void {

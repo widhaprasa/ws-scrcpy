@@ -3,7 +3,6 @@ import { TypedEmitter } from '../../../common/TypedEmitter';
 import * as portfinder from 'portfinder';
 import { Server, XCUITestDriver } from '../../../types/WdaServer';
 import * as XCUITest from 'appium-xcuitest-driver';
-import { DEVICE_CONNECTIONS_FACTORY } from 'appium-xcuitest-driver/build/lib/device-connections-factory';
 import { WDAMethod } from '../../../common/WDAMethod';
 // TODO: DEV-14061
 // import { timing } from 'appium-support';
@@ -150,17 +149,19 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                     { action: 'moveTo', options: { x: to.x, y: to.y } },
                     { action: 'release', options: {} },
                 ]);
-            // TODO: HBsmith DEV-14062, DEV-14620
+            case WDAMethod.APPIUM_SETTINGS:
+                return driver.updateSettings(args.options);
+            case WDAMethod.SEND_KEYS:
+                return driver.keys(args.keys);
+            // TODO: HBsmith
             case WDAMethod.UNLOCK:
                 return driver.unlock();
-            case WDAMethod.SEND_TEXT:
-                const value = args.text;
-                if (!value) return;
-                return driver.keys(value);
             case WDAMethod.TERMINATE_APP:
-                const bundleId = args.bundleId;
-                if (!bundleId) return;
-                return driver.isAppInstalled(bundleId).then(() => {
+                return driver.mobileGetActiveAppInfo().then((appInfo) => {
+                    const bundleId = appInfo['bundleId'];
+                    if (bundleId === 'com.apple.springboard') {
+                        return true;
+                    }
                     return driver.terminateApp(bundleId);
                 });
             //
@@ -173,7 +174,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
         if (this.started || this.starting) {
             return;
         }
-        this.emit('status-change', { status: 'starting' });
+        this.emit('status-change', { status: WdaStatus.STARTING });
         this.starting = true;
         const server = await WdaRunner.getServer(this.udid);
 
@@ -203,7 +204,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                     this.starting = false;
                     server.driver.deleteSession();
                     delete this.server;
-                    this.emit('status-change', { status: 'stopped', code });
+                    this.emit('status-change', { status: WdaStatus.STOPPED, code });
                     if (this.holders > 0) {
                         this.start();
                     }
@@ -215,14 +216,17 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                 throw new Error('xcodebuild process not found');
             }
             */
-            /// #if WDA_RUN_MJPEG_SERVER
+            /// #if USE_WDA_MJPEG_SERVER
+            const { DEVICE_CONNECTIONS_FACTORY } = await import(
+                'appium-xcuitest-driver/build/lib/device-connections-factory'
+            );
             await DEVICE_CONNECTIONS_FACTORY.requestConnection(this.udid, this.mjpegServerPort, {
                 usePortForwarding: true,
                 devicePort: remoteMjpegServerPort,
             });
             /// #endif
             this.started = true;
-            this.emit('status-change', { status: 'started' });
+            this.emit('status-change', { status: WdaStatus.STARTED });
         } catch (e) {
             this.started = false;
             this.starting = false;
@@ -263,12 +267,13 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
             });
             return rr.data;
         } catch (error) {
-            console.error(
-                Utils.getTimeISOString(),
-                udid,
-                `[${WdaRunner.TAG}]`,
-                `Cannot retrieve the device ${udid}. resp code: ${error.response.status}`,
-            );
+            let msg;
+            if ('response' in error) {
+                msg = `[${WdaRunner.TAG}] Cannot retrieve the device ${udid}. resp code: ${error.response.status}`;
+            } else {
+                msg = `[${WdaRunner.TAG}] ${error.message}`;
+            }
+            console.error(Utils.getTimeISOString(), udid, msg);
             throw error;
         }
     }
@@ -282,6 +287,12 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
         await this.server.driver.mobilePressButton({ name: 'home' });
         await this.server.driver.mobilePressButton({ name: 'home' });
         await this.server.driver.mobilePressButton({ name: 'home' });
+
+        const appInfo = await this.server.driver.mobileGetActiveAppInfo();
+        const bundleId = appInfo['bundleId'];
+        if (bundleId !== 'com.apple.springboard') {
+            await this.server.driver.terminateApp(bundleId);
+        }
 
         if (!appKey) return;
         this.appKey = appKey;
@@ -305,6 +316,12 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
             if (installed) {
                 await this.server.driver.terminateApp(this.appKey);
             }
+        }
+
+        const appInfo = await this.server.driver.mobileGetActiveAppInfo();
+        const bundleId = appInfo['bundleId'];
+        if (bundleId !== 'com.apple.springboard') {
+            await this.server.driver.terminateApp(bundleId);
         }
 
         await this.server.driver.mobilePressButton({ name: 'home' });

@@ -9,17 +9,20 @@ window.onload = async function (): Promise<void> {
     const parsedQuery = querystring.parse(hash);
     const action = parsedQuery.action;
 
-    // TODO: HBsmith DEV-12386, DEV-13549
+    // TODO: HBsmith DEV-12386, DEV-13549, DEV-14464
     const search = location.search.replace('?', '');
     const parsedSearch = querystring.parse(search);
     const appKey = parsedSearch.app_key || null;
     const userAgent = parsedSearch['user-agent'] || 'unknown';
+
+    let wsUrl = parsedQuery['ws'];
+    wsUrl = `${!!wsUrl ? wsUrl : ''}&user-agent=${userAgent}`;
+    parsedQuery['user-agent'] = userAgent; // TODO remove. ios only
     if (appKey) {
-        parsedQuery['app_key'] = appKey;
-        parsedQuery['ws'] = `${parsedQuery['ws']}&app_key=${appKey}&user-agent=${userAgent}`;
-    } else {
-        parsedQuery['ws'] = `${parsedQuery['ws']}&user-agent=${userAgent}`;
+        parsedQuery['app_key'] = appKey; // TODO remove. ios only
+        wsUrl = `${wsUrl}&app_key=${appKey}`;
     }
+    parsedQuery['ws'] = wsUrl;
     //
 
     /// #if USE_BROADWAY
@@ -50,6 +53,8 @@ window.onload = async function (): Promise<void> {
     /// #if INCLUDE_APPL
     {
         const { DeviceTracker } = await import('./applDevice/client/DeviceTracker');
+
+        /// #if USE_QVH_SERVER
         const { StreamClientQVHack } = await import('./applDevice/client/StreamClientQVHack');
 
         DeviceTracker.registerTool(StreamClientQVHack);
@@ -68,8 +73,9 @@ window.onload = async function (): Promise<void> {
             StreamClientQVHack.start(parsedQuery);
             return;
         }
+        /// #endif
 
-        /// #if WDA_RUN_MJPEG_SERVER
+        /// #if USE_WDA_MJPEG_SERVER
         const { StreamClientMJPEG } = await import('./applDevice/client/StreamClientMJPEG');
         DeviceTracker.registerTool(StreamClientMJPEG);
 
