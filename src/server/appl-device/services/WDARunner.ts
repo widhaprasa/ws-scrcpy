@@ -267,12 +267,13 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
             });
             return rr.data;
         } catch (error) {
-            console.error(
-                Utils.getTimeISOString(),
-                udid,
-                `[${WdaRunner.TAG}]`,
-                `Cannot retrieve the device ${udid}. resp code: ${error.response.status}`,
-            );
+            let msg;
+            if ('response' in error) {
+                msg = `[${WdaRunner.TAG}] Cannot retrieve the device ${udid}. resp code: ${error.response.status}`;
+            } else {
+                msg = `[${WdaRunner.TAG}] ${error.message}`;
+            }
+            console.error(Utils.getTimeISOString(), udid, msg);
             throw error;
         }
     }
