@@ -222,14 +222,17 @@ export class WdaProxyClient
         });
     }
 
-    // TODO: HBsmith DEV-14062
+    // TODO: HBsmith
     public async pressButton2(type: string): Promise<void> {
         switch (type) {
             case 'unlock':
                 return this.requestWebDriverAgent(WDAMethod.UNLOCK);
             case 'sendText':
-                const value = prompt('텍스트를 입력해 주세요');
-                return this.requestWebDriverAgent(WDAMethod.SEND_TEXT, { text: value });
+                const keys = prompt('텍스트를 입력해 주세요');
+                if (!keys) {
+                    return;
+                }
+                return this.requestWebDriverAgent(WDAMethod.SEND_KEYS, { keys });
             case 'terminateApp':
                 return this.requestWebDriverAgent(WDAMethod.TERMINATE_APP);
         }

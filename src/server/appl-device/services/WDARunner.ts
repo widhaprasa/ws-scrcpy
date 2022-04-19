@@ -149,15 +149,13 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                     { action: 'moveTo', options: { x: to.x, y: to.y } },
                     { action: 'release', options: {} },
                 ]);
-            // TODO: HBsmith DEV-14062, DEV-14620
+            case WDAMethod.APPIUM_SETTINGS:
+                return driver.updateSettings(args.options);
+            case WDAMethod.SEND_KEYS:
+                return driver.keys(args.keys);
+            // TODO: HBsmith
             case WDAMethod.UNLOCK:
                 return driver.unlock();
-            // TODO: REMOVE SEND_TEXT
-            case WDAMethod.SEND_TEXT:
-                const value = args.text;
-                if (!value) return;
-                return driver.keys(value);
-            // TODO: end of SEND_TEXT
             case WDAMethod.TERMINATE_APP:
                 return driver.mobileGetActiveAppInfo().then((appInfo) => {
                     const bundleId = appInfo['bundleId'];
@@ -166,10 +164,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                     }
                     return driver.terminateApp(bundleId);
                 });
-            case WDAMethod.APPIUM_SETTINGS:
-                return driver.updateSettings(args.options);
-            case WDAMethod.SEND_KEYS:
-                return driver.keys(args.keys);
+            //
             default:
                 return `Unknown command: ${method}`;
         }
