@@ -4,11 +4,11 @@ import * as portfinder from 'portfinder';
 import { Server, XCUITestDriver } from '../../../types/WdaServer';
 import * as XCUITest from 'appium-xcuitest-driver';
 import { WDAMethod } from '../../../common/WDAMethod';
-// TODO: DEV-14061
+// TODO: HBsmith
 // import { timing } from 'appium-support';
 //
 import { WdaStatus } from '../../../common/WdaStatus';
-// TODO: DEV-14061
+// TODO: HBsmith
 import { Config } from '../../Config';
 import { Logger, Utils } from '../../Utils';
 import axios from 'axios';
@@ -27,7 +27,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
     public static SHUTDOWN_TIMEOUT = 15000;
     private static servers: Map<string, Server> = new Map();
     private static cachedScreenWidth: Map<string, any> = new Map();
-    // TODO: HBsmith DEV-14465
+    // TODO: HBsmith
     private appKey: string;
     private logger: Logger;
     //
@@ -91,7 +91,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
     constructor(private readonly udid: string) {
         super();
         this.name = `[${WdaRunner.TAG}][udid: ${this.udid}]`;
-        // TODO: HBsmith DEV-14465
+        // TODO: HBsmith
         this.appKey = '';
         this.logger = new Logger(udid, 'iOS');
         //
@@ -179,7 +179,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
         const server = await WdaRunner.getServer(this.udid);
 
         try {
-            // TODO: DEV-14061
+            // TODO: HBsmith
             const data = await WdaRunner.apiGetDevice(this.udid);
             const webDriverAgentUrl = `http://${data['device_host']}:${data['device_port']}`;
             //
@@ -196,7 +196,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                 mjpegServerPort: remoteMjpegServerPort,
                 webDriverAgentUrl: webDriverAgentUrl,
             });
-            /* TODO: DEV-14061
+            /* TODO: HBsmith
             await server.driver.wda.xcodebuild.waitForStart(new timing.Timer().start());
             if (server.driver?.wda?.xcodebuild?.xcodebuild) {
                 server.driver.wda.xcodebuild.xcodebuild.on('exit', (code: number) => {
@@ -243,7 +243,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
         this.unlock();
     }
 
-    // TODO: HBsmith DEV-14061, DEV-14062
+    // TODO: HBsmith
     private static async apiGetDevice(udid: string) {
         const host = Config.getInstance().getRamielApiServerEndpoint();
         const api = `/real-devices/${udid}/`;
