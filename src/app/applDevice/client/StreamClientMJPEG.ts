@@ -52,8 +52,8 @@ export class StreamClientMJPEG
     }
 
     // TODO: HBsmith
-    public onKeyEvent(keys: string): void {
-        this.wdaProxy.requestWebDriverAgent(WDAMethod.SEND_KEYS, { keys });
+    public onKeyEvent(key: string): void {
+        this.wdaProxy.requestWebDriverAgent(WDAMethod.SEND_A_KEY, { key });
     }
 
     public onStop(ev?: string | Event): void {

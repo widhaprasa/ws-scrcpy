@@ -28,15 +28,16 @@ export class KeyInputHandler {
             return;
         }
 
-        if (
-            (!event.getModifierState('Shift') && event.getModifierState('CapsLock')) ||
-            (event.getModifierState('Shift') && !event.getModifierState('CapsLock'))
-        ) {
-            const tt = ToUpperCodeMap.get(keyValue);
-            if (tt) {
-                keyValue = tt;
-            } else {
+        const shift = event.getModifierState('Shift') ? 1 : 0;
+        const capsLock = event.getModifierState('CapsLock') ? 1 : 0;
+        if (shift || capsLock) {
+            if (keyValue.match(/[a-z]/i) && shift ^ capsLock) {
                 keyValue = keyValue.toUpperCase();
+            } else if (shift) {
+                const tt = ToUpperCodeMap.get(keyValue);
+                if (tt) {
+                    keyValue = tt;
+                }
             }
         }
 

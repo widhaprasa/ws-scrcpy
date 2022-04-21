@@ -12,6 +12,7 @@ import { WdaStatus } from '../../../common/WdaStatus';
 import { Config } from '../../Config';
 import { Logger, Utils } from '../../Utils';
 import axios from 'axios';
+import { EventEmitter } from 'events';
 //
 
 const MJPEG_SERVER_PORT = 9100;
@@ -30,6 +31,10 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
     // TODO: HBsmith
     private appKey: string;
     private logger: Logger;
+
+    private keyEvents: Array<string> = [];
+    private keyEventInAction = false;
+    private keyEventEmitter: EventEmitter = new EventEmitter();
     //
 
     public static getInstance(udid: string): WdaRunner {
@@ -94,6 +99,28 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
         // TODO: HBsmith
         this.appKey = '';
         this.logger = new Logger(udid, 'iOS');
+
+        this.keyEventInAction = false;
+        this.keyEventEmitter.on('event', () => {
+            const driver = this.server?.driver;
+            if (!driver) {
+                return;
+            }
+            const key = this.keyEvents.shift();
+            if (!key) {
+                return;
+            }
+            this.keyEventInAction = true;
+            return driver.keys(key).finally(() => {
+                this.keyEventInAction = false;
+            });
+        });
+        setInterval(() => {
+            if (this.keyEventInAction || this.keyEvents.length === 0) {
+                return;
+            }
+            this.keyEventEmitter.emit('event');
+        }, 100);
         //
     }
 
@@ -154,13 +181,16 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
             case WDAMethod.SEND_KEYS:
                 return driver.keys(args.keys);
             // TODO: HBsmith
+            case WDAMethod.SEND_A_KEY:
+                this.keyEvents.push(args.key);
+                return;
             case WDAMethod.UNLOCK:
                 return driver.unlock();
             case WDAMethod.TERMINATE_APP:
                 return driver.mobileGetActiveAppInfo().then((appInfo) => {
                     const bundleId = appInfo['bundleId'];
                     if (bundleId === 'com.apple.springboard') {
-                        return true;
+                        return;
                     }
                     return driver.terminateApp(bundleId);
                 });

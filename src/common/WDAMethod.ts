@@ -6,6 +6,7 @@ export enum WDAMethod {
     APPIUM_SETTINGS = 'APPIUM_SETTINGS',
     SEND_KEYS = 'SEND_KEYS',
     // TODO: HBsmith
+    SEND_A_KEY = 'SEND_A_KEY',
     UNLOCK = 'UNLOCK',
     TERMINATE_APP = 'TERMINATE_APP',
     //
