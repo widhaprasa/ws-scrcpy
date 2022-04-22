@@ -30,6 +30,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
     // TODO: HBsmith
     private appKey: string;
     private logger: Logger;
+    private wdaProcessId: number | undefined;
     //
 
     public static getInstance(udid: string): WdaRunner {
@@ -94,6 +95,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
         // TODO: HBsmith
         this.appKey = '';
         this.logger = new Logger(udid, 'iOS');
+        this.wdaProcessId = undefined;
         //
     }
 
@@ -198,13 +200,14 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                 webDriverAgentUrl: webDriverAgentUrl, // TODO: HBsmith
             });
             // TODO: HBsmith
+            this.wdaProcessId = await Utils.getProcessId(`xcodebuild.+${this.udid}`);
             setInterval(() => {
                 if (!this.started && !this.starting) {
                     return;
                 }
 
                 Utils.getProcessId(`xcodebuild.+${this.udid}`).then((pid) => {
-                    if (pid) {
+                    if (this.wdaProcessId && pid && this.wdaProcessId === pid) {
                         return;
                     }
 
