@@ -61,6 +61,8 @@ export class WebDriverAgentProxy extends Mw {
         // TODO: HBsmith
         this.apiCreateSession()
             .then(() => {
+                this.apiSessionCreated = true;
+                //
                 if (this.wda) {
                     const message: MessageRunWdaResponse = {
                         id,
@@ -82,13 +84,11 @@ export class WebDriverAgentProxy extends Mw {
                 if (this.wda.isStarted()) {
                     this.onStatusChange(command, WdaStatus.STARTED);
                     // TODO: HBsmith
-                    this.apiSessionCreated = true;
                     this.wda.setUpTest(this.appKey);
                     //
                 } else {
                     // TODO: HBsmith
                     this.onStatusChange(command, WdaStatus.STARTED);
-                    this.apiSessionCreated = true;
                     this.wda.start().then(() => {
                         this.wda?.setUpTest(this.appKey);
                     });

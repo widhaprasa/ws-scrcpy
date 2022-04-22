@@ -182,6 +182,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
             // TODO: HBsmith
             const data = await WdaRunner.apiGetDevice(this.udid);
             const webDriverAgentUrl = `http://${data['device_host']}:${data['device_port']}`;
+            const model = data['model'];
             //
             const remoteMjpegServerPort = MJPEG_SERVER_PORT;
             const ports = await Promise.all([portfinder.getPortPromise(), portfinder.getPortPromise()]);
@@ -189,33 +190,36 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
             this.mjpegServerPort = ports[1];
             await server.driver.createSession({
                 platformName: 'iOS',
-                deviceName: 'my iphone',
+                deviceName: model, // TODO: HBsmith
                 udid: this.udid,
                 wdaLocalPort: this.wdaLocalPort,
                 usePrebuiltWDA: true,
                 mjpegServerPort: remoteMjpegServerPort,
-                webDriverAgentUrl: webDriverAgentUrl,
+                webDriverAgentUrl: webDriverAgentUrl, // TODO: HBsmith
             });
-            /* TODO: HBsmith
-            await server.driver.wda.xcodebuild.waitForStart(new timing.Timer().start());
-            if (server.driver?.wda?.xcodebuild?.xcodebuild) {
-                server.driver.wda.xcodebuild.xcodebuild.on('exit', (code: number) => {
+            // TODO: HBsmith
+            setInterval(() => {
+                if (!this.started && !this.starting) {
+                    return;
+                }
+
+                Utils.getProcessId(`xcodebuild.+${this.udid}`).then((pid) => {
+                    if (pid) {
+                        return;
+                    }
+
                     this.started = false;
                     this.starting = false;
                     server.driver.deleteSession();
                     delete this.server;
-                    this.emit('status-change', { status: WdaStatus.STOPPED, code });
-                    if (this.holders > 0) {
-                        this.start();
-                    }
+                    this.emit('status-change', {
+                        status: WdaStatus.STOPPED,
+                        code: -1,
+                        text: 'WebDriverAgent process has been disconnected',
+                    });
                 });
-            } else {
-                this.started = false;
-                this.starting = false;
-                delete this.server;
-                throw new Error('xcodebuild process not found');
-            }
-            */
+            }, 100);
+            //
             /// #if USE_WDA_MJPEG_SERVER
             const { DEVICE_CONNECTIONS_FACTORY } = await import(
                 'appium-xcuitest-driver/build/lib/device-connections-factory'
