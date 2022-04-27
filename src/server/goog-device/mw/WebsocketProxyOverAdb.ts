@@ -126,7 +126,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                 let msg = `[${this.TAG}] failed to create a session for ${udid}`;
                 if (!('response' in error)) msg = `undefined response in error`;
                 else if (409 === status) {
-                    const userAgent = 'user-agent' in error.response ? error.response.data['user-agent'] : '';
+                    const userAgent = 'user-agent' in error.response.data ? error.response.data['user-agent'] : '';
                     msg = `사용 중인 장비입니다`;
                     if (userAgent) msg += ` (${userAgent})`;
                 } else if (503 === status) msg = `장비의 연결이 끊어져 있습니다`;
