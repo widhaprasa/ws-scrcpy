@@ -192,7 +192,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                 return service.init(`ws://127.0.0.1:${port}${path ? path : ''}`);
             })
             .then(() => {
-                service.setUpTest(udid, appKey, userAgent);
+                return service.setUpTest(udid, appKey, userAgent);
             })
             .catch((e) => {
                 const msg = `[${this.TAG}] Failed to start service: ${e.message}`;
@@ -264,7 +264,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
         return new Device(this.udid, 'device');
     }
 
-    private setUpTest(udid: string, appKey?: string, userAgent?: string): void {
+    private async setUpTest(udid: string, appKey?: string, userAgent?: string): Promise<void> {
         this.apiSessionCreated = true;
         if (udid) {
             this.udid = udid;
@@ -287,7 +287,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             'for pp in $(dumpsys window a | grep "/" | cut -d "{" -f2 | cut -d "/" -f1 | cut -d " " -f2); do am force-stop "${pp}"; done';
         const cmdAppStart = `monkey -p '${this.appKey}' -c android.intent.category.LAUNCHER 1`;
 
-        device
+        return device
             .runShellCommandAdbKit(cmdMenu)
             .then((output) => {
                 this.logger.info(output ? output : `success to send 1st KEYCODE_MENU: ${cmdMenu}`);

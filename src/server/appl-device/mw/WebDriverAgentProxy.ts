@@ -212,7 +212,7 @@ export class WebDriverAgentProxy extends Mw {
         const url = `${host}${api}`;
         const tag = WebDriverAgentProxy.TAG;
 
-        await axios
+        return await axios
             .post(url, data, {
                 headers: hh,
             })
