@@ -5,15 +5,27 @@ import { StreamClient } from './StreamClient';
 import { BasePlayer, PlayerClass } from '../../player/BasePlayer';
 import { WdaStatus } from '../../../common/WdaStatus';
 import { ApplMjpegMoreBox } from '../toolbox/ApplMjpegMoreBox';
+// TODO: HBsmith
+import { KeyEventListener, KeyInputHandler } from '../KeyInputHandler';
+import { WDAMethod } from '../../../common/WDAMethod';
+//
 
 const TAG = '[StreamClientMJPEG]';
 
-export class StreamClientMJPEG extends StreamClient<ParamsStream> {
+export class StreamClientMJPEG
+    extends StreamClient<ParamsStream>
+    // TODO: HBsmith DEV-14440
+    implements KeyEventListener {
+    //
     public static ACTION = ACTION.STREAM_MJPEG;
     protected static players: Map<string, PlayerClass> = new Map<string, PlayerClass>();
 
     public static start(params: ParsedUrlQuery | ParamsStream): StreamClientMJPEG {
-        return new StreamClientMJPEG(params);
+        // TODO: HBsmith DEV-14440
+        const cc = new StreamClientMJPEG(params);
+        KeyInputHandler.addEventListener(cc);
+        return cc;
+        //
     }
 
     constructor(params: ParsedUrlQuery | ParamsStream) {
@@ -23,7 +35,7 @@ export class StreamClientMJPEG extends StreamClient<ParamsStream> {
         this.runWebDriverAgent().then(() => {
             this.startStream();
             this.player?.play();
-            // TODO: HBsmith DEV-14062
+            // TODO: HBsmith
             this.setBodyClass('stream');
 
             const headerText = document.getElementById('control-header-device-name-text');
@@ -38,6 +50,17 @@ export class StreamClientMJPEG extends StreamClient<ParamsStream> {
             }
         });
     }
+
+    // TODO: HBsmith
+    public onKeyEvent(key: string): void {
+        this.wdaProxy.requestWebDriverAgent(WDAMethod.SEND_A_KEY, { key });
+    }
+
+    public onStop(ev?: string | Event): void {
+        KeyInputHandler.removeEventListener(this);
+        super.onStop(ev);
+    }
+    //
 
     public get action(): string {
         return StreamClientMJPEG.ACTION;
