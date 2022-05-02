@@ -61,6 +61,8 @@ export class WebDriverAgentProxy extends Mw {
         // TODO: HBsmith
         this.apiCreateSession()
             .then(() => {
+                this.apiSessionCreated = true;
+                //
                 if (this.wda) {
                     const message: MessageRunWdaResponse = {
                         id,
@@ -82,13 +84,11 @@ export class WebDriverAgentProxy extends Mw {
                 if (this.wda.isStarted()) {
                     this.onStatusChange(command, WdaStatus.STARTED);
                     // TODO: HBsmith
-                    this.apiSessionCreated = true;
                     this.wda.setUpTest(this.appKey);
                     //
                 } else {
                     // TODO: HBsmith
                     this.onStatusChange(command, WdaStatus.STARTED);
-                    this.apiSessionCreated = true;
                     this.wda.start().then(() => {
                         this.wda?.setUpTest(this.appKey);
                     });
@@ -212,7 +212,7 @@ export class WebDriverAgentProxy extends Mw {
         const url = `${host}${api}`;
         const tag = WebDriverAgentProxy.TAG;
 
-        await axios
+        return await axios
             .post(url, data, {
                 headers: hh,
             })
@@ -231,10 +231,10 @@ export class WebDriverAgentProxy extends Mw {
                 let msg = `[${WebDriverAgentProxy.TAG}] failed to create a session for ${this.udid}`;
                 if (!('response' in error)) msg = `undefined response in error`;
                 else if (409 === status) {
-                    const userAgent = 'user-agent' in error.response ? error.response.data['user-agent'] : '';
+                    const userAgent = 'user-agent' in error.response.data ? error.response.data['user-agent'] : '';
                     msg = `사용 중인 장비입니다`;
                     if (userAgent) msg += ` (${userAgent})`;
-                } else if (503 === status) msg = `장비의 연결이 끊어져 있습니다`;
+                } else if (410 === status) msg = `장비의 연결이 끊어져 있습니다`;
                 error.message = msg;
                 throw error;
             });
