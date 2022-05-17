@@ -32,9 +32,9 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
     private appKey: string;
     private logger: Logger;
 
-    private keyEvents: Array<string> = [];
-    private keyEventInAction = false;
-    private keyEventEmitter: EventEmitter = new EventEmitter();
+    private wdaEvents: Array<Object> = [];
+    private wdaEventInAction = false;
+    private wdaEventEmitter: EventEmitter = new EventEmitter();
     private wdaProcessId: number | undefined;
     //
 
@@ -101,26 +101,26 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
         this.appKey = '';
         this.logger = new Logger(udid, 'iOS');
         this.wdaProcessId = undefined;
-        this.keyEventInAction = false;
-        this.keyEventEmitter.on('event', () => {
+        this.wdaEventInAction = false;
+        this.wdaEventEmitter.on('event', () => {
             const driver = this.server?.driver;
             if (!driver) {
                 return;
             }
-            const key = this.keyEvents.shift();
-            if (!key) {
+            const ev = this.wdaEvents.shift();
+            if (!ev) {
                 return;
             }
-            this.keyEventInAction = true;
-            return driver.keys(key).finally(() => {
-                this.keyEventInAction = false;
+            this.wdaEventInAction = true;
+            (<Function> ev)(driver).finally(() => {
+                this.wdaEventInAction = false;
             });
         });
         setInterval(() => {
-            if (this.keyEventInAction || this.keyEvents.length === 0) {
+            if (this.wdaEventInAction || this.wdaEvents.length === 0) {
                 return;
             }
-            this.keyEventEmitter.emit('event');
+            this.wdaEventEmitter.emit('event');
         }, 100);
         //
     }
@@ -166,34 +166,58 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
             case WDAMethod.GET_SCREEN_WIDTH:
                 return WdaRunner.getScreenWidth(this.udid, driver);
             case WDAMethod.CLICK:
-                return driver.performTouch([{ action: 'tap', options: { x: args.x, y: args.y } }]);
+                const [ x, y ] = [ args.x, args.y ];
+                this.wdaEvents.push((driver: XCUITestDriver) => {
+                    return driver.performTouch([{ action: 'tap', options: { x: x, y: y } }]);
+                });
+                return;
             case WDAMethod.PRESS_BUTTON:
-                return driver.mobilePressButton({ name: args.name });
+                const name = args.name;
+                this.wdaEvents.push((driver: XCUITestDriver) => {
+                    return driver.mobilePressButton({ name: name });
+                });
+                return;
             case WDAMethod.SCROLL:
                 const { from, to } = args;
-                return driver.performTouch([
-                    { action: 'press', options: { x: from.x, y: from.y } },
-                    { action: 'wait', options: { ms: 500 } },
-                    { action: 'moveTo', options: { x: to.x, y: to.y } },
-                    { action: 'release', options: {} },
-                ]);
+                this.wdaEvents.push((driver: XCUITestDriver) => {
+                        return driver.performTouch([
+                        { action: 'press', options: { x: from.x, y: from.y } },
+                        { action: 'wait', options: { ms: 500 } },
+                        { action: 'moveTo', options: { x: to.x, y: to.y } },
+                        { action: 'release', options: {} },
+                    ]);
+                });
+                return;
             case WDAMethod.APPIUM_SETTINGS:
                 return driver.updateSettings(args.options);
             case WDAMethod.SEND_KEYS:
-                return driver.keys(args.keys);
+                const keys = args.keys;
+                this.wdaEvents.push((driver: XCUITestDriver) => {
+                    return driver.keys(keys);
+                });
+                return;
             // TODO: HBsmith
             case WDAMethod.SEND_A_KEY:
-                this.keyEvents.push(args.key);
+                const keys2 = args.keys;
+                this.wdaEvents.push((driver: XCUITestDriver) => {
+                    return driver.keys(keys2);
+                });
                 return;
             case WDAMethod.UNLOCK:
-                return driver.unlock();
+                this.wdaEvents.push((driver: XCUITestDriver) => {
+                    return driver.unlock();
+                });
+                return;
             case WDAMethod.TERMINATE_APP:
                 return driver.mobileGetActiveAppInfo().then((appInfo) => {
                     const bundleId = appInfo['bundleId'];
                     if (bundleId === 'com.apple.springboard') {
                         return;
                     }
-                    return driver.terminateApp(bundleId);
+                    this.wdaEvents.push((driver: XCUITestDriver) => {
+                        return driver.terminateApp(bundleId);
+                    });
+                    return;
                 });
             //
             default:
@@ -345,6 +369,9 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
     }
 
     public async tearDownTest(): Promise<void> {
+        this.wdaEvents = []
+        this.wdaEventInAction = false;
+        
         if (!this.server) {
             this.logger.error('No Server at tearDownTest', this.udid);
             return;
