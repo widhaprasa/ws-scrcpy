@@ -197,12 +197,6 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                 });
                 return;
             // TODO: HBsmith
-            case WDAMethod.SEND_A_KEY:
-                const keys2 = args.keys;
-                this.wdaEvents.push((driver: XCUITestDriver) => {
-                    return driver.keys(keys2);
-                });
-                return;
             case WDAMethod.UNLOCK:
                 this.wdaEvents.push((driver: XCUITestDriver) => {
                     return driver.unlock();
@@ -369,8 +363,8 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
     }
 
     public async tearDownTest(): Promise<void> {
-        this.wdaEvents = []
         this.wdaEventInAction = false;
+        this.wdaEvents = [];
         
         if (!this.server) {
             this.logger.error('No Server at tearDownTest', this.udid);
