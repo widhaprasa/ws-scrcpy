@@ -226,7 +226,10 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                 wdaLocalPort: this.wdaLocalPort,
                 usePrebuiltWDA: true,
                 mjpegServerPort: remoteMjpegServerPort,
-                webDriverAgentUrl: webDriverAgentUrl, // TODO: HBsmith
+                // TODO: HBsmith
+                webDriverAgentUrl: webDriverAgentUrl,
+                waitForQuiescence: false,
+                //
             });
             // TODO: HBsmith
             this.wdaProcessId = await Utils.getProcessId(`xcodebuild.+${this.udid}`);
