@@ -12,7 +12,6 @@ import { WdaStatus } from '../../../common/WdaStatus';
 import { Config } from '../../Config';
 import { Logger, Utils } from '../../Utils';
 import axios from 'axios';
-import { EventEmitter } from 'events';
 //
 
 const MJPEG_SERVER_PORT = 9100;
@@ -34,7 +33,6 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
 
     private wdaEvents: Array<Object> = [];
     private wdaEventInAction = false;
-    private wdaEventEmitter: EventEmitter = new EventEmitter();
     private wdaProcessId: number | undefined;
     //
 
@@ -102,7 +100,12 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
         this.logger = new Logger(udid, 'iOS');
         this.wdaProcessId = undefined;
         this.wdaEventInAction = false;
-        this.wdaEventEmitter.on('event', () => {
+
+        setInterval(() => {
+            if (this.wdaEventInAction || this.wdaEvents.length === 0) {
+                return;
+            }
+
             const driver = this.server?.driver;
             if (!driver) {
                 return;
@@ -115,12 +118,6 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
             (<Function> ev)(driver).finally(() => {
                 this.wdaEventInAction = false;
             });
-        });
-        setInterval(() => {
-            if (this.wdaEventInAction || this.wdaEvents.length === 0) {
-                return;
-            }
-            this.wdaEventEmitter.emit('event');
         }, 100);
         //
     }
