@@ -52,6 +52,11 @@ const BUTTONS = [
         icon: BtnDoubleDown,
         type: 'CommandControlMessage',
     },
+    {
+        title: 'InstallApk',
+        icon: BtnDoubleDown,
+        type: 'CommandControlMessage',
+    },
 ];
 
 export class ToolBoxButton2 extends ToolBoxElement<HTMLButtonElement> {
@@ -147,6 +152,15 @@ export class DroidToolBox2 {
                         const event = CommandControlMessage.createAdbControlCommand(
                             ControlMessage.TYPE_ADB_CONTROL_SWIPE_DOWN,
                         );
+                        client.sendMessage(event);
+                        break;
+                    }
+                    case 'InstallApk': {
+                        const fileName = prompt('input apk file name');
+                        if (!fileName) {
+                            break;
+                        }
+                        const event = CommandControlMessage.createAdbInstallCommand(fileName);
                         client.sendMessage(event);
                         break;
                     }
