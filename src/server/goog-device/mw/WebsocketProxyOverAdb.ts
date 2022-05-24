@@ -225,16 +225,16 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                         const pathToApk = `/data/local/tmp/${fileName}`;
                         // AdbKit.install is not working
                         device
-                            .runShellCommandAdbKit(`pm install -r ${pathToApk}`)
+                            .runShellCommandAdbKit(`pm install -r '${pathToApk}'`)
                             .then(() => {
                                 this.logger.info(`success to install apk: ${fileName}`);
-                                return device.runShellCommandAdbKit(`rm -f ${pathToApk}`);
+                                return device.runShellCommandAdbKit(`rm -f '${pathToApk}'`);
                             })
                             .then(() => {
-                                this.logger.info(`remove the installed apk: ${pathToApk}`);
+                                this.logger.info(`remove the installed apk: '${pathToApk}'`);
                             })
                             .catch((ee) => {
-                                this.logger.error(`failed to install apk: ${fileName}`, ee);
+                                this.logger.error(`failed to install apk: '${fileName}'`, ee);
                             });
                         return;
                     }
