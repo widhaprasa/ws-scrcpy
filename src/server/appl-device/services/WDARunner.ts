@@ -354,17 +354,24 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                 return;
             }
 
-            Utils.getProcessId(`xcodebuild.+${this.udid}`).then((pid) => {
+            Utils.getProcessId(`xcodebuild.+${this.udid}`).then(async (pid) => {
                 if (this.wdaProcessId && pid && this.wdaProcessId === pid) {
                     return;
                 }
 
                 this.started = false;
                 this.starting = false;
+
+                WdaRunner.servers.delete(this.udid);
+                WdaRunner.instances.delete(this.udid);
                 if (this.server) {
-                    this.server.driver.deleteSession();
+                    if (this.server.driver) {
+                        await this.server.driver.deleteSession();
+                    }
+                    this.server.close();
                     delete this.server;
                 }
+
                 this.emit('status-change', {
                     status: WdaStatus.STOPPED,
                     code: -1,
