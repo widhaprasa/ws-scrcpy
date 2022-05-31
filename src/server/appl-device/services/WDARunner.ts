@@ -329,6 +329,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
             }
         }
 
+        this.logger.info('setUpTest: Enable the WDA events');
         this.wdaEventInAction = false;
         this.wdaEventTimer = setInterval(() => {
             if (this.wdaEventInAction || this.wdaEvents.length === 0) {
@@ -382,9 +383,9 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
     }
 
     public async tearDownTest(): Promise<void> {
+        this.logger.info('setUpTest: Disable the WDA events');
         this.wdaEventInAction = false;
         this.wdaEvents = [];
-
         if (this.wdaEventTimer) {
             clearInterval(this.wdaEventTimer);
             this.wdaEventTimer = undefined;
