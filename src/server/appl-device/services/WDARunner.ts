@@ -383,7 +383,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
     }
 
     public async tearDownTest(): Promise<void> {
-        this.logger.info('setUpTest: Disable the WDA events');
+        this.logger.info('tearDownTest: Disable the WDA events');
         this.wdaEventInAction = false;
         this.wdaEvents = [];
         if (this.wdaEventTimer) {
