@@ -295,6 +295,8 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
     }
 
     public async setUpTest(appKey: string): Promise<void> {
+        this.emit('status-change', { status: WdaStatus.IN_ACTION, text: '장비 초기화 중' });
+
         this.appKey = appKey;
         this.wdaEventInAction = true;
 
@@ -345,8 +347,10 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                 return;
             }
             this.wdaEventInAction = true;
+            this.emit('status-change', { status: WdaStatus.IN_ACTION, text: '제어 중' });
             (<Function>ev)(driver).finally(() => {
                 this.wdaEventInAction = false;
+                this.emit('status-change', { status: WdaStatus.END_ACTION, text: '제어 완료' });
             });
         }, 100);
         this.wdaProcessId = await Utils.getProcessId(`xcodebuild.+${this.udid}`);
@@ -380,6 +384,8 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                 });
             });
         }, 100);
+
+        this.emit('status-change', { status: WdaStatus.END_ACTION, text: '장비 초기화 완료' });
     }
 
     public async tearDownTest(): Promise<void> {
