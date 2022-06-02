@@ -303,10 +303,8 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
             return;
         }
 
-        this.logger.info('setUpTest: Press home 3 times for unlock/deactivate app/go to the first page');
-        await this.server.driver.mobilePressButton({ name: 'home' });
-        await this.server.driver.mobilePressButton({ name: 'home' });
-        await this.server.driver.mobilePressButton({ name: 'home' });
+        this.logger.info('setUpTest: Unlock the device');
+        await this.server.driver.unlock();
 
         this.logger.info('setUpTest: Get the activated app');
         const appInfo = await this.server.driver.mobileGetActiveAppInfo();
@@ -316,12 +314,14 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
             await this.server.driver.terminateApp(bundleId);
         }
 
+        this.logger.info('setUpTest: Press the home button to go to the home screen');
+        await this.server.driver.mobilePressButton({ name: 'home' });
+        await this.server.driver.mobilePressButton({ name: 'home' });
+
         if (this.appKey) {
             this.logger.info(`setUpTest: Check the app is installed - ${this.appKey}`);
             const installed = await this.server.driver.isAppInstalled(this.appKey);
             if (installed) {
-                this.logger.info(`setUpTest: Terminate the app ${this.appKey}`);
-                await this.server.driver.terminateApp(this.appKey);
                 this.logger.info(`setUpTest: Launch the app - ${this.appKey}`);
                 await this.server.driver.mobileLaunchApp({ bundleId: this.appKey });
                 this.logger.info(`setUpTest: Activate the app - ${this.appKey}`);
