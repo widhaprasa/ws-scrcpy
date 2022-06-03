@@ -324,6 +324,11 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
             this.logger.info(`setUpTest: Check the app is installed - ${this.appKey}`);
             const installed = await this.server.driver.isAppInstalled(this.appKey);
             if (installed) {
+                this.logger.info(`setUpTest: Launch the terminated app to prevent Enqueue Failure - ${this.appKey}`);
+                await this.server.driver.mobileLaunchApp({ bundleId: this.appKey });
+                this.logger.info(`setUpTest: Terminate the app - ${this.appKey}`);
+                await this.server.driver.terminateApp(this.appKey);
+
                 this.logger.info(`setUpTest: Launch the app - ${this.appKey}`);
                 await this.server.driver.mobileLaunchApp({ bundleId: this.appKey });
                 this.logger.info(`setUpTest: Activate the app - ${this.appKey}`);
