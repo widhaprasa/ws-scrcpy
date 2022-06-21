@@ -37,6 +37,7 @@ export class MjpegProxyFactory {
             console.error('msg: ' + data.msg);
             console.error('url: ' + data.url);
         });
+        proxy.proxyRequest(req, res);
         //
     };
 }
