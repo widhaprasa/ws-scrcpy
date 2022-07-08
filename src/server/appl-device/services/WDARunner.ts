@@ -106,10 +106,12 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
     }
 
     protected lock(): void {
+        /* TODO: HBsmith
         if (this.releaseTimeoutId) {
             clearTimeout(this.releaseTimeoutId);
         }
-        // this.holders++; // TODO: HBsmith
+        this.holders++;
+        */
     }
 
     protected unlock(): void {
@@ -125,7 +127,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                 if (this.server.driver) {
                     try {
                         await this.server.driver.deleteSession();
-                        this.server.close();
+                        await this.server.close();
                     } catch (e) {
                         this.logger.error(e);
                     }
