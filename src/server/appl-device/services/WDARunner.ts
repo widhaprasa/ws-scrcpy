@@ -106,10 +106,12 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
     }
 
     protected lock(): void {
+        /* TODO: HBsmith
         if (this.releaseTimeoutId) {
             clearTimeout(this.releaseTimeoutId);
         }
-        // this.holders++; // TODO: HBsmith
+        this.holders++;
+        */
     }
 
     protected unlock(): void {
