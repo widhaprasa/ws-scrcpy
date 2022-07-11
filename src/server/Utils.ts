@@ -84,6 +84,12 @@ export class Utils {
             return undefined;
         }
     }
+
+    public static sleepAsync(ms: number): Promise<void> {
+        return new Promise((resolve) => {
+            setTimeout(resolve, ms);
+        });
+    }
     //
 }
 
