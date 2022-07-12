@@ -178,10 +178,18 @@ export abstract class StreamClient<T extends ParamsStream> extends BaseClient<T,
         return this.waitForWda;
     }
 
-    protected handleWdaStatus = (message: MessageRunWdaResponse): void => {
-        // TODO: HBsmith
+    // TODO: HBsmith
+    private logWdaStatus(status: WdaStatus, text: string | undefined): void {
         const statusText = document.getElementById('control-header-device-status-text');
-        //
+
+        let msg = `[${status}]`;
+        if (!!text) msg += ` ${text}`;
+        if (statusText) statusText.textContent = msg;
+        this.emit('wda:status', status);
+    }
+    //
+
+    protected handleWdaStatus = (message: MessageRunWdaResponse): void => {
         const data = message.data;
         this.setWdaStatusNotification(data.status);
         switch (data.status) {
@@ -191,17 +199,23 @@ export abstract class StreamClient<T extends ParamsStream> extends BaseClient<T,
             case WdaStatus.ERROR:
             case WdaStatus.IN_ACTION:
             case WdaStatus.END_ACTION:
-                // TODO: HBsmith
-                let msg = `[${data.status}]`;
-                if (!!data.text) msg += ` ${data.text}`;
-                if (statusText) statusText.textContent = msg;
-                //
-                this.emit('wda:status', data.status);
+                this.logWdaStatus(data.status, data.text);
+                break;
+            case WdaStatus.SET_UP:
+            case WdaStatus.END_SET_UP:
+                this.logWdaStatus(data.status, data.text);
+                const videoLayer = document.getElementById('video-layer');
+                if (!videoLayer) {
+                    break;
+                }
+                if (data.status === WdaStatus.SET_UP) {
+                    videoLayer.style.display = 'none';
+                } else if (data.status === WdaStatus.END_SET_UP) {
+                    videoLayer.style.display = '';
+                }
                 break;
             default:
-                // TODO: HBsmith
-                if (statusText) statusText.textContent = status;
-                //
+                this.logWdaStatus(data.status, data.text);
                 throw Error(`Unknown WDA status: '${status}'`);
         }
     };

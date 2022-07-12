@@ -302,7 +302,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
     }
 
     public async setUpTest(appKey: string): Promise<void> {
-        this.emit('status-change', { status: WdaStatus.IN_ACTION, text: '장비 초기화 중' });
+        this.emit('status-change', { status: WdaStatus.SET_UP, text: '장비 초기화 중' });
 
         this.appKey = appKey;
         this.wdaEventInAction = true;
@@ -395,7 +395,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
             });
         }, 100);
 
-        this.emit('status-change', { status: WdaStatus.END_ACTION, text: '장비 초기화 완료' });
+        this.emit('status-change', { status: WdaStatus.END_SET_UP, text: '장비 초기화 완료' });
     }
 
     public async tearDownTest(): Promise<void> {
