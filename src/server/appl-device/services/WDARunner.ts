@@ -48,7 +48,10 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
     public static async getServer(udid: string): Promise<Server> {
         let server = this.servers.get(udid);
         if (!server) {
-            const port = await portfinder.getPortPromise();
+            const port = await portfinder.getPortPromise({
+                port: 38000,
+                stopPort: 39000,
+            });
             server = await XCUITest.startServer(port, '127.0.0.1');
             server.on('error', (...args: any[]) => {
                 console.error('Server Error:', args);
