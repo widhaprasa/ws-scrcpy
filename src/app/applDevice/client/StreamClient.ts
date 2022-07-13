@@ -201,6 +201,15 @@ export abstract class StreamClient<T extends ParamsStream> extends BaseClient<T,
             case WdaStatus.END_ACTION:
                 this.logWdaStatus(data.status, data.text);
                 break;
+            case WdaStatus.SET_UP_DEVICE_INFO:
+                if (data.text) {
+                    this.deviceName = data.text;
+                }
+                const headerText = document.getElementById('control-header-device-name-text');
+                if (headerText) {
+                    headerText.textContent = `${this.deviceName} (${this.udid})`;
+                }
+                break;
             case WdaStatus.SET_UP:
             case WdaStatus.SET_UP_SCREEN_ON:
             case WdaStatus.END_SET_UP:

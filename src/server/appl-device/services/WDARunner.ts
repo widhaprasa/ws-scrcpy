@@ -88,7 +88,10 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
     private server?: Server;
     private mjpegServerPort = 0;
     private wdaLocalPort = 0;
-    // private holders = 0; // TODO: HBsmith
+    // TODO: HBsmith
+    private deviceName: string | undefined = '';
+    // private holders = 0;
+    //
     protected releaseTimeoutId?: NodeJS.Timeout;
 
     constructor(private readonly udid: string) {
@@ -221,7 +224,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
 
             const data = await WdaRunner.apiGetDevice(this.udid);
             const webDriverAgentUrl = `http://${data['device_host']}:${data['device_port']}`;
-            const model = data['model'];
+            this.deviceName = data['alias'] || data['model'];
             //
             const remoteMjpegServerPort = MJPEG_SERVER_PORT;
             const ports = await Promise.all([portfinder.getPortPromise(), portfinder.getPortPromise()]);
@@ -229,7 +232,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
             this.mjpegServerPort = ports[1];
             await server.driver.createSession({
                 platformName: 'iOS',
-                deviceName: model, // TODO: HBsmith
+                deviceName: this.deviceName, // TODO: HBsmith
                 udid: this.udid,
                 wdaLocalPort: this.wdaLocalPort,
                 usePrebuiltWDA: true,
@@ -302,6 +305,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
     }
 
     public async setUpTest(appKey: string): Promise<void> {
+        this.emit('status-change', { status: WdaStatus.SET_UP_DEVICE_INFO, text: this.deviceName });
         this.emit('status-change', { status: WdaStatus.SET_UP, text: '장비 초기화 중' });
 
         this.appKey = appKey;
