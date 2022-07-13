@@ -336,6 +336,8 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                 this.logger.info(`setUpTest: Terminate the app - ${this.appKey}`);
                 await this.server.driver.terminateApp(this.appKey);
 
+                this.emit('status-change', { status: WdaStatus.SET_UP_SCREEN_ON, text: '장비 초기화 중 - 앱 시작' });
+
                 this.logger.info(`setUpTest: Launch the app - ${this.appKey}`);
                 await this.server.driver.mobileLaunchApp({ bundleId: this.appKey });
                 this.logger.info(`setUpTest: Activate the app - ${this.appKey}`);

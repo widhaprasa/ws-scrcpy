@@ -202,6 +202,7 @@ export abstract class StreamClient<T extends ParamsStream> extends BaseClient<T,
                 this.logWdaStatus(data.status, data.text);
                 break;
             case WdaStatus.SET_UP:
+            case WdaStatus.SET_UP_SCREEN_ON:
             case WdaStatus.END_SET_UP:
                 this.logWdaStatus(data.status, data.text);
                 const videoLayer = document.getElementById('video-layer');
@@ -210,7 +211,7 @@ export abstract class StreamClient<T extends ParamsStream> extends BaseClient<T,
                 }
                 if (data.status === WdaStatus.SET_UP) {
                     videoLayer.style.display = 'none';
-                } else if (data.status === WdaStatus.END_SET_UP) {
+                } else {
                     videoLayer.style.display = '';
                 }
                 break;
