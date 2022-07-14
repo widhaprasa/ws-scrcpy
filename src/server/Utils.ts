@@ -1,5 +1,6 @@
 import * as os from 'os';
 // TODO: HBsmith
+import * as portfinder from 'portfinder';
 import fs from 'fs';
 import qs from 'qs';
 import { createHmac } from 'crypto';
@@ -102,9 +103,40 @@ export class Utils {
     }
 
     public static async clearFileLock(): Promise<void> {
-        fs.readdirSync('./.filelock')
-            .filter((ff) => /\w+[.lock]$/.test(ff))
-            .map((ff) => fs.unlinkSync(ff));
+        try {
+            fs.readdirSync('./.filelock')
+                .filter((ff) => /\w+[.lock]$/.test(ff))
+                .map((ff) => fs.unlinkSync(`./.filelock/${ff}`));
+        } catch (e) {
+            console.log(e);
+        }
+    }
+
+    public static async getPortWithLock(): Promise<number> {
+        let port = -1;
+        for (let i = 0; i < 10; ++i) {
+            port = await portfinder.getPortPromise({
+                port: 38000,
+                stopPort: 40000,
+            });
+
+            try {
+                if (!port) {
+                    // noinspection ExceptionCaughtLocallyJS
+                    throw Error('No free port found');
+                }
+                await Utils.fileLock(`${port}.lock`);
+                break;
+            } catch (e) {
+                if ('EEXIST' === e.code && i < 9) {
+                    await Utils.sleepAsync(1000);
+                } else {
+                    // noinspection ExceptionCaughtLocallyJS
+                    throw e;
+                }
+            }
+        }
+        return port;
     }
     //
 }

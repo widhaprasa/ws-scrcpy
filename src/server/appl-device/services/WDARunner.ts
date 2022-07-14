@@ -1,6 +1,6 @@
 import { ControlCenterCommand } from '../../../common/ControlCenterCommand';
 import { TypedEmitter } from '../../../common/TypedEmitter';
-import * as portfinder from 'portfinder';
+// import * as portfinder from 'portfinder'; // TODO: HBsmith
 import { Server, XCUITestDriver } from '../../../types/WdaServer';
 import * as XCUITest from 'appium-xcuitest-driver';
 import { WDAMethod } from '../../../common/WDAMethod';
@@ -25,6 +25,8 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
     private static servers: Map<string, Server> = new Map();
     private static cachedScreenWidth: Map<string, any> = new Map();
     // TODO: HBsmith
+    private static serverPorts: Map<string, number> = new Map();
+
     private appKey: string;
     private logger: Logger;
 
@@ -48,7 +50,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
     public static async getServer(udid: string): Promise<Server> {
         let server = this.servers.get(udid);
         if (!server) {
-            const port = await portfinder.getPortPromise();
+            const port = await Utils.getPortWithLock();
             server = await XCUITest.startServer(port, '127.0.0.1');
             server.on('error', (...args: any[]) => {
                 console.error('Server Error:', args);
@@ -57,6 +59,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                 console.info('Server Close:', args);
             });
             this.servers.set(udid, server);
+            this.serverPorts.set(udid, port);
         }
         return server;
     }
@@ -135,14 +138,15 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                 delete this.server;
             }
             // TODO: HBsmith
-            if (this.wdaLocalPort > 0) {
+            const serverPort = WdaRunner.serverPorts.get(this.udid);
+            WdaRunner.serverPorts.delete(this.udid);
+
+            for (const port of [serverPort, this.wdaLocalPort, this.mjpegServerPort]) {
                 try {
-                    await Utils.fileUnlock(`${this.wdaLocalPort}.lock`);
-                } catch (e) {}
-            }
-            if (this.mjpegServerPort > 0) {
-                try {
-                    await Utils.fileUnlock(`${this.mjpegServerPort}.lock`);
+                    if (!port || port <= 0) {
+                        continue;
+                    }
+                    await Utils.fileUnlock(`${port}.lock`);
                 } catch (e) {}
             }
             //
@@ -224,10 +228,11 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
         }
         this.emit('status-change', { status: WdaStatus.STARTING });
         this.starting = true;
-        const server = await WdaRunner.getServer(this.udid);
 
+        let server;
         try {
             // TODO: HBsmith
+            server = await WdaRunner.getServer(this.udid);
             const pid = await Utils.getProcessId(`xcodebuild.+${this.udid}`);
             if (!pid) {
                 // noinspection ExceptionCaughtLocallyJS
@@ -239,29 +244,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
             const model = data['model'];
             const remoteMjpegServerPort = MJPEG_SERVER_PORT;
 
-            let proxyPort = -1;
-            for (let i = 0; i < 10; ++i) {
-                proxyPort = await portfinder.getPortPromise({
-                    port: 38000,
-                    stopPort: 39000,
-                });
-
-                try {
-                    if (!proxyPort) {
-                        // noinspection ExceptionCaughtLocallyJS
-                        throw Error('No free port found');
-                    }
-                    await Utils.fileLock(`${proxyPort}.lock`);
-                    break;
-                } catch (e) {
-                    if ('EEXIST' === e.code && i < 9) {
-                        await Utils.sleepAsync(1000);
-                    } else {
-                        // noinspection ExceptionCaughtLocallyJS
-                        throw e;
-                    }
-                }
-            }
+            const proxyPort: number = await Utils.getPortWithLock();
             this.wdaLocalPort = proxyPort;
             this.mjpegServerPort = proxyPort;
             //
