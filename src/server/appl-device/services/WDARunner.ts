@@ -48,10 +48,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
     public static async getServer(udid: string): Promise<Server> {
         let server = this.servers.get(udid);
         if (!server) {
-            const port = await portfinder.getPortPromise({
-                port: 38000,
-                stopPort: 39000,
-            });
+            const port = await portfinder.getPortPromise();
             server = await XCUITest.startServer(port, '127.0.0.1');
             server.on('error', (...args: any[]) => {
                 console.error('Server Error:', args);
@@ -137,6 +134,18 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                 }
                 delete this.server;
             }
+            // TODO: HBsmith
+            if (this.wdaLocalPort > 0) {
+                try {
+                    await Utils.fileUnlock(`${this.wdaLocalPort}.lock`);
+                } catch (e) {}
+            }
+            if (this.mjpegServerPort > 0) {
+                try {
+                    await Utils.fileUnlock(`${this.mjpegServerPort}.lock`);
+                } catch (e) {}
+            }
+            //
         }, WdaRunner.SHUTDOWN_TIMEOUT);
     }
 
@@ -221,17 +230,41 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
             // TODO: HBsmith
             const pid = await Utils.getProcessId(`xcodebuild.+${this.udid}`);
             if (!pid) {
+                // noinspection ExceptionCaughtLocallyJS
                 throw Error('No WebDriverAgent process found');
             }
 
             const data = await WdaRunner.apiGetDevice(this.udid);
             const webDriverAgentUrl = `http://${data['device_host']}:${data['device_port']}`;
             const model = data['model'];
-            //
             const remoteMjpegServerPort = MJPEG_SERVER_PORT;
-            const ports = await Promise.all([portfinder.getPortPromise(), portfinder.getPortPromise()]);
-            this.wdaLocalPort = ports[0];
-            this.mjpegServerPort = ports[1];
+
+            let proxyPort = -1;
+            for (let i = 0; i < 10; ++i) {
+                proxyPort = await portfinder.getPortPromise({
+                    port: 38000,
+                    stopPort: 39000,
+                });
+
+                try {
+                    if (!proxyPort) {
+                        // noinspection ExceptionCaughtLocallyJS
+                        throw Error('No free port found');
+                    }
+                    await Utils.fileLock(`${proxyPort}.lock`);
+                    break;
+                } catch (e) {
+                    if ('EEXIST' === e.code && i < 9) {
+                        await Utils.sleepAsync(1000);
+                    } else {
+                        // noinspection ExceptionCaughtLocallyJS
+                        throw e;
+                    }
+                }
+            }
+            this.wdaLocalPort = proxyPort;
+            this.mjpegServerPort = proxyPort;
+            //
             await server.driver.createSession({
                 platformName: 'iOS',
                 deviceName: model, // TODO: HBsmith

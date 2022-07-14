@@ -1,5 +1,6 @@
 import * as os from 'os';
 // TODO: HBsmith
+import fs from 'fs';
 import qs from 'qs';
 import { createHmac } from 'crypto';
 import { execSync } from 'child_process';
@@ -89,6 +90,21 @@ export class Utils {
         return new Promise((resolve) => {
             setTimeout(resolve, ms);
         });
+    }
+
+    public static async fileLock(file: string): Promise<void> {
+        const fd = fs.openSync(`.filelock/${file}`, 'wx');
+        fs.closeSync(fd);
+    }
+
+    public static async fileUnlock(file: string): Promise<void> {
+        return fs.unlinkSync(`.filelock/${file}`);
+    }
+
+    public static async clearFileLock(): Promise<void> {
+        fs.readdirSync('./.filelock')
+            .filter((ff) => /\w+[.lock]$/.test(ff))
+            .map((ff) => fs.unlinkSync(ff));
     }
     //
 }
