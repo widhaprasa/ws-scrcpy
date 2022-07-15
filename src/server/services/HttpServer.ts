@@ -126,7 +126,7 @@ export class HttpServer extends TypedEmitter<HttpServerEvents> implements Servic
 
     public async start(): Promise<void> {
         // TODO: HBsmith
-        await Utils.clearFileLock();
+        await Utils.initFileLock();
         //
         this.mainApp = express();
         if (HttpServer.SERVE_STATIC && HttpServer.PUBLIC_DIR) {

@@ -8,6 +8,8 @@ import { execSync } from 'child_process';
 //
 
 export class Utils {
+    private static readonly PathToFileLock: string = '/tmp/ramiel_file_lock';
+
     public static printListeningMsg(proto: string, port: number): void {
         const ipv4List: string[] = [];
         const ipv6List: string[] = [];
@@ -94,19 +96,20 @@ export class Utils {
     }
 
     public static async fileLock(file: string): Promise<void> {
-        const fd = fs.openSync(`.filelock/${file}`, 'wx');
+        const fd = fs.openSync(`${Utils.PathToFileLock}/${file}`, 'wx');
         fs.closeSync(fd);
     }
 
     public static async fileUnlock(file: string): Promise<void> {
-        return fs.unlinkSync(`.filelock/${file}`);
+        return fs.unlinkSync(`${Utils.PathToFileLock}/${file}`);
     }
 
-    public static async clearFileLock(): Promise<void> {
+    public static async initFileLock(): Promise<void> {
         try {
-            fs.readdirSync('./.filelock')
-                .filter((ff) => /\w+[.lock]$/.test(ff))
-                .map((ff) => fs.unlinkSync(`./.filelock/${ff}`));
+            if (fs.existsSync(Utils.PathToFileLock)) {
+                fs.rmdirSync(Utils.PathToFileLock, { recursive: true });
+            }
+            fs.mkdirSync(Utils.PathToFileLock);
         } catch (e) {
             console.log(e);
         }
