@@ -15,7 +15,7 @@ import axios from 'axios';
 const MJPEG_SERVER_PORT = 9100;
 
 export interface WdaRunnerEvents {
-    'status-change': { status: WdaStatus; text?: string; code?: number };
+    'status-change': { status: WdaStatus; text?: string; code?: number; detail?: string };
     error: Error;
 }
 
