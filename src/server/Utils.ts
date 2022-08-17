@@ -10,6 +10,9 @@ import { execSync } from 'child_process';
 export class Utils {
     private static readonly PathToFileLock: string = '/tmp/ramiel_file_lock';
 
+    public static readonly BasePort = 38000;
+    public static readonly StopPort = 40000;
+
     public static printListeningMsg(proto: string, port: number): void {
         const ipv4List: string[] = [];
         const ipv6List: string[] = [];
@@ -89,19 +92,43 @@ export class Utils {
         }
     }
 
-    public static sleepAsync(ms: number): Promise<void> {
+    public static sleep(ms: number): Promise<void> {
         return new Promise((resolve) => {
             setTimeout(resolve, ms);
         });
     }
 
-    public static async fileLock(file: string): Promise<void> {
+    private static checkExpiredFileLock(file: string): void {
+        const pp = `${Utils.PathToFileLock}/${file}`;
+        if (!fs.existsSync(pp)) {
+            return;
+        }
+
+        const ss = fs.statSync(pp);
+        if (!ss) {
+            return;
+        }
+
+        const ee = Date.now() - ss.birthtimeMs - Date.now();
+        if (ee < 30 * 60 * 1000) {
+            return;
+        }
+
+        console.log(`Expired file lock found: ${pp}, ${ee}ms`);
+        try {
+            fs.unlinkSync(pp);
+        } catch (e) {
+            console.log(`Error while deleting expired file lock: ${pp}`);
+        }
+    }
+
+    private static fileLock(file: string): void {
         const fd = fs.openSync(`${Utils.PathToFileLock}/${file}`, 'wx');
         fs.closeSync(fd);
     }
 
-    public static async fileUnlock(file: string): Promise<void> {
-        return fs.unlinkSync(`${Utils.PathToFileLock}/${file}`);
+    public static fileUnlock(file: string): void {
+        fs.unlinkSync(`${Utils.PathToFileLock}/${file}`);
     }
 
     public static async initFileLock(): Promise<void> {
@@ -115,12 +142,16 @@ export class Utils {
         }
     }
 
-    public static async getPortWithLock(): Promise<number> {
+    public static async getPortWithLock(basePort = Utils.BasePort, stopPort = Utils.StopPort): Promise<number> {
+        if (basePort < Utils.BasePort || basePort > Utils.StopPort) {
+            throw Error(`Invalid port: ${basePort}, ${stopPort}`);
+        }
+
         let port = -1;
-        for (let i = 0; i < 10; ++i) {
+        for (let i = 0; i < 3; ++i) {
             port = await portfinder.getPortPromise({
-                port: 38000,
-                stopPort: 40000,
+                port: basePort,
+                stopPort: stopPort,
             });
 
             try {
@@ -128,11 +159,13 @@ export class Utils {
                     // noinspection ExceptionCaughtLocallyJS
                     throw Error('No free port found');
                 }
-                await Utils.fileLock(`${port}.lock`);
+                const pp = `${port}.lock`;
+                Utils.checkExpiredFileLock(pp);
+                Utils.fileLock(pp);
                 break;
             } catch (e) {
-                if ('EEXIST' === e.code && i < 9) {
-                    await Utils.sleepAsync(1000);
+                if ('EEXIST' === e.code && i < 2) {
+                    await Utils.sleep(1000 * 2 ** i);
                 } else {
                     // noinspection ExceptionCaughtLocallyJS
                     throw e;
