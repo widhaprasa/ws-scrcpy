@@ -142,16 +142,39 @@ export class Utils {
         }
     }
 
-    public static async getPortWithLock(basePort = Utils.BasePort, stopPort = Utils.StopPort): Promise<number> {
+    private static getLastFileLock(): number {
+        let ll = fs.readdirSync(Utils.PathToFileLock);
+        ll = ll.filter((file) => /\d+\.lock$/.test(file));
+        const aa: number[] = [];
+        ll.forEach((ee) => {
+            const rr = /(\d+)\.lock/.exec(ee);
+            if (!rr || rr.length < 1) return;
+            aa.push(parseInt(rr[1]));
+        });
+        const rr = Math.max(...aa);
+        if (rr < Utils.BasePort || rr > Utils.StopPort) {
+            return -1;
+        }
+        return rr;
+    }
+
+    public static async getPortWithLock(changePortRange = false): Promise<number> {
+        let basePort = Utils.BasePort;
+        if (changePortRange) {
+            const pp = Utils.getLastFileLock();
+            if (pp >= 0) {
+                basePort = pp + 1;
+            }
+        }
         if (basePort < Utils.BasePort || basePort > Utils.StopPort) {
-            throw Error(`Invalid port: ${basePort}, ${stopPort}`);
+            throw Error(`Invalid port: ${basePort}`);
         }
 
         let port = -1;
         for (let i = 0; i < 3; ++i) {
             port = await portfinder.getPortPromise({
                 port: basePort,
-                stopPort: stopPort,
+                stopPort: Utils.StopPort,
             });
 
             try {
@@ -179,19 +202,19 @@ export class Utils {
 
 // TODO: HBsmith
 export class Logger {
-    private udid: string;
-    private type: string;
+    private readonly udid: string;
+    private readonly type: string;
 
     constructor(udid: string, type: string) {
         this.udid = udid;
         this.type = type;
     }
 
-    public info(...args: any[]): void {
+    public info(...args: unknown[]): void {
         console.log(Utils.getTimeISOString(), this.type, this.udid, ...args);
     }
 
-    public error(...args: any[]): void {
+    public error(...args: unknown[]): void {
         console.error(Utils.getTimeISOString(), this.type, this.udid, ...args);
     }
 }
