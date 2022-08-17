@@ -268,6 +268,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
             const data = await WdaRunner.apiGetDevice(this.udid);
             const webDriverAgentUrl = `http://${data['device_host']}:${data['device_port']}`;
             const remoteMjpegServerPort = MJPEG_SERVER_PORT;
+            const platformVersion = data['os_version'] || '0.0';
             this.deviceName = data['alias'] || data['model'];
 
             for (let ii = 0; ii < 2; ++ii) {
@@ -277,6 +278,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                     this.mjpegServerPort = proxyPort;
                     await server.driver.createSession({
                         platformName: 'iOS',
+                        platformVersion: platformVersion, // TODO: HBsmith
                         deviceName: this.deviceName, // TODO: HBsmith
                         udid: this.udid,
                         wdaLocalPort: this.wdaLocalPort,
