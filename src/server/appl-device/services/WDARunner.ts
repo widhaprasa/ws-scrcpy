@@ -10,6 +10,7 @@ import { WdaStatus } from '../../../common/WdaStatus';
 import { Config } from '../../Config';
 import { Logger, Utils } from '../../Utils';
 import axios from 'axios';
+import * as Sentry from "@sentry/node";
 //
 
 const MJPEG_SERVER_PORT = 9100;
@@ -155,6 +156,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                         this.server.close();
                     } catch (e) {
                         this.logger.error(e);
+                        Sentry.captureException(e);
                     }
                 }
                 delete this.server;

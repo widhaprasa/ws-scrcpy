@@ -6,6 +6,14 @@ import { Utils } from '../Utils';
 import express, { Express } from 'express';
 import { Config } from '../Config';
 import { TypedEmitter } from '../../common/TypedEmitter';
+import * as Sentry from '@sentry/node'; // TODO: HBsmith
+
+// TODO: HBsmith
+Sentry.init({
+    dsn: Config.getInstance().getSentryDSN(),
+    release: `${Config.getInstance().getSentryProject()}@${Utils.getAppVersion()}`,
+});
+//
 
 const DEFAULT_STATIC_DIR = path.join(__dirname, './public');
 

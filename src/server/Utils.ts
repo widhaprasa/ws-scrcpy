@@ -197,6 +197,30 @@ export class Utils {
         }
         return port;
     }
+
+    public static getGitPhase(): string {
+        let bb;
+        try {
+            bb = execSync(`cd ${__dirname} && git branch --show-current`).toString().trim();
+        } catch (e) {
+            return 'ErrorPhase';
+        }
+
+        if (['qa', 'op'].includes(bb)) {
+            return bb;
+        }
+        return 'dv';
+    }
+
+    public static getAppVersion(): string {
+        let hh;
+        try {
+            hh = execSync(`cd ${__dirname} && git rev-parse --short HEAD`).toString().trim();
+        } catch (e) {
+            hh = 'ErrorHash';
+        }
+        return `${Utils.getGitPhase()}-${hh}`;
+    }
     //
 }
 

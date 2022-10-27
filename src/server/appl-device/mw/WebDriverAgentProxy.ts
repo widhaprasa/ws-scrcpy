@@ -9,6 +9,7 @@ import Util from '../../../app/Util';
 import { WdaStatus } from '../../../common/WdaStatus';
 import { Config } from '../../Config';
 import { Utils, Logger } from '../../Utils'; // TODO: HBsmith
+import * as Sentry from '@sentry/node'; // TODO: HBsmith
 import qs from 'qs';
 import axios from 'axios';
 
@@ -257,7 +258,9 @@ export class WebDriverAgentProxy extends Mw {
                     const userAgent = 'user-agent' in error.response.data ? error.response.data['user-agent'] : '';
                     msg = `사용 중인 장비입니다`;
                     if (userAgent) msg += ` (${userAgent})`;
-                } else if (410 === status) msg = `장비의 연결이 끊어져 있습니다`;
+                } else if (410 === status) {
+                    msg = `장비의 연결이 끊어져 있습니다`;
+                }
                 error.message = msg;
                 throw error;
             });
@@ -300,6 +303,7 @@ export class WebDriverAgentProxy extends Mw {
                     status = e.message;
                 }
                 console.error(Utils.getTimeISOString(), `[${tag}] failed to create a session: ${status}`);
+                Sentry.captureException(e);
             });
     }
     //
