@@ -193,6 +193,8 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             })
             .then(() => {
                 return service.setUpTest(udid, appKey, userAgent);
+            }).then(() => {
+                return service.setUpGitInfo();
             })
             .catch((e) => {
                 const msg = `[${this.TAG}] Failed to start service: ${e.message}`;
@@ -339,6 +341,14 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             .catch((e) => {
                 this.logger.error(e);
             });
+    }
+
+    private async setUpGitInfo() {
+        this.sendMessage({
+            id: -1,
+            type: 'git-info',
+            data: Utils.getGitInfo(),
+        });
     }
 
     private tearDownTest(): void {

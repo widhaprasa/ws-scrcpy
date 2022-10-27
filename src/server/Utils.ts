@@ -5,6 +5,7 @@ import fs from 'fs';
 import qs from 'qs';
 import { createHmac } from 'crypto';
 import { execSync } from 'child_process';
+import gitRepoInfo from "git-repo-info";
 //
 
 export class Utils {
@@ -196,6 +197,13 @@ export class Utils {
             }
         }
         return port;
+    }
+
+    public static getGitInfo() {
+        return {
+            branch: gitRepoInfo().branch,
+            sha: gitRepoInfo().sha
+        }
     }
     //
 }
