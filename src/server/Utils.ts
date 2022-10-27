@@ -5,6 +5,7 @@ import fs from 'fs';
 import qs from 'qs';
 import { createHmac } from 'crypto';
 import { execSync } from 'child_process';
+import * as Sentry from '@sentry/node';
 //
 
 export class Utils {
@@ -220,6 +221,18 @@ export class Utils {
             hh = 'ErrorHash';
         }
         return `${Utils.getGitPhase()}-${hh}`;
+    }
+
+    public static captureException(
+        e: Error,
+        deviceType: string,
+        deviceId: string,
+        deviceName: string | undefined = undefined,
+    ): void {
+        let mm = `[${deviceType}][${deviceId}]`;
+        if (deviceName) mm += `[${deviceName}]`;
+        mm += ` ${e.message}`;
+        Sentry.captureException(new Error(mm));
     }
     //
 }

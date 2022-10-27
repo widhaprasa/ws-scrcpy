@@ -114,24 +114,30 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                     `[${tag}] success to create session. resp code: ${rr.status}`,
                 );
             })
-            .catch((error) => {
+            .catch((e) => {
                 let status;
                 try {
-                    status = 'response' in error && 'status' in error.response ? error.response.status : 'unknown1';
+                    status = 'response' in e && 'status' in e.response ? e.response.status : 'unknown1';
                 } catch {
-                    status = error.toString();
+                    status = e.toString();
                 }
                 console.error(Utils.getTimeISOString(), udid, `[${tag}] failed to create a session: ${status}`);
 
-                let msg = `[${this.TAG}] failed to create a session for ${udid}`;
-                if (!('response' in error)) msg = `undefined response in error`;
+                e.message = `[${this.TAG}] failed to create a session for ${udid}`;
+                if (!e.response) e.message = 'undefined response in error';
                 else if (409 === status) {
-                    const userAgent = 'user-agent' in error.response.data ? error.response.data['user-agent'] : '';
-                    msg = `사용 중인 장비입니다`;
-                    if (userAgent) msg += ` (${userAgent})`;
-                } else if (410 === status) msg = `장비의 연결이 끊어져 있습니다`;
-                ws.close(4900, msg);
-                throw error;
+                    const userAgent = 'user-agent' in e.response.data ? e.response.data['user-agent'] : '';
+                    e.message = `사용 중인 장비입니다`;
+                    if (userAgent) e.message += ` (${userAgent})`;
+                    Utils.captureException(e, 'Android', udid);
+                } else if (410 === status) {
+                    e.message = `장비의 연결이 끊어져 있습니다`;
+                    Utils.captureException(e, 'Android', udid);
+                } else {
+                    Utils.captureException(e, 'Android', udid);
+                }
+                ws.close(4900, e.message);
+                throw e;
             });
     }
 
@@ -162,14 +168,17 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             .then((rr) => {
                 this.logger.info(`[${tag}] success to delete a session. resp code: ${rr.status}`);
             })
-            .catch((error) => {
+            .catch((e) => {
                 let status;
                 try {
-                    status = 'response' in error && 'status' in error.response ? error.response.status : 'unknown1';
+                    status = 'response' in e && 'status' in e.response ? e.response.status : 'unknown1';
                 } catch {
-                    status = error.toString();
+                    status = e.toString();
                 }
                 this.logger.error(`[${tag}] failed to create a session: ${status}`);
+                e.text = `failed to create a session: ${status}`;
+                e.deviceId = this.udid;
+                Utils.captureException(e, 'Android', this.udid);
             });
     }
     //
@@ -197,6 +206,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             .catch((e) => {
                 const msg = `[${this.TAG}] Failed to start service: ${e.message}`;
                 console.error(Utils.getTimeISOString(), udid, msg);
+                Utils.captureException(e, 'Android', udid);
                 ws.close(4005, msg);
             });
         //
@@ -269,15 +279,18 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                                         this.logger.info(`Success to swipe: ${xx} ${y1} ${xx} ${y2} 500`);
                                     });
                             })
-                            .catch((error) => {
-                                this.logger.error(error);
+                            .catch((e) => {
+                                e.deviceId = this.udid;
+                                e.text = 'Failed to swipe';
+                                this.logger.error(e);
                             });
                         return;
                     }
                 }
             }
-        } catch (error) {
-            this.logger.error(error);
+        } catch (e) {
+            this.logger.error(e);
+            Utils.captureException(e, 'Android', this.udid);
         }
         super.onSocketMessage(event);
     }
@@ -291,9 +304,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
 
     private async setUpTest(udid: string, appKey?: string, userAgent?: string): Promise<void> {
         this.apiSessionCreated = true;
-        if (udid) {
-            this.udid = udid;
-        }
+        this.udid = udid;
         if (appKey) {
             this.appKey = appKey;
         }
@@ -340,6 +351,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             })
             .catch((e) => {
                 this.logger.error(e);
+                Utils.captureException(e, 'Android', this.udid);
             });
     }
 
@@ -372,6 +384,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             })
             .catch((e) => {
                 this.logger.error(e);
+                Utils.captureException(e, 'Android', this.udid);
             })
             .finally(() => {
                 setTimeout(() => {

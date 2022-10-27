@@ -9,7 +9,6 @@ import Util from '../../../app/Util';
 import { WdaStatus } from '../../../common/WdaStatus';
 import { Config } from '../../Config';
 import { Utils, Logger } from '../../Utils'; // TODO: HBsmith
-import * as Sentry from '@sentry/node'; // TODO: HBsmith
 import qs from 'qs';
 import axios from 'axios';
 
@@ -199,8 +198,9 @@ export class WebDriverAgentProxy extends Mw {
 
         new Promise((resolve) => setTimeout(resolve, 3000))
             .then(() => {
-                return this.wda?.tearDownTest().catch((e: Error) => {
+                return this.wda?.tearDownTest().catch((e) => {
                     this.logger.error(e);
+                    Utils.captureException(e, 'iOS', this.udid, this.wda?.getDeviceName());
                 });
             })
             .finally(() => {
@@ -243,26 +243,29 @@ export class WebDriverAgentProxy extends Mw {
             .then((rr) => {
                 this.logger.info(`[${tag}] success to create session. resp code: ${rr.status}`);
             })
-            .catch((error) => {
+            .catch((e) => {
                 let status;
                 try {
-                    status = 'response' in error && 'status' in error.response ? error.response.status : 'unknown1';
+                    status = e.response && e.response.status ? e.response.status : 'unknown1';
                 } catch {
-                    status = error.toString();
+                    status = e.toString();
                 }
                 console.error(Utils.getTimeISOString(), `[${tag}] failed to create a session: ${status}`);
 
-                let msg = `[${WebDriverAgentProxy.TAG}] failed to create a session for ${this.udid}`;
-                if (!('response' in error)) msg = `undefined response in error`;
+                e.message = `[${WebDriverAgentProxy.TAG}] failed to create a session for ${this.udid}`;
+                if (!e.response) e.message = `undefined response in error`;
                 else if (409 === status) {
-                    const userAgent = 'user-agent' in error.response.data ? error.response.data['user-agent'] : '';
-                    msg = `사용 중인 장비입니다`;
-                    if (userAgent) msg += ` (${userAgent})`;
+                    const userAgent = 'user-agent' in e.response.data ? e.response.data['user-agent'] : '';
+                    e.message = `사용 중인 장비입니다`;
+                    if (userAgent) e.message += ` (${userAgent})`;
+                    Utils.captureException(e, 'iOS', this.udid, this.wda?.getDeviceName());
                 } else if (410 === status) {
-                    msg = `장비의 연결이 끊어져 있습니다`;
+                    e.message = `장비의 연결이 끊어져 있습니다`;
+                    Utils.captureException(e, 'iOS', this.udid, this.wda?.getDeviceName());
+                } else {
+                    Utils.captureException(e, 'iOS', this.udid, this.wda?.getDeviceName());
                 }
-                error.message = msg;
-                throw error;
+                throw e;
             });
     }
 
@@ -303,7 +306,6 @@ export class WebDriverAgentProxy extends Mw {
                     status = e.message;
                 }
                 console.error(Utils.getTimeISOString(), `[${tag}] failed to create a session: ${status}`);
-                Sentry.captureException(e);
             });
     }
     //

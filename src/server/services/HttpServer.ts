@@ -11,6 +11,7 @@ import * as Sentry from '@sentry/node'; // TODO: HBsmith
 // TODO: HBsmith
 Sentry.init({
     dsn: Config.getInstance().getSentryDSN(),
+    environment: Utils.getGitPhase(),
     release: `${Config.getInstance().getSentryProject()}@${Utils.getAppVersion()}`,
 });
 //

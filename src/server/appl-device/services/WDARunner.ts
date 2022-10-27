@@ -10,7 +10,6 @@ import { WdaStatus } from '../../../common/WdaStatus';
 import { Config } from '../../Config';
 import { Logger, Utils } from '../../Utils';
 import axios from 'axios';
-import * as Sentry from "@sentry/node";
 //
 
 const MJPEG_SERVER_PORT = 9100;
@@ -156,7 +155,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                         this.server.close();
                     } catch (e) {
                         this.logger.error(e);
-                        Sentry.captureException(e);
+                        Utils.captureException(e, 'iOS', this.udid, this.deviceName);
                     }
                 }
                 delete this.server;
@@ -175,6 +174,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                     Utils.fileUnlock(`${port}.lock`);
                 } catch (e) {
                     this.logger.error(`Failed to delete lock file: ${port}`, e);
+                    Utils.captureException(e, 'iOS', this.udid, this.deviceName);
                 }
             }
             //
@@ -369,8 +369,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
         this.wdaEventInAction = true;
 
         if (!this.server) {
-            this.logger.error('No Server at setUpTest', this.udid);
-            return;
+            throw Error('No Server at setUpTest');
         }
 
         this.logger.info('setUpTest: Unlock the device');
@@ -426,6 +425,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
             (<Function>ev)(driver)
                 .catch((e: Error) => {
                     this.logger.error(e);
+                    Utils.captureException(e, 'iOS', this.udid, this.deviceName);
                 })
                 .finally(() => {
                     this.wdaEventInAction = false;
@@ -475,8 +475,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
         }
 
         if (!this.server) {
-            this.logger.error('No Server at tearDownTest', this.udid);
-            return;
+            throw Error('No Server at tearDownTest');
         }
 
         if (this.appKey) {
@@ -500,6 +499,10 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
         await this.server.driver.mobilePressButton({ name: 'home' });
         this.logger.info('tearDownTest: Lock the device');
         await this.server.driver.lock();
+    }
+
+    public getDeviceName(): string | undefined {
+        return this.deviceName;
     }
     //
 }
