@@ -9,11 +9,13 @@ import { TypedEmitter } from '../../common/TypedEmitter';
 import * as Sentry from '@sentry/node'; // TODO: HBsmith
 
 // TODO: HBsmith
-Sentry.init({
-    dsn: Config.getInstance().getSentryDSN(),
-    environment: Utils.getGitPhase(),
-    release: `${Config.getInstance().getSentryProject()}@${Utils.getAppVersion()}`,
-});
+if (Utils.getGitPhase() === 'op') {
+    Sentry.init({
+        dsn: Config.getInstance().getSentryDSN(),
+        environment: Utils.getGitPhase(),
+        release: `${Config.getInstance().getSentryProject()}@${Utils.getAppVersion()}`,
+    });
+}
 //
 
 const DEFAULT_STATIC_DIR = path.join(__dirname, './public');
