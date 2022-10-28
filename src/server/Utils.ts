@@ -200,9 +200,14 @@ export class Utils {
     }
 
     public static getGitInfo() {
-        return {
-            branch: gitRepoInfo().branch,
-            sha: gitRepoInfo().sha
+        try {
+            return {
+                branch: gitRepoInfo().branch,
+                sha: gitRepoInfo().sha
+            }
+        } catch (e) {
+            console.error('Failed to load Git info');
+            return {};
         }
     }
     //
