@@ -155,7 +155,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                         this.server.close();
                     } catch (e) {
                         this.logger.error(e);
-                        Utils.captureException(e, 'iOS', this.udid, this.deviceName);
+                        Utils.captureMessage(e.message, 'iOS', this.udid);
                     }
                 }
                 delete this.server;
@@ -174,7 +174,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                     Utils.fileUnlock(`${port}.lock`);
                 } catch (e) {
                     this.logger.error(`Failed to delete lock file: ${port}`, e);
-                    Utils.captureException(e, 'iOS', this.udid, this.deviceName);
+                    Utils.captureMessage(e.message, 'iOS', this.udid);
                 }
             }
             //
@@ -425,7 +425,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
             (<Function>ev)(driver)
                 .catch((e: Error) => {
                     this.logger.error(e);
-                    Utils.captureException(e, 'iOS', this.udid, this.deviceName);
+                    Utils.captureMessage(e.message, 'iOS', this.udid);
                 })
                 .finally(() => {
                     this.wdaEventInAction = false;

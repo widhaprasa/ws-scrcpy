@@ -129,12 +129,12 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                     const userAgent = 'user-agent' in e.response.data ? e.response.data['user-agent'] : '';
                     e.message = `사용 중인 장비입니다`;
                     if (userAgent) e.message += ` (${userAgent})`;
-                    Utils.captureException(e, 'Android', udid);
+                    Utils.captureMessage(e.message, 'Android', udid);
                 } else if (410 === status) {
                     e.message = `장비의 연결이 끊어져 있습니다`;
-                    Utils.captureException(e, 'Android', udid);
+                    Utils.captureMessage(e.message, 'Android', udid);
                 } else {
-                    Utils.captureException(e, 'Android', udid);
+                    Utils.captureMessage(e.message, 'Android', udid);
                 }
                 ws.close(4900, e.message);
                 throw e;
@@ -175,10 +175,9 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                 } catch {
                     status = e.toString();
                 }
-                this.logger.error(`[${tag}] failed to create a session: ${status}`);
-                e.text = `failed to create a session: ${status}`;
-                e.deviceId = this.udid;
-                Utils.captureException(e, 'Android', this.udid);
+                const mm = `[${tag}] failed to create a session: ${status}`;
+                this.logger.error(mm);
+                Utils.captureMessage(mm, 'Android', this.udid);
             });
     }
     //
@@ -206,7 +205,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             .catch((e) => {
                 const msg = `[${this.TAG}] Failed to start service: ${e.message}`;
                 console.error(Utils.getTimeISOString(), udid, msg);
-                Utils.captureException(e, 'Android', udid);
+                Utils.captureMessage(e.message, 'Android', udid);
                 ws.close(4005, msg);
             });
         //
@@ -280,8 +279,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                                     });
                             })
                             .catch((e) => {
-                                e.deviceId = this.udid;
-                                e.text = 'Failed to swipe';
+                                e.message = 'Failed to swipe';
                                 this.logger.error(e);
                             });
                         return;
@@ -290,7 +288,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             }
         } catch (e) {
             this.logger.error(e);
-            Utils.captureException(e, 'Android', this.udid);
+            Utils.captureMessage(e.message, 'Android', this.udid);
         }
         super.onSocketMessage(event);
     }
@@ -351,7 +349,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             })
             .catch((e) => {
                 this.logger.error(e);
-                Utils.captureException(e, 'Android', this.udid);
+                Utils.captureMessage('Failed to run setUpTest', 'Android', this.udid);
             });
     }
 
@@ -384,7 +382,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             })
             .catch((e) => {
                 this.logger.error(e);
-                Utils.captureException(e, 'Android', this.udid);
+                Utils.captureMessage('Failed to run tearDownTest', 'Android', this.udid);
             })
             .finally(() => {
                 setTimeout(() => {

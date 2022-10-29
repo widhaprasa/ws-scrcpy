@@ -200,7 +200,7 @@ export class WebDriverAgentProxy extends Mw {
             .then(() => {
                 return this.wda?.tearDownTest().catch((e) => {
                     this.logger.error(e);
-                    Utils.captureException(e, 'iOS', this.udid, this.wda?.getDeviceName());
+                    Utils.captureMessage('Failed to run tearDownTest', 'iOS', this.udid);
                 });
             })
             .finally(() => {
@@ -258,12 +258,12 @@ export class WebDriverAgentProxy extends Mw {
                     const userAgent = 'user-agent' in e.response.data ? e.response.data['user-agent'] : '';
                     e.message = `사용 중인 장비입니다`;
                     if (userAgent) e.message += ` (${userAgent})`;
-                    Utils.captureException(e, 'iOS', this.udid, this.wda?.getDeviceName());
+                    Utils.captureMessage(e.message, 'iOS', this.udid);
                 } else if (410 === status) {
                     e.message = `장비의 연결이 끊어져 있습니다`;
-                    Utils.captureException(e, 'iOS', this.udid, this.wda?.getDeviceName());
+                    Utils.captureMessage(e.message, 'iOS', this.udid);
                 } else {
-                    Utils.captureException(e, 'iOS', this.udid, this.wda?.getDeviceName());
+                    Utils.captureMessage(e.message, 'iOS', this.udid);
                 }
                 throw e;
             });

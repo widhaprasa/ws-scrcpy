@@ -223,16 +223,13 @@ export class Utils {
         return `${Utils.getGitPhase()}-${hh}`;
     }
 
-    public static captureException(
-        e: Error,
-        deviceType: string,
-        deviceId: string,
-        deviceName: string | undefined = undefined,
-    ): void {
-        let mm = `[${deviceType}][${deviceId}]`;
-        if (deviceName) mm += `[${deviceName}]`;
-        mm += ` ${e.message}`;
-        Sentry.captureException(new Error(mm));
+    public static captureMessage(message: string, deviceType: string, deviceId: string): void {
+        Sentry.captureMessage(message, {
+            tags: {
+                ramiel_device_type: deviceType,
+                ramiel_device_id: deviceId,
+            },
+        });
     }
     //
 }
