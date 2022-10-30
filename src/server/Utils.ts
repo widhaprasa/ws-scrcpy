@@ -214,13 +214,11 @@ export class Utils {
     }
 
     public static getAppVersion(): string {
-        let hh;
         try {
-            hh = execSync(`cd ${__dirname} && git rev-parse --short HEAD`).toString().trim();
+            return execSync(`cd ${__dirname} && git rev-parse --verify HEAD`).toString().trim();
         } catch (e) {
-            hh = 'ErrorHash';
+            return 'ErrorHash';
         }
-        return `${Utils.getGitPhase()}-${hh}`;
     }
 
     public static captureMessage(message: string, deviceType: string, deviceId: string): void {
