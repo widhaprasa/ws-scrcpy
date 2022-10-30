@@ -105,14 +105,13 @@ export class WebDriverAgentProxy extends Mw {
                 }
             })
             .catch((e) => {
-                this.onStatusChange(
-                    command,
-                    WdaStatus.ERROR,
-                    -1,
-                    e.text || e.message || '알 수 없는 이유로 장비 초기화에 실패하였습니다.',
-                );
+                const mm = e.text || e.message || '알 수 없는 이유로 장비 초기화에 실패하였습니다.';
+                this.onStatusChange(command, WdaStatus.ERROR, -1, mm);
                 this.ws.close(4900, e.message);
                 this.logger.error(e);
+                if (!e.handled) {
+                    Utils.captureMessage(mm, this.udid, 'iOS');
+                }
             });
         //
     }
@@ -263,11 +262,14 @@ export class WebDriverAgentProxy extends Mw {
                             'User Agent': userAgent,
                         },
                     });
+                    e.handled = true;
                 } else if (410 === status) {
                     e.message = `장비의 연결이 끊어져 있습니다`;
                     Utils.captureMessage(e.message, 'iOS', this.udid);
+                    e.handled = true;
                 } else {
                     Utils.captureMessage(e.message, 'iOS', this.udid);
+                    e.handled = true;
                 }
                 throw e;
             });

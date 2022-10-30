@@ -134,11 +134,14 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                             'User Agent': userAgent,
                         },
                     });
+                    e.handled = true;
                 } else if (410 === status) {
                     e.message = `장비의 연결이 끊어져 있습니다`;
                     Utils.captureMessage(e.message, 'Android', udid);
+                    e.handled = true;
                 } else {
                     Utils.captureMessage(e.message, 'Android', udid);
+                    e.handled = true;
                 }
                 ws.close(4900, e.message);
                 throw e;
@@ -208,9 +211,11 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             })
             .catch((e) => {
                 const msg = `[${this.TAG}] Failed to start service: ${e.message}`;
-                console.error(Utils.getTimeISOString(), udid, msg);
-                Utils.captureMessage(msg, 'Android', udid);
                 ws.close(4005, msg);
+                console.error(Utils.getTimeISOString(), udid, msg);
+                if (!e.handled) {
+                    Utils.captureMessage(msg, 'Android', udid);
+                }
             });
         //
         return service;
