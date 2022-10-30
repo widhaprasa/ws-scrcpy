@@ -256,9 +256,13 @@ export class WebDriverAgentProxy extends Mw {
                 if (!e.response) e.message = `undefined response in error`;
                 else if (409 === status) {
                     const userAgent = 'user-agent' in e.response.data ? e.response.data['user-agent'] : '';
-                    e.message = `사용 중인 장비입니다`;
+                    e.message = '사용 중인 장비입니다';
                     if (userAgent) e.message += ` (${userAgent})`;
-                    Utils.captureMessage(e.message, 'iOS', this.udid);
+                    Utils.captureMessage('사용 중인 장비입니다', 'iOS', this.udid, {
+                        Ramiel: {
+                            'User Agent': userAgent,
+                        },
+                    });
                 } else if (410 === status) {
                     e.message = `장비의 연결이 끊어져 있습니다`;
                     Utils.captureMessage(e.message, 'iOS', this.udid);

@@ -127,9 +127,13 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                 if (!e.response) e.message = 'undefined response in error';
                 else if (409 === status) {
                     const userAgent = 'user-agent' in e.response.data ? e.response.data['user-agent'] : '';
-                    e.message = `사용 중인 장비입니다`;
+                    e.message = '사용 중인 장비입니다';
                     if (userAgent) e.message += ` (${userAgent})`;
-                    Utils.captureMessage(e.message, 'Android', udid);
+                    Utils.captureMessage('사용 중인 장비입니다', 'Android', udid, {
+                        Ramiel: {
+                            'User Agent': userAgent,
+                        },
+                    });
                 } else if (410 === status) {
                     e.message = `장비의 연결이 끊어져 있습니다`;
                     Utils.captureMessage(e.message, 'Android', udid);
@@ -205,7 +209,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             .catch((e) => {
                 const msg = `[${this.TAG}] Failed to start service: ${e.message}`;
                 console.error(Utils.getTimeISOString(), udid, msg);
-                Utils.captureMessage(e.message, 'Android', udid);
+                Utils.captureMessage(msg, 'Android', udid);
                 ws.close(4005, msg);
             });
         //

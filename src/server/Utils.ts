@@ -221,13 +221,28 @@ export class Utils {
         }
     }
 
-    public static captureMessage(message: string, deviceType: string, deviceId: string): void {
-        Sentry.captureMessage(message, {
-            tags: {
-                ramiel_device_type: deviceType,
-                ramiel_device_id: deviceId,
-            },
-        });
+    public static captureMessage(
+        message: string,
+        deviceType: string,
+        deviceId: string,
+        contexts: any | undefined = undefined,
+    ): void {
+        if (contexts) {
+            Sentry.captureMessage(message, {
+                tags: {
+                    ramiel_device_type: deviceType,
+                    ramiel_device_id: deviceId,
+                    contexts: contexts,
+                },
+            });
+        } else {
+            Sentry.captureMessage(message, {
+                tags: {
+                    ramiel_device_type: deviceType,
+                    ramiel_device_id: deviceId,
+                },
+            });
+        }
     }
     //
 }
