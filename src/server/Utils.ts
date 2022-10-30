@@ -232,8 +232,8 @@ export class Utils {
                 tags: {
                     ramiel_device_type: deviceType,
                     ramiel_device_id: deviceId,
-                    contexts: contexts,
                 },
+                contexts: contexts,
             });
         } else {
             Sentry.captureMessage(message, {
