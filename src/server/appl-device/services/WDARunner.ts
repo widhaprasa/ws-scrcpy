@@ -174,7 +174,6 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                     Utils.fileUnlock(`${port}.lock`);
                 } catch (e) {
                     this.logger.error(`Failed to delete lock file: ${port}`, e);
-                    Utils.captureMessage(e.message, 'iOS', this.udid);
                 }
             }
             //
@@ -455,6 +454,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                     code: -1,
                     text: 'WebDriverAgent process has been disconnected',
                 });
+                Utils.captureMessage('WebDriverAgent process has been disconnected', 'iOS', this.udid);
             });
         }, 100);
 

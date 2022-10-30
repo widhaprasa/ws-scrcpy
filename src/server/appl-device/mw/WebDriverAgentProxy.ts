@@ -199,7 +199,6 @@ export class WebDriverAgentProxy extends Mw {
             .then(() => {
                 return this.wda?.tearDownTest().catch((e) => {
                     this.logger.error(e);
-                    Utils.captureMessage('Failed to run tearDownTest', 'iOS', this.udid);
                 });
             })
             .finally(() => {

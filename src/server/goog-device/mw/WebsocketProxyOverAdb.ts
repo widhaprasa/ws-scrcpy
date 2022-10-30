@@ -391,7 +391,6 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             })
             .catch((e) => {
                 this.logger.error(e);
-                Utils.captureMessage('Failed to run tearDownTest', 'Android', this.udid);
             })
             .finally(() => {
                 setTimeout(() => {
