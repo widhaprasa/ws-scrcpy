@@ -207,7 +207,9 @@ export class Utils {
             }
         } catch (e) {
             console.error('Failed to load Git info: ' + e);
-            return {};
+            return {
+                sha: 'Failed to load Git info: ' + e
+            };
         }
     }
     //

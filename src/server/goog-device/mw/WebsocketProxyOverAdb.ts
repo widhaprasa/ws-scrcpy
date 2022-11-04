@@ -193,7 +193,8 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             })
             .then(() => {
                 return service.setUpTest(udid, appKey, userAgent);
-            }).then(() => {
+            })
+            .then(() => {
                 return service.setUpGitInfo();
             })
             .catch((e) => {
