@@ -10,6 +10,7 @@ import { WdaStatus } from '../../../common/WdaStatus';
 import { Config } from '../../Config';
 import { Logger, Utils } from '../../Utils';
 import axios from 'axios';
+import * as Sentry from '@sentry/node';
 //
 
 const MJPEG_SERVER_PORT = 9100;
@@ -155,7 +156,14 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                         this.server.close();
                     } catch (e) {
                         this.logger.error(e);
-                        Utils.captureMessage(e.message, 'iOS', this.udid);
+
+                        Sentry.captureException(e, {
+                            tags: {
+                                ramiel_device_type: 'iOS',
+                                ramiel_device_id: this.udid,
+                                ramiel_message: e.ramiel_message,
+                            },
+                        });
                     }
                 }
                 delete this.server;
@@ -424,7 +432,13 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
             (<Function>ev)(driver)
                 .catch((e: Error) => {
                     this.logger.error(e);
-                    Utils.captureMessage(e.message, 'iOS', this.udid);
+                    Sentry.captureException(e, {
+                        tags: {
+                            ramiel_device_type: 'iOS',
+                            ramiel_device_id: this.udid,
+                            ramiel_message: 'WebDriverAgent event error',
+                        },
+                    });
                 })
                 .finally(() => {
                     this.wdaEventInAction = false;
@@ -449,12 +463,19 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                 this.started = false;
                 this.starting = false;
 
+                const mm = 'WebDriverAgent process has been disconnected';
                 this.emit('status-change', {
                     status: WdaStatus.STOPPED,
                     code: -1,
-                    text: 'WebDriverAgent process has been disconnected',
+                    text: mm,
                 });
-                Utils.captureMessage('WebDriverAgent process has been disconnected', 'iOS', this.udid);
+                Sentry.captureException(new Error(mm), {
+                    tags: {
+                        ramiel_device_type: 'iOS',
+                        ramiel_device_id: this.udid,
+                        ramiel_message: mm,
+                    },
+                });
             });
         }, 100);
 

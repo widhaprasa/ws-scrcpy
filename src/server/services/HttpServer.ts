@@ -133,7 +133,8 @@ export class HttpServer extends TypedEmitter<HttpServerEvents> implements Servic
         await Utils.initFileLock();
 
         const app = express();
-        if (Utils.getGitPhase() === 'op') {
+        //if (Utils.getGitPhase() === 'op') {
+        if (Utils.getGitPhase() === 'dv') {
             Sentry.init({
                 dsn: Config.getInstance().getSentryDSN(),
                 environment: Utils.getGitPhase(),

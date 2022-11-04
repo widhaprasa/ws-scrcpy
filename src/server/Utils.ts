@@ -5,7 +5,6 @@ import fs from 'fs';
 import qs from 'qs';
 import { createHmac } from 'crypto';
 import { execSync } from 'child_process';
-import * as Sentry from '@sentry/node';
 //
 
 export class Utils {
@@ -218,30 +217,6 @@ export class Utils {
             return execSync(`cd ${__dirname} && git rev-parse --verify HEAD`).toString().trim();
         } catch (e) {
             return 'ErrorHash';
-        }
-    }
-
-    public static captureMessage(
-        message: string,
-        deviceType: string,
-        deviceId: string,
-        contexts: any | undefined = undefined,
-    ): void {
-        if (contexts) {
-            Sentry.captureMessage(message, {
-                tags: {
-                    ramiel_device_type: deviceType,
-                    ramiel_device_id: deviceId,
-                },
-                contexts: contexts,
-            });
-        } else {
-            Sentry.captureMessage(message, {
-                tags: {
-                    ramiel_device_type: deviceType,
-                    ramiel_device_id: deviceId,
-                },
-            });
         }
     }
     //

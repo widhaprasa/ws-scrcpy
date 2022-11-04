@@ -9,6 +9,7 @@ import Util from '../../../app/Util';
 import { WdaStatus } from '../../../common/WdaStatus';
 import { Config } from '../../Config';
 import { Utils, Logger } from '../../Utils'; // TODO: HBsmith
+import * as Sentry from '@sentry/node'; // TODO: HBsmith
 import qs from 'qs';
 import axios from 'axios';
 
@@ -109,9 +110,16 @@ export class WebDriverAgentProxy extends Mw {
                 this.onStatusChange(command, WdaStatus.ERROR, -1, mm);
                 this.ws.close(4900, e.message);
                 this.logger.error(e);
-                if (!e.handled) {
-                    Utils.captureMessage(mm, this.udid, 'iOS');
-                }
+                Sentry.captureException(e, {
+                    tags: {
+                        ramiel_device_type: 'iOS',
+                        ramiel_device_id: this.udid,
+                        ramiel_message: e.ramiel_message,
+                    },
+                    contexts: {
+                        Ramiel: e.ramiel_contexts,
+                    },
+                });
             });
         //
     }
@@ -251,24 +259,18 @@ export class WebDriverAgentProxy extends Mw {
                 console.error(Utils.getTimeISOString(), `[${tag}] failed to create a session: ${status}`);
 
                 e.message = `[${WebDriverAgentProxy.TAG}] failed to create a session for ${this.udid}`;
-                if (!e.response) e.message = `undefined response in error`;
-                else if (409 === status) {
+                if (!e.response) {
+                    e.ramiel_message = e.message = 'undefined response in error';
+                } else if (409 === status) {
                     const userAgent = 'user-agent' in e.response.data ? e.response.data['user-agent'] : '';
-                    e.message = '사용 중인 장비입니다';
+                    e.ramiel_message = e.message = '사용 중인 장비입니다';
                     if (userAgent) e.message += ` (${userAgent})`;
-                    Utils.captureMessage('사용 중인 장비입니다', 'iOS', this.udid, {
-                        Ramiel: {
-                            'User Agent': userAgent,
-                        },
-                    });
-                    e.handled = true;
+
+                    e.ramiel_contexts = {
+                        'User Agent': userAgent,
+                    };
                 } else if (410 === status) {
-                    e.message = `장비의 연결이 끊어져 있습니다`;
-                    Utils.captureMessage(e.message, 'iOS', this.udid);
-                    e.handled = true;
-                } else {
-                    Utils.captureMessage(e.message, 'iOS', this.udid);
-                    e.handled = true;
+                    e.ramiel_message = e.message = `장비의 연결이 끊어져 있습니다`;
                 }
                 throw e;
             });

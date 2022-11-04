@@ -13,6 +13,7 @@ import qs from 'qs';
 import KeyEvent from '../../../app/googDevice/android/KeyEvent';
 import { Multiplexer } from '../../../packages/multiplexer/Multiplexer';
 import { ControlMessage } from '../../../app/controlMessage/ControlMessage';
+import * as Sentry from '@sentry/node'; // TODO: HBsmith
 //
 
 export class WebsocketProxyOverAdb extends WebsocketProxy {
@@ -124,24 +125,18 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                 console.error(Utils.getTimeISOString(), udid, `[${tag}] failed to create a session: ${status}`);
 
                 e.message = `[${this.TAG}] failed to create a session for ${udid}`;
-                if (!e.response) e.message = 'undefined response in error';
-                else if (409 === status) {
+                if (!e.response) {
+                    e.ramiel_message = e.message = 'undefined response in error';
+                } else if (409 === status) {
                     const userAgent = 'user-agent' in e.response.data ? e.response.data['user-agent'] : '';
-                    e.message = '사용 중인 장비입니다';
+                    e.ramiel_message = e.message = '사용 중인 장비입니다';
                     if (userAgent) e.message += ` (${userAgent})`;
-                    Utils.captureMessage('사용 중인 장비입니다', 'Android', udid, {
-                        Ramiel: {
-                            'User Agent': userAgent,
-                        },
-                    });
-                    e.handled = true;
+
+                    e.ramiel_contexts = {
+                        'User Agent': userAgent,
+                    };
                 } else if (410 === status) {
-                    e.message = `장비의 연결이 끊어져 있습니다`;
-                    Utils.captureMessage(e.message, 'Android', udid);
-                    e.handled = true;
-                } else {
-                    Utils.captureMessage(e.message, 'Android', udid);
-                    e.handled = true;
+                    e.ramiel_message = e.message = `장비의 연결이 끊어져 있습니다`;
                 }
                 ws.close(4900, e.message);
                 throw e;
@@ -184,7 +179,13 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                 }
                 const mm = `[${tag}] failed to create a session: ${status}`;
                 this.logger.error(mm);
-                Utils.captureMessage(mm, 'Android', this.udid);
+                Sentry.captureException(e, {
+                    tags: {
+                        ramiel_device_type: 'Android',
+                        ramiel_device_id: this.udid,
+                        ramiel_message: mm,
+                    },
+                });
             });
     }
     //
@@ -213,9 +214,16 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                 const msg = `[${this.TAG}] Failed to start service: ${e.message}`;
                 ws.close(4005, msg);
                 console.error(Utils.getTimeISOString(), udid, msg);
-                if (!e.handled) {
-                    Utils.captureMessage(msg, 'Android', udid);
-                }
+                Sentry.captureException(e, {
+                    tags: {
+                        ramiel_device_type: 'Android',
+                        ramiel_device_id: udid,
+                        ramiel_message: e.ramiel_message || msg,
+                    },
+                    contexts: {
+                        Ramiel: e.ramiel_contexts,
+                    },
+                });
             });
         //
         return service;
@@ -251,8 +259,12 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                             .then(() => {
                                 this.logger.info(`remove the installed apk: '${pathToApk}'`);
                             })
-                            .catch((ee) => {
-                                this.logger.error(`failed to install apk: '${fileName}'`, ee);
+                            .catch((e) => {
+                                Sentry.setContext('Ramiel', {
+                                    'File Name': fileName,
+                                });
+                                e.ramiel_message = 'Failed to install apk';
+                                throw e;
                             });
                         return;
                     }
@@ -288,8 +300,8 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                                     });
                             })
                             .catch((e) => {
-                                e.message = 'Failed to swipe';
-                                this.logger.error(e);
+                                e.ramiel_message = 'Failed to swipe';
+                                throw e;
                             });
                         return;
                     }
@@ -297,7 +309,13 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             }
         } catch (e) {
             this.logger.error(e);
-            Utils.captureMessage(e.message, 'Android', this.udid);
+            Sentry.captureException(e, {
+                tags: {
+                    ramiel_device_type: 'Android',
+                    ramiel_device_id: this.udid,
+                    ramiel_message: e.ramiel_message,
+                },
+            });
         }
         super.onSocketMessage(event);
     }
@@ -358,7 +376,13 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             })
             .catch((e) => {
                 this.logger.error(e);
-                Utils.captureMessage('Failed to run setUpTest', 'Android', this.udid);
+                Sentry.captureException(e, {
+                    tags: {
+                        ramiel_device_type: 'Android',
+                        ramiel_device_id: this.udid,
+                        ramiel_message: 'Failed to run setUpTest',
+                    },
+                });
             });
     }
 
