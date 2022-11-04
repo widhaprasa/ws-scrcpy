@@ -156,13 +156,11 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                         this.server.close();
                     } catch (e) {
                         this.logger.error(e);
-
-                        Sentry.captureException(e, {
-                            tags: {
-                                ramiel_device_type: 'iOS',
-                                ramiel_device_id: this.udid,
-                                ramiel_message: e.ramiel_message,
-                            },
+                        Sentry.captureException(e, (scope) => {
+                            scope.setTag('ramiel_device_type', 'iOS');
+                            scope.setTag('ramiel_device_id', this.udid);
+                            scope.setTag('ramiel_message', e.ramiel_message);
+                            return scope;
                         });
                     }
                 }
@@ -432,12 +430,11 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
             (<Function>ev)(driver)
                 .catch((e: Error) => {
                     this.logger.error(e);
-                    Sentry.captureException(e, {
-                        tags: {
-                            ramiel_device_type: 'iOS',
-                            ramiel_device_id: this.udid,
-                            ramiel_message: 'WebDriverAgent event error',
-                        },
+                    Sentry.captureException(e, (scope) => {
+                        scope.setTag('ramiel_device_type', 'iOS');
+                        scope.setTag('ramiel_device_id', this.udid);
+                        scope.setTag('ramiel_message', 'WebDriverAgent event error');
+                        return scope;
                     });
                 })
                 .finally(() => {
@@ -469,12 +466,11 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                     code: -1,
                     text: mm,
                 });
-                Sentry.captureException(new Error(mm), {
-                    tags: {
-                        ramiel_device_type: 'iOS',
-                        ramiel_device_id: this.udid,
-                        ramiel_message: mm,
-                    },
+                Sentry.captureException(new Error(mm), (scope) => {
+                    scope.setTag('ramiel_device_type', 'iOS');
+                    scope.setTag('ramiel_device_id', this.udid);
+                    scope.setTag('ramiel_message', mm);
+                    return scope;
                 });
             });
         }, 100);

@@ -179,12 +179,11 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                 }
                 const mm = `[${tag}] failed to create a session: ${status}`;
                 this.logger.error(mm);
-                Sentry.captureException(e, {
-                    tags: {
-                        ramiel_device_type: 'Android',
-                        ramiel_device_id: this.udid,
-                        ramiel_message: mm,
-                    },
+                Sentry.captureException(e, (scope) => {
+                    scope.setTag('ramiel_device_type', 'Android');
+                    scope.setTag('ramiel_device_id', this.udid);
+                    scope.setTag('ramiel_message', mm);
+                    return scope;
                 });
             });
     }
@@ -211,18 +210,17 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                 return service.setUpTest(udid, appKey, userAgent);
             })
             .catch((e) => {
-                const msg = `[${this.TAG}] Failed to start service: ${e.message}`;
-                ws.close(4005, msg);
-                console.error(Utils.getTimeISOString(), udid, msg);
-                Sentry.captureException(e, {
-                    tags: {
-                        ramiel_device_type: 'Android',
-                        ramiel_device_id: udid,
-                        ramiel_message: e.ramiel_message || msg,
-                    },
-                    contexts: {
-                        Ramiel: e.ramiel_contexts,
-                    },
+                const mm = `[${this.TAG}] Failed to start service: ${e.message}`;
+                ws.close(4005, mm);
+                console.error(Utils.getTimeISOString(), udid, mm);
+                Sentry.captureException(e, (scope) => {
+                    scope.setTag('ramiel_device_type', 'Android');
+                    scope.setTag('ramiel_device_id', udid);
+                    scope.setTag('ramiel_message', e.ramiel_message || mm);
+                    if (e.ramiel_contexts) {
+                        scope.setContext('Ramiel', e.ramiel_contexts);
+                    }
+                    return scope;
                 });
             });
         //
@@ -309,12 +307,11 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             }
         } catch (e) {
             this.logger.error(e);
-            Sentry.captureException(e, {
-                tags: {
-                    ramiel_device_type: 'Android',
-                    ramiel_device_id: this.udid,
-                    ramiel_message: e.ramiel_message,
-                },
+            Sentry.captureException(e, (scope) => {
+                scope.setTag('ramiel_device_type', 'Android');
+                scope.setTag('ramiel_device_id', this.udid);
+                scope.setTag('ramiel_message', e.ramiel_message);
+                return scope;
             });
         }
         super.onSocketMessage(event);
@@ -376,12 +373,11 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             })
             .catch((e) => {
                 this.logger.error(e);
-                Sentry.captureException(e, {
-                    tags: {
-                        ramiel_device_type: 'Android',
-                        ramiel_device_id: this.udid,
-                        ramiel_message: 'Failed to run setUpTest',
-                    },
+                Sentry.captureException(e, (scope) => {
+                    scope.setTag('ramiel_device_type', 'Android');
+                    scope.setTag('ramiel_device_id', this.udid);
+                    scope.setTag('ramiel_message', 'Failed to run setUpTest');
+                    return scope;
                 });
             });
     }

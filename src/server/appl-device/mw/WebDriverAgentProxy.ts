@@ -110,15 +110,14 @@ export class WebDriverAgentProxy extends Mw {
                 this.onStatusChange(command, WdaStatus.ERROR, -1, mm);
                 this.ws.close(4900, e.message);
                 this.logger.error(e);
-                Sentry.captureException(e, {
-                    tags: {
-                        ramiel_device_type: 'iOS',
-                        ramiel_device_id: this.udid,
-                        ramiel_message: e.ramiel_message,
-                    },
-                    contexts: {
-                        Ramiel: e.ramiel_contexts,
-                    },
+                Sentry.captureException(e, (scope) => {
+                    scope.setTag('ramiel_device_type', 'Android');
+                    scope.setTag('ramiel_device_id', udid);
+                    scope.setTag('ramiel_message', e.ramiel_message || mm);
+                    if (e.ramiel_contexts) {
+                        scope.setContext('Ramiel', e.ramiel_contexts);
+                    }
+                    return scope;
                 });
             });
         //
@@ -263,7 +262,8 @@ export class WebDriverAgentProxy extends Mw {
                     e.ramiel_message = e.message = 'undefined response in error';
                 } else if (409 === status) {
                     const userAgent = 'user-agent' in e.response.data ? e.response.data['user-agent'] : '';
-                    e.ramiel_message = e.message = '사용 중인 장비입니다';
+                    e.message = '사용 중인 장비입니다';
+                    e.ramiel_message = 'DEVICE_IS_OCCUPIED';
                     if (userAgent) e.message += ` (${userAgent})`;
 
                     e.ramiel_contexts = {
