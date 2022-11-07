@@ -207,6 +207,28 @@ export class Utils {
             return 'Failed to load Git info: ' + e.message;
         }
     }
+
+    public static getGitPhase(): string {
+        let bb;
+        try {
+            bb = execSync(`cd ${__dirname} && git branch --show-current`).toString().trim();
+        } catch (e) {
+            return 'ErrorPhase';
+        }
+
+        if (['qa', 'op'].includes(bb)) {
+            return bb;
+        }
+        return 'dv';
+    }
+
+    public static getAppVersion(): string {
+        try {
+            return execSync(`cd ${__dirname} && git rev-parse --verify HEAD`).toString().trim();
+        } catch (e) {
+            return 'ErrorHash';
+        }
+    }
     //
 }
 

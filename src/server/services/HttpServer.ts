@@ -6,6 +6,10 @@ import { Utils } from '../Utils';
 import express, { Express } from 'express';
 import { Config } from '../Config';
 import { TypedEmitter } from '../../common/TypedEmitter';
+// TODO: HBsmith
+import * as Sentry from '@sentry/node';
+import * as Tracing from '@sentry/tracing';
+//
 
 const DEFAULT_STATIC_DIR = path.join(__dirname, './public');
 
@@ -127,8 +131,18 @@ export class HttpServer extends TypedEmitter<HttpServerEvents> implements Servic
     public async start(): Promise<void> {
         // TODO: HBsmith
         await Utils.initFileLock();
+
+        const app = express();
+        if (Utils.getGitPhase() === 'op') {
+            Sentry.init({
+                dsn: Config.getInstance().getSentryDSN(),
+                environment: Utils.getGitPhase(),
+                release: `${Config.getInstance().getSentryProject()}@${Utils.getAppVersion()}`,
+                integrations: [new Tracing.Integrations.Express({ app })],
+            });
+        }
+        this.mainApp = app;
         //
-        this.mainApp = express();
         if (HttpServer.SERVE_STATIC && HttpServer.PUBLIC_DIR) {
             // TODO: HBsmith
             this.mainApp.use(this.CheckPermission);
@@ -166,6 +180,9 @@ export class HttpServer extends TypedEmitter<HttpServerEvents> implements Servic
                 }
                 const options = { ...serverItem.options, cert, key };
                 server = https.createServer(options, this.mainApp);
+                // TODO: HBsmith
+                server.timeout = 300 * 1000;
+                //
                 proto = 'https';
             } else {
                 const options = serverItem.options ? { ...serverItem.options } : {};
@@ -196,6 +213,9 @@ export class HttpServer extends TypedEmitter<HttpServerEvents> implements Servic
                     });
                 }
                 server = http.createServer(options, currentApp);
+                // TODO: HBsmith
+                server.timeout = 300 * 1000;
+                //
             }
             this.servers.push({ server, port });
             server.listen(port, () => {
