@@ -223,7 +223,7 @@ export class StreamClientScrcpy
         if (json.type === 'git-info') {
             const gitHashText = document.getElementById('control-footer-hash-name-text');
             if (gitHashText) {
-                gitHashText.textContent = json.data.sha;
+                gitHashText.textContent = json.data
             }
         }
     };

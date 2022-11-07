@@ -201,15 +201,10 @@ export class Utils {
 
     public static getGitInfo() {
         try {
-            return {
-                branch: gitRepoInfo().branch,
-                sha: gitRepoInfo().sha
-            }
+            return gitRepoInfo().branch + '-' + gitRepoInfo().sha;
         } catch (e) {
-            console.error('Failed to load Git info: ' + e);
-            return {
-                sha: 'Failed to load Git info: ' + e
-            };
+            console.error('Failed to load Git info: ' + e.message);
+            return 'Failed to load Git info: ' + e.message;
         }
     }
     //

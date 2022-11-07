@@ -361,7 +361,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
 
     public async setUpTest(appKey: string): Promise<void> {
         this.emit('status-change', { status: WdaStatus.SET_UP_DEVICE_INFO, text: this.deviceName });
-        this.emit('status-change', { status: WdaStatus.SET_UP_GIT_INFO, text: Utils.getGitInfo().sha });
+        this.emit('status-change', { status: WdaStatus.SET_UP_GIT_INFO, text: Utils.getGitInfo() });
         this.emit('status-change', { status: WdaStatus.SET_UP, text: '장비 초기화 중' });
 
         this.appKey = appKey;
