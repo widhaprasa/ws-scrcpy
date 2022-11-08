@@ -27,7 +27,9 @@ export class MjpegProxyFactory {
         const url = `http://127.0.0.1:${port}`;
         const proxy = new MjpegProxy(url);
         proxy.on('streamstop', (): void => {
-            wda.release();
+            // TODO: HBsmith
+            // wda.release();
+            //
         });
         proxy.on('error', (data: { msg: Error; url: string }): void => {
             console.error('msg: ' + data.msg);
