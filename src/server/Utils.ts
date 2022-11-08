@@ -5,6 +5,7 @@ import fs from 'fs';
 import qs from 'qs';
 import { createHmac } from 'crypto';
 import { execSync } from 'child_process';
+import gitRepoInfo from "git-repo-info";
 //
 
 export class Utils {
@@ -196,6 +197,15 @@ export class Utils {
             }
         }
         return port;
+    }
+
+    public static getGitInfo() {
+        try {
+            return gitRepoInfo().branch + '-' + gitRepoInfo().sha;
+        } catch (e) {
+            console.error('Failed to load Git info: ' + e.message);
+            return 'Failed to load Git info: ' + e.message;
+        }
     }
 
     public static getGitPhase(): string {
