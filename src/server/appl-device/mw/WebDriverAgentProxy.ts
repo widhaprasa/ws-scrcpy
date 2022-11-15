@@ -111,7 +111,7 @@ export class WebDriverAgentProxy extends Mw {
                 this.ws.close(4900, e.message);
                 this.logger.error(e);
                 Sentry.captureException(e, (scope) => {
-                    scope.setTag('ramiel_device_type', 'Android');
+                    scope.setTag('ramiel_device_type', 'iOS');
                     scope.setTag('ramiel_device_id', udid);
                     scope.setTag('ramiel_message', e.ramiel_message || mm);
                     if (e.ramiel_contexts) {
