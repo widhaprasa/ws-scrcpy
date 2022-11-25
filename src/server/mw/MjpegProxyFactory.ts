@@ -26,11 +26,11 @@ export class MjpegProxyFactory {
         const port = wda.mjpegPort;
         const url = `http://127.0.0.1:${port}`;
         const proxy = new MjpegProxy(url);
+        /* TODO: HBsmith
         proxy.on('streamstop', (): void => {
-            // TODO: HBsmith
-            // wda.release();
-            //
+            wda.release();
         });
+        */
         proxy.on('error', (data: { msg: Error; url: string }): void => {
             console.error('msg: ' + data.msg);
             console.error('url: ' + data.url);
