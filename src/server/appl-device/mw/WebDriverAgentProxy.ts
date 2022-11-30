@@ -236,7 +236,7 @@ export class WebDriverAgentProxy extends Mw {
             POST: api,
             timestamp: tt,
             'user-agent': this.userAgent,
-            signature: Utils.getSignature(pp, tt),
+            signature: Utils.getSignature(pp),
         });
         const url = `${host}${api}`;
         const tag = WebDriverAgentProxy.TAG;
@@ -291,7 +291,7 @@ export class WebDriverAgentProxy extends Mw {
             DELETE: api,
             timestamp: tt,
             'user-agent': this.userAgent,
-            signature: Utils.getSignature(pp, tt),
+            signature: Utils.getSignature(pp),
         });
         const url = `${host}${api}`;
         const tag = WebDriverAgentProxy.TAG;

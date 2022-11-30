@@ -113,7 +113,7 @@ export class HttpServer extends TypedEmitter<HttpServerEvents> implements Servic
                         'user-agent': userAgent,
                     };
                 }
-                const serverSignature = Utils.getSignature(pp, timestamp);
+                const serverSignature = Utils.getSignature(pp);
                 if (serverSignature != signature) {
                     res.status(400).send('signature');
                     return;

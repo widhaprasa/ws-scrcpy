@@ -148,6 +148,10 @@ export class Config {
     getSentryProject(): string {
         return this.fullConfig.sentryProject || '';
     }
+
+    getAesKey(): string {
+        return this.fullConfig.AES_0 || '';
+    }
     //
 
     public getServers(): ServerItem[] {
