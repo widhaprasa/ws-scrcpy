@@ -315,10 +315,9 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                             });
                         return;
                     }
-                    case ControlMessage.TYPE_HEARTBEAT:
-                        this.lastHeartbeat = Date.now();
-                        return;
                 }
+            } else if (type === ControlMessage.TYPE_HEARTBEAT) {
+                this.lastHeartbeat = Date.now();
             }
         } catch (e) {
             this.logger.error(e);

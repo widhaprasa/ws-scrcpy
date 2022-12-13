@@ -168,7 +168,7 @@ export class StreamClientScrcpy
         }
 
         this.heartbeatTimer = setInterval(() => {
-            this.sendMessage(CommandControlMessage.createHeartBeatCommand());
+            this.sendMessage(CommandControlMessage.createHeartbeatCommand());
         }, 120 * 1000);
         //
     }
