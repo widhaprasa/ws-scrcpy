@@ -121,7 +121,7 @@ export abstract class StreamClient<T extends ParamsStream> extends BaseClient<T,
         this.appKey = 'app_key' in params ? params['app_key']?.toString() : undefined;
         this.userAgent = 'user-agent' in params ? params['user-agent']?.toString() : undefined;
         this.heartbeatTimer = setInterval(() => {
-            // return this.wdaProxy.sendHeartbeat();
+            return this.wdaProxy.sendHeartbeat();
         }, 120 * 1000);
         //
 
