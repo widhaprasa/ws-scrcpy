@@ -109,7 +109,7 @@ export abstract class StreamClient<T extends ParamsStream> extends BaseClient<T,
     // TODO: HBsmith
     protected appKey?: string;
     protected userAgent?: string;
-    private heartbeatTimer: NodeJS.Timeout;
+    private readonly heartbeatTimer: NodeJS.Timeout;
     //
 
     protected constructor(params: ParsedUrlQuery | T) {

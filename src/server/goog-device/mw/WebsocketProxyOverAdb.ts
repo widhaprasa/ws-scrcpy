@@ -23,10 +23,18 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
     private userAgent = '';
     private apiSessionCreated = false;
     private logger: Logger;
+    private lastHeartbeat: number = Date.now();
+    private readonly heartbeatTimer: NodeJS.Timeout;
 
     constructor(ws: WS | Multiplexer, udid: string) {
         super(ws);
         this.logger = new Logger(udid, 'Android');
+        this.heartbeatTimer = setInterval(() => {
+            if (Date.now() - this.lastHeartbeat < 300 * 1000) {
+                return;
+            }
+            this.ws.close(4900, 'Heartbeat timeout');
+        }, 1000);
     }
     //
 
@@ -234,6 +242,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
     public release(): void {
         this.tearDownTest();
         super.release();
+        clearInterval(this.heartbeatTimer);
     }
 
     protected onSocketMessage(event: WS.MessageEvent): void {
@@ -306,6 +315,9 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                             });
                         return;
                     }
+                    case ControlMessage.TYPE_HEARTBEAT:
+                        this.lastHeartbeat = Date.now();
+                        return;
                 }
             }
         } catch (e) {
