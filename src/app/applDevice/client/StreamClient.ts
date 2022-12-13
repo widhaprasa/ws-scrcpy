@@ -199,12 +199,17 @@ export abstract class StreamClient<T extends ParamsStream> extends BaseClient<T,
         switch (data.status) {
             case WdaStatus.STARTING:
             case WdaStatus.STARTED:
-            case WdaStatus.STOPPED:
-            case WdaStatus.ERROR:
             case WdaStatus.IN_ACTION:
             case WdaStatus.END_ACTION:
                 this.logWdaStatus(message);
                 break;
+            // TODO: HBsmith
+            case WdaStatus.STOPPED:
+            case WdaStatus.ERROR:
+                this.player?.stop();
+                this.logWdaStatus(message);
+                break;
+            //
             case WdaStatus.SET_UP_DEVICE_INFO:
                 if (data.text) {
                     this.deviceName = data.text;
