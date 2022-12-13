@@ -221,6 +221,15 @@ export class CommandControlMessage extends ControlMessage {
         event.buffer = buffer;
         return event;
     }
+
+    public static createHeartBeatCommand(): CommandControlMessage {
+        const event = new CommandControlMessage(ControlMessage.TYPE_HEARTBEAT);
+        let offset = 0;
+        const buffer = Buffer.alloc(1);
+        offset = buffer.writeInt8(event.type, offset);
+        event.buffer = buffer;
+        return event;
+    }
     //
 
     private buffer?: Buffer;

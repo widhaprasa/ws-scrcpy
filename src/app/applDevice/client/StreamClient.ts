@@ -109,6 +109,7 @@ export abstract class StreamClient<T extends ParamsStream> extends BaseClient<T,
     // TODO: HBsmith
     protected appKey?: string;
     protected userAgent?: string;
+    private heartbeatTimer: NodeJS.Timeout;
     //
 
     protected constructor(params: ParsedUrlQuery | T) {
@@ -119,6 +120,9 @@ export abstract class StreamClient<T extends ParamsStream> extends BaseClient<T,
         // TODO: HBsmith
         this.appKey = 'app_key' in params ? params['app_key']?.toString() : undefined;
         this.userAgent = 'user-agent' in params ? params['user-agent']?.toString() : undefined;
+        this.heartbeatTimer = setInterval(() => {
+            // return this.wdaProxy.sendHeartbeat();
+        }, 120 * 1000);
         //
 
         const controlHeaderView = document.createElement('div');
@@ -265,6 +269,9 @@ export abstract class StreamClient<T extends ParamsStream> extends BaseClient<T,
         }
         this.wdaProxy.stop();
         this.player?.stop();
+        // TODO: HBsmith
+        clearInterval(this.heartbeatTimer);
+        //
     }
 
     public setWdaStatusNotification(status: WdaStatus): void {
