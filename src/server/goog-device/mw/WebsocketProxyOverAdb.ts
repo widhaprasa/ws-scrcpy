@@ -30,7 +30,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
         super(ws);
         this.logger = new Logger(udid, 'Android');
         this.heartbeatTimer = setInterval(() => {
-            if (Date.now() - this.lastHeartbeat < 300 * 1000) {
+            if (Date.now() - this.lastHeartbeat < 120 * 1000) {
                 return;
             }
             this.ws.close(4900, 'Heartbeat timeout');

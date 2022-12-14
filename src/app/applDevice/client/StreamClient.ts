@@ -122,7 +122,7 @@ export abstract class StreamClient<T extends ParamsStream> extends BaseClient<T,
         this.userAgent = 'user-agent' in params ? params['user-agent']?.toString() : undefined;
         this.heartbeatTimer = setInterval(() => {
             return this.wdaProxy.sendHeartbeat();
-        }, 120 * 1000);
+        }, 60 * 1000);
         //
 
         const controlHeaderView = document.createElement('div');

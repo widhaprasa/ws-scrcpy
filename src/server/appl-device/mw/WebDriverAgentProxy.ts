@@ -51,7 +51,7 @@ export class WebDriverAgentProxy extends Mw {
         this.logger = new Logger(udid, 'iOS');
         this.lastHeartbeat = Date.now();
         this.heartbeatTimer = setInterval(() => {
-            if (Date.now() - this.lastHeartbeat < 300 * 1000) {
+            if (Date.now() - this.lastHeartbeat < 120 * 1000) {
                 return;
             }
             if (this.wda) {
