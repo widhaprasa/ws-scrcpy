@@ -67,7 +67,7 @@ export class Utils {
 
     public static getSignature(params: Record<string, unknown>): string {
         const algorithm = 'sha1';
-        const privateKey = Config.getInstance().getAesKey();
+        const privateKey = Config.getInstance().getHMACIdcKey();
         const secretKey = privateKey + '&';
         let baseString = this.getBaseString(params);
         baseString = encodeURIComponent(baseString);

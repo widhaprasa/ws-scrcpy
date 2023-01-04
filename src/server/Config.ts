@@ -149,8 +149,8 @@ export class Config {
         return this.fullConfig.sentryProject || '';
     }
 
-    getAesKey(): string {
-        return this.fullConfig.AES_0 || '';
+    getHMACIdcKey(): string {
+        return this.fullConfig.HMAC_IDC_KEY || '';
     }
     //
 
