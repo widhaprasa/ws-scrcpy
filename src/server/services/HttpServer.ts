@@ -113,10 +113,10 @@ export class HttpServer extends TypedEmitter<HttpServerEvents> implements Servic
                     }
 
                     const pp = {
-                            GET: api,
-                            timestamp: timestamp,
-                            'user-agent': userAgent,
-                        };
+                        GET: api,
+                        timestamp: timestamp,
+                        'user-agent': userAgent,
+                    };
                     if (appKey) {
                         // @ts-ignore
                         pp['app_key'] = appKey;
