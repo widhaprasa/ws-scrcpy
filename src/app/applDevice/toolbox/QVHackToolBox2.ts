@@ -1,11 +1,11 @@
+import BtnDoubleUp from '../../../public/images/buttons/btn-double-up.png';
+import BtnDoubleDown from '../../../public/images/buttons/btn-double-down.png';
 import BtnHomePng from '../../../public/images/buttons/btn-home.png';
 import BtnSendTextPng from '../../../public/images/buttons/btn-send-text.png';
 import BtnTerminateAppPng from '../../../public/images/buttons/btn-terminate-app.png';
 import BtnUnlockPng from '../../../public/images/buttons/btn-unlock.png';
 import { Optional, ToolBoxElement } from '../../toolbox/ToolBoxElement';
 import { WdaProxyClient } from '../client/WdaProxyClient';
-import BtnDoubleUp from "../../../public/images/buttons/btn-double-up.png";
-import BtnDoubleDown from "../../../public/images/buttons/btn-double-down.png";
 
 const BUTTONS = [
     {
