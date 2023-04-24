@@ -4,6 +4,7 @@ import BtnBackPng from '../../../public/images/buttons/btn-back.png';
 import BtnDoubleUp from '../../../public/images/buttons/btn-double-up.png';
 import BtnDoubleDown from '../../../public/images/buttons/btn-double-down.png';
 import BtnHomePng from '../../../public/images/buttons/btn-home.png';
+import BtnLock from '../../../public/images/buttons/btn-lock.png';
 import BtnRotatePng from '../../../public/images/buttons/btn-rotate.png';
 import BtnSendText from '../../../public/images/buttons/btn-send-text.png';
 import BtnTerminateAppPng from '../../../public/images/buttons/btn-terminate-app.png';
@@ -57,6 +58,12 @@ const BUTTONS = [
         title: 'TerminateApp',
         icon: BtnTerminateAppPng,
         type: 'CommandControlMessage',
+    },
+    {
+        title: 'Unlock',
+        code: KeyEvent.KEYCODE_SLEEP,
+        icon: BtnLock,
+        type: 'KeyCodeControlMessage',
     },
 ];
 
