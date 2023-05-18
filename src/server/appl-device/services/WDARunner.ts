@@ -202,9 +202,9 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
             case WDAMethod.GET_SCREEN_WIDTH:
                 return WdaRunner.getScreenWidth(this.udid, driver);
             case WDAMethod.CLICK:
-                const [x, y] = [args.x, args.y];
+                const { x, y } = args;
                 this.wdaEvents.push((driver: XCUITestDriver) => {
-                    return driver.performTouch([{ action: 'tap', options: { x: x, y: y } }]);
+                    return driver.performTouch([{ action: 'tap', options: { x, y } }]);
                 });
                 return;
             case WDAMethod.PRESS_BUTTON:
@@ -254,6 +254,12 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                     });
                     return;
                 });
+            case WDAMethod.TAP_LONG:
+                this.wdaEvents.push((driver: XCUITestDriver) => {
+                    args.duration = 1.0;
+                    return driver.mobileTouchAndHold(args);
+                });
+                return;
             //
             default:
                 return `Unknown command: ${method}`;

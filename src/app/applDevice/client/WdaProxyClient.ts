@@ -43,7 +43,8 @@ const TAG = '[WdaProxyClient]';
 
 export class WdaProxyClient
     extends ManagerClient<ParamsWdaProxy, WdaProxyClientEvents>
-    implements TouchHandlerListener {
+    implements TouchHandlerListener
+{
     public static calculatePhysicalPoint(
         screenInfo: ScreenInfo,
         screenWidth: number,
@@ -276,6 +277,21 @@ export class WdaProxyClient
             return;
         }
         return this.requestWebDriverAgent(WDAMethod.CLICK, {
+            x: point.x,
+            y: point.y,
+        });
+    }
+
+    public async performTapLong(position: Position): Promise<void> {
+        if (!this.screenInfo) {
+            return;
+        }
+        const screenWidth = this.screenWidth || (await this.getScreenWidth());
+        const point = WdaProxyClient.calculatePhysicalPoint(this.screenInfo, screenWidth, position);
+        if (!point) {
+            return;
+        }
+        return this.requestWebDriverAgent(WDAMethod.TAP_LONG, {
             x: point.x,
             y: point.y,
         });
