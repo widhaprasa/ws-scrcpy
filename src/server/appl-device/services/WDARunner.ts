@@ -448,6 +448,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
             }
             this.wdaEventInAction = true;
             this.emit('status-change', { status: WdaStatus.IN_ACTION, text: '제어 중' });
+            // eslint-disable-next-line @typescript-eslint/ban-types
             (<Function>ev)(driver)
                 .catch((e: Error) => {
                     this.logger.error(e);
