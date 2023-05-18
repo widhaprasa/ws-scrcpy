@@ -5,7 +5,7 @@ import Position from '../Position';
 
 export interface TouchHandlerListener {
     performClick: (position: Position) => void;
-    performScroll: (from: Position, to: Position) => void;
+    performScroll: (from: Position, to: Position, holdAtStart: boolean) => void;
     performTapLong: (position: Position) => void;
 }
 
@@ -16,6 +16,8 @@ export class SimpleInteractionHandler extends InteractionHandler {
     private endPosition?: Position;
     // TODO: HBsmith
     private startTime?: Date;
+    private holdAtStart = false;
+    private holdAtStartFlag = false;
     //
     private static readonly touchEventsNames: InteractionEvents[] = ['mousedown', 'mouseup', 'mousemove'];
     private storage = new Map();
@@ -46,6 +48,8 @@ export class SimpleInteractionHandler extends InteractionHandler {
                     this.startPosition = events[0].position;
                     // TODO: HBsmith
                     this.startTime = new Date();
+                    this.holdAtStart = false;
+                    this.holdAtStartFlag = false;
                     //
                 } else {
                     if (this.startPosition) {
@@ -63,6 +67,11 @@ export class SimpleInteractionHandler extends InteractionHandler {
                         this.drawLine(this.startPosition.point, this.endPosition.point);
                     }
                 }
+                if (e.type === 'mousemove' && !this.holdAtStartFlag) {
+                    this.holdAtStartFlag = true;
+                    const duration = !this.startTime ? 0 : new Date().getTime() - this.startTime.getTime();
+                    if (duration > 500) this.holdAtStart = true;
+                }
                 if (e.type === 'mouseup') {
                     if (this.startPosition && this.endPosition) {
                         this.clearCanvas();
@@ -73,7 +82,7 @@ export class SimpleInteractionHandler extends InteractionHandler {
                             else this.listener.performTapLong(this.endPosition);
                             //
                         } else {
-                            this.listener.performScroll(this.startPosition, this.endPosition);
+                            this.listener.performScroll(this.startPosition, this.endPosition, this.holdAtStart);
                         }
                     }
                 }

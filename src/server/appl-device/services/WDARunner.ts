@@ -214,8 +214,17 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                 });
                 return;
             case WDAMethod.SCROLL:
-                const { from, to } = args;
+                const { from, to, holdAtStart } = args;
                 this.wdaEvents.push((driver: XCUITestDriver) => {
+                    if (holdAtStart) {
+                        return driver.mobileDragFromToForDuration({
+                            duration: 0.5,
+                            fromX: from.x,
+                            fromY: from.y,
+                            toX: to.x,
+                            toY: to.y,
+                        });
+                    }
                     return driver.performTouch([
                         { action: 'press', options: { x: from.x, y: from.y } },
                         { action: 'wait', options: { ms: 500 } },

@@ -245,7 +245,7 @@ export class WdaProxyClient
                 const from = new Position(new Point(pointX, pointY + 200), videoSize);
                 const to = new Position(new Point(pointX, pointY - 200), videoSize);
 
-                return this.performScroll(from, to);
+                return this.performScroll(from, to, false);
             }
             case 'swipeDown': {
                 if (!this.screenInfo) {
@@ -258,7 +258,7 @@ export class WdaProxyClient
                 const from = new Position(new Point(pointX, pointY - 200), videoSize);
                 const to = new Position(new Point(pointX, pointY + 200), videoSize);
 
-                return this.performScroll(from, to);
+                return this.performScroll(from, to, false);
             }
             case 'lock': {
                 return this.requestWebDriverAgent(WDAMethod.LOCK);
@@ -297,7 +297,7 @@ export class WdaProxyClient
         });
     }
 
-    public async performScroll(from: Position, to: Position): Promise<void> {
+    public async performScroll(from: Position, to: Position, holdAtStart: boolean): Promise<void> {
         if (!this.screenInfo) {
             return;
         }
@@ -316,6 +316,7 @@ export class WdaProxyClient
                 x: toPoint.x,
                 y: toPoint.y,
             },
+            holdAtStart: holdAtStart,
         });
     }
 
