@@ -134,6 +134,10 @@ export class Utils {
     }
 
     public static async initFileLock(): Promise<void> {
+        try {
+            fs.mkdirSync(Utils.PathToFileLock);
+        } catch (e) {}
+
         const pp = `${Utils.PathToFileLock}/${Config.getInstance().getServerPort()}`;
         try {
             if (fs.existsSync(pp)) {
@@ -141,7 +145,7 @@ export class Utils {
             }
             fs.mkdirSync(pp);
         } catch (e) {
-            console.log(e);
+            console.error(e);
         }
     }
 
