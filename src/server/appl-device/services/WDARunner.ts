@@ -204,18 +204,21 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
             case WDAMethod.CLICK:
                 const { x, y } = args;
                 this.wdaEvents.push((driver: XCUITestDriver) => {
+                    this.logger.info(`[WDA EVENT] CLICK: ${x}, ${y}`);
                     return driver.performTouch([{ action: 'tap', options: { x, y } }]);
                 });
                 return;
             case WDAMethod.PRESS_BUTTON:
                 const name = args.name;
                 this.wdaEvents.push((driver: XCUITestDriver) => {
+                    this.logger.info(`[WDA EVENT] PRESS_BUTTON: ${name}`);
                     return driver.mobilePressButton({ name: name });
                 });
                 return;
             case WDAMethod.SCROLL:
                 const { from, to, holdAtStart } = args;
                 this.wdaEvents.push((driver: XCUITestDriver) => {
+                    this.logger.info(`[WDA EVENT] SCROLL: from(${from}), to(${to}, ${holdAtStart}`);
                     if (holdAtStart) {
                         return driver.mobileDragFromToForDuration({
                             duration: 0.5,
@@ -238,6 +241,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
             case WDAMethod.SEND_KEYS:
                 const keys = args.keys;
                 this.wdaEvents.push((driver: XCUITestDriver) => {
+                    this.logger.info(`[WDA EVENT] SEND_KEYS: ${keys}`);
                     return driver.keys(keys);
                 });
                 return;
@@ -266,6 +270,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
             case WDAMethod.TAP_LONG:
                 this.wdaEvents.push((driver: XCUITestDriver) => {
                     args.duration = 1.0;
+                    this.logger.info(`[WDA EVENT] TAP_LONG: ${args}`);
                     return driver.mobileTouchAndHold(args);
                 });
                 return;
