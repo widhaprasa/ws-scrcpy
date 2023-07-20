@@ -7,6 +7,11 @@ import { createHmac } from 'crypto';
 import { execSync } from 'child_process';
 import gitRepoInfo from 'git-repo-info';
 import { Config } from './Config';
+/// #if INCLUDE_APPL
+import { WebDriverAgentProxy } from './appl-device/mw/WebDriverAgentProxy';
+/// #else
+import { WebsocketProxyOverAdb } from './goog-device/mw/WebsocketProxyOverAdb';
+/// #endif
 //
 
 export class Utils {
@@ -133,6 +138,22 @@ export class Utils {
         fs.unlinkSync(`${Utils.PathToFileLock}/${Config.getInstance().getServerPort()}/${file}`);
     }
 
+    public static async initDevices(): Promise<void> {
+        /// #if INCLUDE_APPL
+        console.log('initDevices: iOS');
+        const iDevs = Utils.getIOSDevices();
+        iDevs.forEach((udid) => {
+            WebDriverAgentProxy.deleteSession(udid, 'ws-scrcpy initDevices');
+        });
+        /// #else
+        console.log('initDevices: Android');
+        const aDevs = Utils.getAndroidDevices();
+        aDevs.forEach((udid) => {
+            WebsocketProxyOverAdb.deleteSession(udid, 'ws-scrcpy initDevices');
+        });
+        /// #endif
+    }
+
     public static async initFileLock(): Promise<void> {
         try {
             fs.mkdirSync(Utils.PathToFileLock);
@@ -233,6 +254,24 @@ export class Utils {
             return execSync(`cd ${__dirname} && git rev-parse --verify HEAD`).toString().trim();
         } catch (e) {
             return 'ErrorHash';
+        }
+    }
+
+    public static getAndroidDevices(): string[] {
+        try {
+            const rr = execSync('adb devices | tail -n +2 | cut -f 1').toString().trim();
+            return rr.split('\n').filter(Boolean);
+        } catch (e) {
+            return [];
+        }
+    }
+
+    public static getIOSDevices(): string[] {
+        try {
+            const rr = execSync('idevice_id -l').toString().trim();
+            return rr.split('\n').filter(Boolean);
+        } catch (e) {
+            return [];
         }
     }
     //
