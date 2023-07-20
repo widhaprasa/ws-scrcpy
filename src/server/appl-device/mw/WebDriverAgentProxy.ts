@@ -132,15 +132,6 @@ export class WebDriverAgentProxy extends Mw {
                 this.onStatusChange(command, WdaStatus.ERROR, -1, mm);
                 this.ws.close(4900, e.message);
                 this.logger.error(e);
-                Sentry.captureException(e, (scope) => {
-                    scope.setTag('ramiel_device_type', 'iOS');
-                    scope.setTag('ramiel_device_id', udid);
-                    scope.setTag('ramiel_message', e.ramiel_message || mm);
-                    if (e.ramiel_contexts) {
-                        scope.setContext('Ramiel', e.ramiel_contexts);
-                    }
-                    return scope;
-                });
             });
         //
     }
