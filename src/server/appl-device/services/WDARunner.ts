@@ -468,7 +468,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                 this.emit('status-change', {
                     status: WdaStatus.END_ACTION,
                     text: '제어 실패',
-                    error: e,
+                    error: e.stack || e.message || e,
                 });
             } finally {
                 this.wdaEventInAction = false;
