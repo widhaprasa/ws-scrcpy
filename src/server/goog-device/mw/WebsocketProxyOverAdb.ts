@@ -291,6 +291,8 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                                 return device.runShellCommandAdbKit('wm size | tail -1');
                             })
                             .then((rr) => {
+                                if (!rr) throw Error('Failed to get screen size');
+
                                 let [, ww, hh] = rr.match(/(\d+)x(\d+)/);
                                 if (isLandscape) {
                                     [ww, hh] = [hh, ww];
