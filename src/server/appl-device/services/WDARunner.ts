@@ -386,7 +386,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
             return rr.data;
         } catch (error) {
             let msg;
-            if ('response' in error) {
+            if (error.response && error.response.status) {
                 msg = `[${WdaRunner.TAG}] Cannot retrieve the device ${udid}. resp code: ${error.response.status}`;
             } else {
                 msg = `[${WdaRunner.TAG}] ${error.message}`;
