@@ -139,6 +139,7 @@ export class WebDriverAgentProxy extends Mw {
                     if (e.ramiel_contexts) {
                         scope.setContext('Ramiel', e.ramiel_contexts);
                     }
+                    scope.setExtra('ramiel_stack', e.stack);
                     return scope;
                 });
             });

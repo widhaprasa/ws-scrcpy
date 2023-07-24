@@ -184,6 +184,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                     scope.setTag('ramiel_device_type', 'Android');
                     scope.setTag('ramiel_device_id', this.udid);
                     scope.setTag('ramiel_message', mm);
+                    scope.setExtra('ramiel_stack', e.stack);
                     return scope;
                 });
             });
@@ -224,6 +225,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                     if (e.ramiel_contexts) {
                         scope.setContext('Ramiel', e.ramiel_contexts);
                     }
+                    scope.setExtra('ramiel_stack', e.stack);
                     return scope;
                 });
             });
@@ -334,6 +336,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                 scope.setTag('ramiel_device_type', 'Android');
                 scope.setTag('ramiel_device_id', this.udid);
                 scope.setTag('ramiel_message', e.ramiel_message);
+                scope.setExtra('ramiel_stack', e.stack);
                 return scope;
             });
         }
@@ -400,6 +403,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                     scope.setTag('ramiel_device_type', 'Android');
                     scope.setTag('ramiel_device_id', this.udid);
                     scope.setTag('ramiel_message', 'Failed to run setUpTest');
+                    scope.setExtra('ramiel_stack', e.stack);
                     return scope;
                 });
             });

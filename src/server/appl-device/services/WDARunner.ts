@@ -160,6 +160,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                             scope.setTag('ramiel_device_type', 'iOS');
                             scope.setTag('ramiel_device_id', this.udid);
                             scope.setTag('ramiel_message', e.ramiel_message);
+                            scope.setExtra('ramiel_stack', e.stack);
                             return scope;
                         });
                     }
@@ -468,6 +469,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                         scope.setTag('ramiel_device_type', 'iOS');
                         scope.setTag('ramiel_device_id', this.udid);
                         scope.setTag('ramiel_message', 'WebDriverAgent event error');
+                        scope.setExtra('ramiel_stack', e.stack);
                         return scope;
                     });
                 })
