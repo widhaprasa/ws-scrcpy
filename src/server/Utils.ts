@@ -10,7 +10,7 @@ import { Config } from './Config';
 //
 
 export class Utils {
-    private static readonly PathToFileLock: string = '/tmp/ramiel_file_lock';
+    private static readonly PathToFileLock: string = `${os.homedir()}/.ramiel`;
 
     public static readonly BasePort = 38000;
     public static readonly StopPort = 40000;
@@ -100,7 +100,7 @@ export class Utils {
         });
     }
 
-    private static checkExpiredFileLock(file: string): void {
+    private static async checkExpiredFileLock(file: string): Promise<void> {
         const pp = `${Utils.PathToFileLock}/${Config.getInstance().getServerPort()}/${file}`;
         if (!fs.existsSync(pp)) {
             return;
@@ -118,13 +118,15 @@ export class Utils {
 
         console.log(`Expired file lock found: ${pp}, ${ee}ms`);
         try {
-            fs.unlinkSync(pp);
+            await fs.unlinkSync(pp);
         } catch (e) {
             console.log(`Error while deleting expired file lock: ${pp}`);
         }
     }
 
-    private static fileLock(file: string): void {
+    private static async fileLock(file: string): Promise<void> {
+        await Utils.ensureFileLockDir();
+
         const fd = fs.openSync(`${Utils.PathToFileLock}/${Config.getInstance().getServerPort()}/${file}`, 'wx');
         fs.closeSync(fd);
     }
@@ -133,20 +135,21 @@ export class Utils {
         fs.unlinkSync(`${Utils.PathToFileLock}/${Config.getInstance().getServerPort()}/${file}`);
     }
 
+    public static async ensureFileLockDir(): Promise<void> {
+        const pp = `${Utils.PathToFileLock}/${Config.getInstance().getServerPort()}`;
+        try {
+            fs.mkdirSync(pp, { recursive: true });
+        } catch (e) {
+            console.error(`[${Utils.getTimeISOString()}] Failed to create filelock dir`, e.stack);
+        }
+    }
+
     public static async initFileLock(): Promise<void> {
         try {
             fs.mkdirSync(Utils.PathToFileLock);
         } catch (e) {}
 
-        const pp = `${Utils.PathToFileLock}/${Config.getInstance().getServerPort()}`;
-        try {
-            if (fs.existsSync(pp)) {
-                fs.rmdirSync(pp, { recursive: true });
-            }
-            fs.mkdirSync(pp);
-        } catch (e) {
-            console.error(e);
-        }
+        await Utils.ensureFileLockDir();
     }
 
     private static getLastFileLock(): number {
@@ -190,8 +193,8 @@ export class Utils {
                     throw Error('No free port found');
                 }
                 const pp = `${port}.lock`;
-                Utils.checkExpiredFileLock(pp);
-                Utils.fileLock(pp);
+                await Utils.checkExpiredFileLock(pp);
+                await Utils.fileLock(pp);
                 break;
             } catch (e) {
                 if ('EEXIST' === e.code && i < 2) {
