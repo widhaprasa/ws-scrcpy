@@ -139,7 +139,6 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                 } else {
                     e.ramiel_message = e.message;
                 }
-
                 ws.close(4900, e.message);
                 throw e;
             });
