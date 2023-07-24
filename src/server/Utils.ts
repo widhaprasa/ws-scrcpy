@@ -118,7 +118,7 @@ export class Utils {
 
         console.log(`Expired file lock found: ${pp}, ${ee}ms`);
         try {
-            await fs.unlinkSync(pp);
+            fs.unlinkSync(pp);
         } catch (e) {
             console.log(`Error while deleting expired file lock: ${pp}`);
         }
@@ -145,9 +145,15 @@ export class Utils {
     }
 
     public static async initFileLock(): Promise<void> {
+        const pp = `${Utils.PathToFileLock}/${Config.getInstance().getServerPort()}`;
         try {
-            fs.mkdirSync(Utils.PathToFileLock);
-        } catch (e) {}
+            if (fs.existsSync(pp)) {
+                fs.rmdirSync(pp, { recursive: true });
+            }
+            fs.mkdirSync(pp);
+        } catch (e) {
+            console.error(e);
+        }
 
         await Utils.ensureFileLockDir();
     }
