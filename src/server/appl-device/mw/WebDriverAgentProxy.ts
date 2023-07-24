@@ -131,7 +131,7 @@ export class WebDriverAgentProxy extends Mw {
                 const mm = e.text || e.message || '알 수 없는 이유로 장비 초기화에 실패하였습니다.';
                 this.onStatusChange(command, WdaStatus.ERROR, -1, mm);
                 this.ws.close(4900, e.message);
-                this.logger.error(e);
+                this.logger.error(e.stack);
                 Sentry.captureException(e, (scope) => {
                     scope.setTag('ramiel_device_type', 'iOS');
                     scope.setTag('ramiel_device_id', udid);
@@ -278,27 +278,20 @@ export class WebDriverAgentProxy extends Mw {
                 this.logger.info(`[${tag}] success to create session. resp code: ${rr.status}`);
             })
             .catch((e) => {
-                let status;
-                try {
-                    status = e.response && e.response.status ? e.response.status : 'unknown1';
-                } catch {
-                    status = e.toString();
-                }
-                console.error(Utils.getTimeISOString(), `[${tag}] failed to create a session: ${status}`);
-
                 e.message = `[${WebDriverAgentProxy.TAG}] failed to create a session for ${this.udid}`;
-                if (!e.response) {
-                    e.ramiel_message = e.message = 'undefined response in error';
-                } else if (409 === status) {
-                    const userAgent = 'user-agent' in e.response.data ? e.response.data['user-agent'] : '';
-                    e.ramiel_message = e.message = '사용 중인 장비입니다';
-                    if (userAgent) e.message += ` (${userAgent})`;
-
-                    e.ramiel_contexts = {
-                        'User Agent': userAgent,
-                    };
-                } else if (410 === status) {
-                    e.ramiel_message = e.message = `장비의 연결이 끊어져 있습니다`;
+                if (e.response) {
+                    if (409 === e.response.status) {
+                        const userAgent = e.response.data['user-agent'];
+                        e.ramiel_message = e.message = '사용 중인 장비입니다';
+                        if (userAgent) e.message += ` (${userAgent})`;
+                        e.ramiel_contexts = { 'User Agent': userAgent };
+                    } else if (410 === e.response.status) {
+                        e.ramiel_message = e.message = '장비의 연결이 끊어져 있습니다';
+                    }
+                } else if (e.request) {
+                    e.ramiel_message = e.message = 'api server is not responding';
+                } else {
+                    e.ramiel_message = e.message;
                 }
                 throw e;
             });
@@ -334,13 +327,13 @@ export class WebDriverAgentProxy extends Mw {
                 this.logger.info(`[${tag}] success to delete a session. resp code: ${rr.status}`);
             })
             .catch((e) => {
-                let status;
-                try {
-                    status = 'response' in e && 'status' in e.response ? e.response.status : 'unknown1';
-                } catch {
-                    status = e.message;
+                if (e.response) {
+                    this.logger.error(`[${tag}] failed to create a session: ${e.response.status}`);
+                } else if (e.request) {
+                    this.logger.error(`[${tag}] failed to create a session: api server is not reponding`);
+                } else {
+                    this.logger.error(`[${tag}] failed to create a session: ${e.stack}`);
                 }
-                console.error(Utils.getTimeISOString(), `[${tag}] failed to create a session: ${status}`);
             });
     }
     //

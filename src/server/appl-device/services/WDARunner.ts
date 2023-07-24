@@ -384,15 +384,17 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                 params: data,
             });
             return rr.data;
-        } catch (error) {
+        } catch (e) {
             let msg;
-            if ('response' in error) {
-                msg = `[${WdaRunner.TAG}] Cannot retrieve the device ${udid}. resp code: ${error.response.status}`;
+            if (e.response) {
+                msg = `[${WdaRunner.TAG}] Cannot retrieve the device ${udid}. resp code: ${e.response.status}`;
+            } else if (e.request) {
+                msg = `[${WdaRunner.TAG}] api server is not responding.`;
             } else {
-                msg = `[${WdaRunner.TAG}] ${error.message}`;
+                msg = `[${WdaRunner.TAG}] ${e.message}`;
             }
             console.error(Utils.getTimeISOString(), udid, msg);
-            throw error;
+            throw e;
         }
     }
 
