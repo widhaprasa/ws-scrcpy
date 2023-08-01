@@ -98,7 +98,11 @@ export class HttpServer extends TypedEmitter<HttpServerEvents> implements Servic
                             params: { team_name: teamName }
                         });
                     } catch (e) {
-                        res.status(401).send((e.response && e.response.status) || 'UNAUTHORIZED');
+                        if (e.response) {
+                            res.status(401).send('UNAUTHORIZED');
+                        } else {
+                            res.status(503).send('api server is not responding');
+                        }
                         return;
                     }
                 } else {
