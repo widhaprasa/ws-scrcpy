@@ -144,20 +144,20 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             });
     }
 
-    private apiDeleteSession() {
+    public static deleteSession(udid: string, userAgent: string, logger: Logger | null = null) {
         const host = Config.getInstance().getRamielApiServerEndpoint();
-        const api = `/real-devices/${this.udid}/control/`;
+        const api = `/real-devices/${udid}/control/`;
         const hh = { 'Content-Type': 'application/x-www-form-urlencoded; charset=utf8' };
         const tt = Utils.getTimestamp();
         const pp = {
             DELETE: api,
             timestamp: tt,
-            'user-agent': this.userAgent,
+            'user-agent': userAgent,
         };
         const data = qs.stringify({
             DELETE: api,
             timestamp: tt,
-            'user-agent': this.userAgent,
+            'user-agent': userAgent,
             signature: Utils.getSignature(pp),
         });
         const url = `${host}${api}`;
@@ -169,25 +169,23 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                 data: data,
             })
             .then((rr) => {
-                this.logger.info(`[${tag}] success to delete a session. resp code: ${rr.status}`);
+                if (logger) logger.info(`[${tag}] success to delete a session. resp code: ${rr.status}`);
             })
             .catch((e) => {
                 let status;
                 try {
-                    status = 'response' in e && 'status' in e.response ? e.response.status : 'unknown1';
+                    status = 'response' in e && 'status' in e.response ? e.response.status : 'unknown_android';
                 } catch {
                     status = e.toString();
                 }
                 const mm = `[${tag}] failed to create a session: ${status}`;
-                this.logger.error(mm);
-                Sentry.captureException(e, (scope) => {
-                    scope.setTag('ramiel_device_type', 'Android');
-                    scope.setTag('ramiel_device_id', this.udid);
-                    scope.setTag('ramiel_message', mm);
-                    scope.setExtra('ramiel_stack', e.stack);
-                    return scope;
-                });
+                if (logger) logger.error(mm);
             });
+    }
+
+    private apiDeleteSession() {
+        if (!this.udid) return;
+        WebsocketProxyOverAdb.deleteSession(this.udid, this.userAgent, this.logger);
     }
     //
 

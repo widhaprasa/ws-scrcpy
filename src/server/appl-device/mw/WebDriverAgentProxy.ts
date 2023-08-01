@@ -298,6 +298,44 @@ export class WebDriverAgentProxy extends Mw {
             });
     }
 
+    public static deleteSession(udid: string, userAgent: string, logger: Logger | null = null) {
+        const host = Config.getInstance().getRamielApiServerEndpoint();
+        const api = `/real-devices/${udid}/control/`;
+        const hh = { 'Content-Type': 'application/x-www-form-urlencoded; charset=utf8' };
+        const tt = Utils.getTimestamp();
+        const pp = {
+            DELETE: api,
+            timestamp: tt,
+            'user-agent': userAgent,
+        };
+        const data = qs.stringify({
+            DELETE: api,
+            timestamp: tt,
+            'user-agent': userAgent,
+            signature: Utils.getSignature(pp),
+        });
+        const url = `${host}${api}`;
+        const tag = WebDriverAgentProxy.TAG;
+
+        axios
+            .delete(url, {
+                headers: hh,
+                data: data,
+            })
+            .then((rr) => {
+                if (logger) logger.info(`[${tag}] success to delete session. resp code: ${rr.status}`);
+            })
+            .catch((e) => {
+                let status;
+                try {
+                    status = e.response && e.response.status ? e.response.status : 'unknown_iOS';
+                } catch {
+                    status = e.toString();
+                }
+                console.error(Utils.getTimeISOString(), `[${tag}] failed to delete a session: ${status}`);
+            });
+    }
+
     private apiDeleteSession() {
         if (!this.udid) return;
 
