@@ -124,27 +124,20 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                 );
             })
             .catch((e) => {
-                let status;
-                try {
-                    status = 'response' in e && 'status' in e.response ? e.response.status : 'unknown1';
-                } catch {
-                    status = e.toString();
-                }
-                console.error(Utils.getTimeISOString(), udid, `[${tag}] failed to create a session: ${status}`);
-
                 e.message = `[${this.TAG}] failed to create a session for ${udid}`;
-                if (!e.response) {
-                    e.ramiel_message = e.message = 'undefined response in error';
-                } else if (409 === status) {
-                    const userAgent = 'user-agent' in e.response.data ? e.response.data['user-agent'] : '';
-                    e.ramiel_message = e.message = '사용 중인 장비입니다';
-                    if (userAgent) e.message += ` (${userAgent})`;
-
-                    e.ramiel_contexts = {
-                        'User Agent': userAgent,
-                    };
-                } else if (410 === status) {
-                    e.ramiel_message = e.message = `장비의 연결이 끊어져 있습니다`;
+                if (e.response) {
+                    if (409 === e.response.status) {
+                        const userAgent = e.response.data['user-agent'];
+                        e.ramiel_message = e.message = '사용 중인 장비입니다';
+                        if (userAgent) e.message += ` (${userAgent})`;
+                        e.ramiel_contexts = { 'User Agent': userAgent };
+                    } else if (410 === e.response.status) {
+                        e.ramiel_message = e.message = `장비의 연결이 끊어져 있습니다`;
+                    }
+                } else if (e.request) {
+                    e.ramiel_message = e.message = 'api server is not responding';
+                } else {
+                    e.ramiel_message = e.message;
                 }
                 ws.close(4900, e.message);
                 throw e;
@@ -191,6 +184,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                     scope.setTag('ramiel_device_type', 'Android');
                     scope.setTag('ramiel_device_id', this.udid);
                     scope.setTag('ramiel_message', mm);
+                    scope.setExtra('ramiel_stack', e.stack);
                     return scope;
                 });
             });
@@ -223,7 +217,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             .catch((e) => {
                 const mm = `[${this.TAG}] Failed to start service: ${e.message}`;
                 ws.close(4005, mm);
-                console.error(Utils.getTimeISOString(), udid, mm);
+                console.error(Utils.getTimeISOString(), udid, e.stack);
                 Sentry.captureException(e, (scope) => {
                     scope.setTag('ramiel_device_type', 'Android');
                     scope.setTag('ramiel_device_id', udid);
@@ -231,6 +225,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                     if (e.ramiel_contexts) {
                         scope.setContext('Ramiel', e.ramiel_contexts);
                     }
+                    scope.setExtra('ramiel_stack', e.stack);
                     return scope;
                 });
             });
@@ -343,6 +338,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                 scope.setTag('ramiel_device_type', 'Android');
                 scope.setTag('ramiel_device_id', this.udid);
                 scope.setTag('ramiel_message', e.ramiel_message);
+                scope.setExtra('ramiel_stack', e.stack);
                 return scope;
             });
         }
@@ -409,6 +405,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                     scope.setTag('ramiel_device_type', 'Android');
                     scope.setTag('ramiel_device_id', this.udid);
                     scope.setTag('ramiel_message', 'Failed to run setUpTest');
+                    scope.setExtra('ramiel_stack', e.stack);
                     return scope;
                 });
             });

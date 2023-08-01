@@ -160,6 +160,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                             scope.setTag('ramiel_device_type', 'iOS');
                             scope.setTag('ramiel_device_id', this.udid);
                             scope.setTag('ramiel_message', e.ramiel_message);
+                            scope.setExtra('ramiel_stack', e.stack);
                             return scope;
                         });
                     }
@@ -384,15 +385,17 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                 params: data,
             });
             return rr.data;
-        } catch (error) {
+        } catch (e) {
             let msg;
-            if (error.response && error.response.status) {
-                msg = `[${WdaRunner.TAG}] Cannot retrieve the device ${udid}. resp code: ${error.response.status}`;
+            if (e.response) {
+                msg = `[${WdaRunner.TAG}] Cannot retrieve the device ${udid}. resp code: ${e.response.status}`;
+            } else if (e.request) {
+                msg = `[${WdaRunner.TAG}] api server is not responding.`;
             } else {
-                msg = `[${WdaRunner.TAG}] ${error.message}`;
+                msg = `[${WdaRunner.TAG}] ${e.message}`;
             }
             console.error(Utils.getTimeISOString(), udid, msg);
-            throw error;
+            throw e;
         }
     }
 
@@ -466,6 +469,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                         scope.setTag('ramiel_device_type', 'iOS');
                         scope.setTag('ramiel_device_id', this.udid);
                         scope.setTag('ramiel_message', 'WebDriverAgent event error');
+                        scope.setExtra('ramiel_stack', e.stack);
                         return scope;
                     });
                 })
