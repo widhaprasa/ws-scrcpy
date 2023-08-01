@@ -16,7 +16,7 @@ import * as Sentry from '@sentry/node';
 const MJPEG_SERVER_PORT = 9100;
 
 export interface WdaRunnerEvents {
-    'status-change': { status: WdaStatus; text?: string; code?: number; detail?: string };
+    'status-change': { status: WdaStatus; text?: string; code?: number; detail?: string; error?: string };
     error: Error;
 }
 
@@ -446,7 +446,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
 
         this.logger.info('setUpTest: Enable the WDA events');
         this.wdaEventInAction = false;
-        this.wdaEventTimer = setInterval(() => {
+        this.wdaEventTimer = setInterval(async () => {
             if (this.wdaEventInAction || this.wdaEvents.length === 0) {
                 return;
             }
@@ -462,21 +462,21 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
             this.wdaEventInAction = true;
             this.emit('status-change', { status: WdaStatus.IN_ACTION, text: '제어 중' });
             // eslint-disable-next-line @typescript-eslint/ban-types
-            (<Function>ev)(driver)
-                .catch((e: Error) => {
-                    this.logger.error(e);
-                    Sentry.captureException(e, (scope) => {
-                        scope.setTag('ramiel_device_type', 'iOS');
-                        scope.setTag('ramiel_device_id', this.udid);
-                        scope.setTag('ramiel_message', 'WebDriverAgent event error');
-                        scope.setExtra('ramiel_stack', e.stack);
-                        return scope;
-                    });
-                })
-                .finally(() => {
-                    this.wdaEventInAction = false;
-                    this.emit('status-change', { status: WdaStatus.END_ACTION, text: '제어 완료' });
+            try {
+                // eslint-disable-next-line @typescript-eslint/ban-types
+                await (<Function>ev)(driver);
+                this.emit('status-change', { status: WdaStatus.END_ACTION, text: '제어 완료' });
+            } catch (e) {
+                this.logger.error(e);
+                this.emit('status-change', {
+                    status: WdaStatus.END_ACTION,
+                    text: '제어 실패',
+                    error: e.stack || e.message || e,
                 });
+            } finally {
+                this.wdaEventInAction = false;
+                this.emit('status-change', { status: WdaStatus.END_ACTION, text: '제어 완료' });
+            }
         }, 100);
         this.wdaProcessId = await Utils.getProcessId(`xcodebuild.+${this.udid}`);
         if (!this.wdaProcessId) {
