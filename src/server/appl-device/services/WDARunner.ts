@@ -468,6 +468,7 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
                     // eslint-disable-next-line @typescript-eslint/ban-types
                     await (<Function>ev)(driver);
                     this.emit('status-change', { status: WdaStatus.END_ACTION, text: '제어 완료' });
+                    break;
                 } catch (e) {
                     if (
                         typeof e.stack === 'string' &&
