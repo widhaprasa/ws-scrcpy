@@ -493,7 +493,6 @@ export class WdaRunner extends TypedEmitter<WdaRunnerEvents> {
             }
 
             this.wdaEventInAction = false;
-            this.emit('status-change', { status: WdaStatus.END_ACTION, text: '제어 완료' });
         }, 100);
         this.wdaProcessId = await Utils.getProcessId(`xcodebuild.+${this.udid}`);
         if (!this.wdaProcessId) {
