@@ -10,7 +10,7 @@ import { Config } from './Config';
 /// #if INCLUDE_APPL
 import { WebDriverAgentProxy } from './appl-device/mw/WebDriverAgentProxy';
 /// #endif
-/// #if INCLUDE_GOOG
+/// #else
 import { WebsocketProxyOverAdb } from './goog-device/mw/WebsocketProxyOverAdb';
 /// #endif
 //
