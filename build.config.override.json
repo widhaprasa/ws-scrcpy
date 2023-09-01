@@ -1,1 +1,4 @@
-{}
+{
+  "USE_WDA_MJPEG_SERVER":true,
+  "INCLUDE_APPL": true
+}
