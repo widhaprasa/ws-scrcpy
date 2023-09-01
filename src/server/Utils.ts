@@ -147,7 +147,7 @@ export class Utils {
         iDevs.forEach((udid) => {
             WebDriverAgentProxy.deleteSession(udid, 'ws-scrcpy initDevices');
         });
-        /// #else
+        /// #if INCLUDE_GOOG
         console.log('initDevices: Android');
         const aDevs = Utils.getAndroidDevices();
         aDevs.forEach((udid) => {
