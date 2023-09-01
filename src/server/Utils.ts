@@ -147,8 +147,7 @@ export class Utils {
         iDevs.forEach((udid) => {
             WebDriverAgentProxy.deleteSession(udid, 'ws-scrcpy initDevices');
         });
-        /// #endif
-        /// #if INCLUDE_GOOG
+        /// #else
         console.log('initDevices: Android');
         const aDevs = Utils.getAndroidDevices();
         aDevs.forEach((udid) => {
@@ -269,6 +268,7 @@ export class Utils {
 
     public static getAndroidDevices(): string[] {
         try {
+            process.env.PATH += ':/opt/homebrew/bin/';
             const rr = execSync('adb devices | tail -n +2 | cut -f 1').toString().trim();
             return rr.split('\n').filter(Boolean);
         } catch (e) {
@@ -278,6 +278,7 @@ export class Utils {
 
     public static getIOSDevices(): string[] {
         try {
+            process.env.PATH += ':/opt/homebrew/bin/';
             const rr = execSync('idevice_id -l').toString().trim();
             return rr.split('\n').filter(Boolean);
         } catch (e) {
