@@ -12,6 +12,7 @@ import { WebDriverAgentProxy } from './appl-device/mw/WebDriverAgentProxy';
 /// #else
 import { WebsocketProxyOverAdb } from './goog-device/mw/WebsocketProxyOverAdb';
 /// #endif
+process.env.PATH += ':/opt/homebrew/bin/';
 //
 
 export class Utils {
@@ -268,7 +269,6 @@ export class Utils {
 
     public static getAndroidDevices(): string[] {
         try {
-            process.env.PATH += ':/opt/homebrew/bin/';
             const rr = execSync('adb devices | tail -n +2 | cut -f 1').toString().trim();
             return rr.split('\n').filter(Boolean);
         } catch (e) {
@@ -278,7 +278,6 @@ export class Utils {
 
     public static getIOSDevices(): string[] {
         try {
-            process.env.PATH += ':/opt/homebrew/bin/';
             const rr = execSync('idevice_id -l').toString().trim();
             return rr.split('\n').filter(Boolean);
         } catch (e) {
