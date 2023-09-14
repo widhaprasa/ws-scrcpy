@@ -329,6 +329,35 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                 }
             } else if (type === ControlMessage.TYPE_HEARTBEAT) {
                 this.lastHeartbeat = Date.now();
+            } else if (type === ControlMessage.TYPE_BARDIEL_CONTROL) {
+                const device = this.getDevice();
+                if (!device) {
+                    return;
+                }
+
+                switch (value) {
+                    case ControlMessage.TYPE_BARDIEL_SET_TEXT: {
+                        const bb = event.data.slice(6);
+                        const text = bb.toString();
+
+                        const bardielPkg = 'io.hbsmith.bardiel/.BardielBroadcastReceiver';
+                        const cmd = `am broadcast -n ${bardielPkg} -a set_text -e text '${text}'`;
+                        device
+                            .runShellCommandAdbKit(cmd)
+                            .then((rr) => {
+                                if (rr.endsWith(' result=0')) {
+                                    this.logger.info('Failed to set text with bardiel.');
+                                    // TODO: use old copy and paste...
+                                    return;
+                                }
+                                this.logger.info(rr);
+                            })
+                            .catch((e) => {
+                                e.ramiel_message = 'Failed to set text';
+                                throw e;
+                            });
+                    }
+                }
             }
         } catch (e) {
             this.logger.error(e);
@@ -365,6 +394,8 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             return;
         }
 
+        const cmdBardiel =
+            'settings put secure enabled_accessibility_services io.hbsmith.bardiel/.BardielAccessibilityService';
         const cmdMenu = `input keyevent ${KeyEvent.KEYCODE_MENU}`;
         const cmdHome = `input keyevent ${KeyEvent.KEYCODE_HOME}`;
         const cmdAppStop =
@@ -372,7 +403,11 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
         const cmdAppStart = `monkey -p '${this.appKey}' -c android.intent.category.LAUNCHER 1`;
 
         return device
-            .runShellCommandAdbKit(cmdMenu)
+            .runShellCommandAdbKit(cmdBardiel)
+            .then((output) => {
+                this.logger.info(output ? output : `success to set accessibility service: ${cmdBardiel}`);
+                return device.runShellCommandAdbKit(cmdMenu);
+            })
             .then((output) => {
                 this.logger.info(output ? output : `success to send 1st KEYCODE_MENU: ${cmdMenu}`);
                 return device.runShellCommandAdbKit(cmdMenu);
