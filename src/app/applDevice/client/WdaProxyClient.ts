@@ -12,6 +12,7 @@ import ScreenInfo from '../../ScreenInfo';
 import Position from '../../Position';
 import Point from '../../Point';
 import { TouchHandlerListener } from '../../interactionHandler/SimpleInteractionHandler';
+import { Utils } from '../../../server/Utils';
 
 export type WdaProxyClientEvents = {
     'wda-status': MessageRunWdaResponse;
@@ -262,6 +263,10 @@ export class WdaProxyClient
             }
             case 'lock': {
                 return this.requestWebDriverAgent(WDAMethod.LOCK);
+            }
+            case 'reboot': {
+                Utils.rebootIOSDevice(this.udid);
+                return;
             }
         }
     }

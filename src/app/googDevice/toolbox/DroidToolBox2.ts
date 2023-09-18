@@ -5,6 +5,7 @@ import BtnDoubleUp from '../../../public/images/buttons/btn-double-up.png';
 import BtnDoubleDown from '../../../public/images/buttons/btn-double-down.png';
 import BtnHomePng from '../../../public/images/buttons/btn-home.png';
 import BtnLock from '../../../public/images/buttons/btn-lock.png';
+import BtnReboot from '../../../public/images/buttons/btn-reboot.png';
 import BtnRotatePng from '../../../public/images/buttons/btn-rotate.png';
 import BtnSendText from '../../../public/images/buttons/btn-send-text.png';
 import BtnTerminateAppPng from '../../../public/images/buttons/btn-terminate-app.png';
@@ -64,6 +65,11 @@ const BUTTONS = [
         code: KeyEvent.KEYCODE_SLEEP,
         icon: BtnLock,
         type: 'KeyCodeControlMessage',
+    },
+    {
+        title: 'Reboot',
+        icon: BtnReboot,
+        type: 'CommandControlMessage',
     },
 ];
 
@@ -160,6 +166,15 @@ export class DroidToolBox2 {
                         const event = CommandControlMessage.createAdbControlCommand(
                             ControlMessage.TYPE_ADB_CONTROL_SWIPE_DOWN,
                         );
+                        client.sendMessage(event);
+                        break;
+                    }
+                    case 'Reboot': {
+                        const text = prompt('재부팅하시겠습니까? "재부팅"을 입력해 주세요');
+                        if (text !== '재부팅') {
+                            break;
+                        }
+                        const event = CommandControlMessage.createAdbControlCommand(ControlMessage.TYPE_ADB_REBOOT);
                         client.sendMessage(event);
                         break;
                     }
