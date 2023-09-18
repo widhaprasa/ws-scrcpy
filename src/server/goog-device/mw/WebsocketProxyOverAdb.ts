@@ -428,7 +428,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             .runShellCommandAdbKit(cmdFindBardiel)
             .then((output) => {
                 if (output.includes('io.hbsmith.bardiel')) {
-                    this.logger.info(`found bardiel installed: ${cmdFindBardiel}`);
+                    this.logger.info(`found bardiel has installed: ${cmdFindBardiel}`);
                     return device.runShellCommandAdbKit(cmdEnableBardiel).then((output) => {
                         this.bardielIsReady = true;
                         this.logger.info(output ? output : `success to set accessibility service: ${cmdEnableBardiel}`);
