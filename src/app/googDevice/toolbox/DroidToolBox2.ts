@@ -170,12 +170,14 @@ export class DroidToolBox2 {
                         break;
                     }
                     case 'Reboot': {
-                        const text = prompt('재부팅하시겠습니까? "재부팅"을 입력해 주세요');
-                        if (text !== '재부팅') {
+                        const cc = prompt('재부팅하시겠습니까? "확인"을 입력해 주세요');
+                        if (cc !== '확인') {
                             break;
                         }
                         const event = CommandControlMessage.createAdbControlCommand(ControlMessage.TYPE_ADB_REBOOT);
                         client.sendMessage(event);
+                        alert('재부팅 중입니다. 5분 뒤 다시 접속해주세요.');
+                        window.close();
                         break;
                     }
                     case 'TerminateApp': {
