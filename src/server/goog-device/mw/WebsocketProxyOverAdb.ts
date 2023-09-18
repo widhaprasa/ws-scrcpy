@@ -350,8 +350,8 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                                 .runShellCommandAdbKit(cmd)
                                 .then((rr) => {
                                     if (rr.endsWith(' result=0')) {
-                                        this.logger.info('Failed to set text with bardiel.');
-                                        // TODO: use old copy and paste...
+                                        this.logger.info('Failed to set text with bardiel. use legacy mode.');
+                                        this.sendLegacySetTextCommand(text);
                                         return;
                                     }
                                     this.logger.info(rr);
@@ -361,7 +361,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                                     throw e;
                                 });
                         } else {
-                            this.logger.info('bardiel not enabled. use legacy mode.');
+                            this.logger.info('bardiel is not enabled. use legacy mode.');
                             this.sendLegacySetTextCommand(text);
                         }
                         return;
