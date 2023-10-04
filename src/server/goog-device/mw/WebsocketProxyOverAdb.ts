@@ -255,19 +255,21 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                         // AdbKit.install is not working
                         device
                             .runShellCommandAdbKit(`pm install -r '${pathToApk}'`)
-                            .then(() => {
-                                this.logger.info(`success to install apk: ${fileName}`);
-                                return device.runShellCommandAdbKit(`rm -f '${pathToApk}'`);
+                            .then((rr) => {
+                                if (rr === 'Success') {
+                                    this.logger.info(`success to install apk: ${fileName}`);
+                                    return device.runShellCommandAdbKit(`rm -f '${pathToApk}'`);
+                                } else if (rr === 'Failure [INSTALL_FAILED_TEST_ONLY: installPackageLI]') {
+                                    return device.runShellCommandAdbKit(`pm install -r -t '${pathToApk}'`);
+                                }
+                                return;
                             })
-                            .then(() => {
-                                this.logger.info(`remove the installed apk: '${pathToApk}'`);
-                            })
-                            .catch((e) => {
-                                Sentry.setContext('Ramiel', {
-                                    'File Name': fileName,
-                                });
-                                e.ramiel_message = 'Failed to install apk';
-                                throw e;
+                            .then((rr) => {
+                                if (rr === 'Success') {
+                                    this.logger.info(`success to install test apk: ${fileName}`);
+                                    return device.runShellCommandAdbKit(`rm -f '${pathToApk}'`);
+                                }
+                                return;
                             });
                         return;
                     }
