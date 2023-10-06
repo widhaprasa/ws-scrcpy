@@ -312,6 +312,13 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                             });
                         return;
                     }
+                    case ControlMessage.TYPE_ADB_REBOOT: {
+                        device.runShellCommandAdbKit('reboot').catch((e) => {
+                            e.ramiel_message = 'Failed to reboot';
+                            throw e;
+                        });
+                        return;
+                    }
                     case ControlMessage.TYPE_ADB_TERMINATE_APP: {
                         device
                             .runShellCommandAdbKit("dumpsys window | grep -E 'mCurrentFocus'")
