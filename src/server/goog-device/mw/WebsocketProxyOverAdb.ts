@@ -13,7 +13,9 @@ import qs from 'qs';
 import KeyEvent from '../../../app/googDevice/android/KeyEvent';
 import { Multiplexer } from '../../../packages/multiplexer/Multiplexer';
 import { ControlMessage } from '../../../app/controlMessage/ControlMessage';
-import * as Sentry from '@sentry/node'; // TODO: HBsmith
+import * as Sentry from '@sentry/node';
+import { CommandControlMessage } from '../../../app/controlMessage/CommandControlMessage';
+import { KeyCodeControlMessage } from '../../../app/controlMessage/KeyCodeControlMessage';
 //
 
 export class WebsocketProxyOverAdb extends WebsocketProxy {
@@ -24,6 +26,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
     private apiSessionCreated = false;
     private logger: Logger;
     private lastHeartbeat: number = Date.now();
+    private bardielIsReady = false;
     private readonly heartbeatTimer: NodeJS.Timeout;
 
     constructor(ws: WS | Multiplexer, udid: string) {
@@ -338,6 +341,41 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                 }
             } else if (type === ControlMessage.TYPE_HEARTBEAT) {
                 this.lastHeartbeat = Date.now();
+            } else if (type === ControlMessage.TYPE_BARDIEL_CONTROL) {
+                const device = this.getDevice();
+                if (!device) {
+                    return;
+                }
+
+                switch (value) {
+                    case ControlMessage.TYPE_BARDIEL_SET_TEXT: {
+                        const bb = event.data.slice(6);
+                        const text = bb.toString();
+
+                        if (this.bardielIsReady) {
+                            const bardielPkg = 'io.hbsmith.bardiel/.BardielBroadcastReceiver';
+                            const cmd = `am broadcast -n ${bardielPkg} -a set_text -e text '${text}'`;
+                            device
+                                .runShellCommandAdbKit(cmd)
+                                .then((rr) => {
+                                    if (rr.endsWith(' result=0')) {
+                                        this.logger.info('Failed to set text with bardiel. use legacy mode.');
+                                        this.sendLegacySetTextCommand(text);
+                                        return;
+                                    }
+                                    this.logger.info(rr);
+                                })
+                                .catch((e) => {
+                                    e.ramiel_message = 'Failed to set text';
+                                    throw e;
+                                });
+                        } else {
+                            this.logger.info('bardiel is not enabled. use legacy mode.');
+                            this.sendLegacySetTextCommand(text);
+                        }
+                        return;
+                    }
+                }
             }
         } catch (e) {
             this.logger.error(e);
@@ -350,6 +388,18 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             });
         }
         super.onSocketMessage(event);
+    }
+
+    // TODO: Remove this legacy code after replace all devices to bardiel.
+    private sendLegacySetTextCommand(text: string): void {
+        const cc = CommandControlMessage.createSetClipboardCommand(text);
+        super.onSocketMessageRaw(cc.toBuffer());
+
+        const kk = KeyEvent.KEYCODE_PASTE;
+        let eventPasteKey = new KeyCodeControlMessage(KeyEvent.ACTION_DOWN, kk, 0, 0);
+        super.onSocketMessageRaw(eventPasteKey.toBuffer());
+        eventPasteKey = new KeyCodeControlMessage(KeyEvent.ACTION_UP, kk, 0, 0);
+        super.onSocketMessageRaw(eventPasteKey.toBuffer());
     }
 
     private getDevice(): Device | null {
@@ -374,6 +424,9 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             return;
         }
 
+        const cmdFindBardiel = 'pm list packages | grep "io.hbsmith.bardiel"';
+        const cmdEnableBardiel =
+            'settings put secure enabled_accessibility_services io.hbsmith.bardiel/.BardielAccessibilityService';
         const cmdMenu = `input keyevent ${KeyEvent.KEYCODE_MENU}`;
         const cmdHome = `input keyevent ${KeyEvent.KEYCODE_HOME}`;
         const cmdAppStop =
@@ -381,7 +434,20 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
         const cmdAppStart = `monkey -p '${this.appKey}' -c android.intent.category.LAUNCHER 1`;
 
         return device
-            .runShellCommandAdbKit(cmdMenu)
+            .runShellCommandAdbKit(cmdFindBardiel)
+            .then((output) => {
+                if (output.includes('io.hbsmith.bardiel')) {
+                    this.logger.info(`found bardiel has installed: ${cmdFindBardiel}`);
+                    return device.runShellCommandAdbKit(cmdEnableBardiel).then((output) => {
+                        this.bardielIsReady = true;
+                        this.logger.info(output ? output : `success to set accessibility service: ${cmdEnableBardiel}`);
+                    });
+                }
+                return;
+            })
+            .then(() => {
+                return device.runShellCommandAdbKit(cmdMenu);
+            })
             .then((output) => {
                 this.logger.info(output ? output : `success to send 1st KEYCODE_MENU: ${cmdMenu}`);
                 return device.runShellCommandAdbKit(cmdMenu);
@@ -401,10 +467,15 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             })
             .then((output) => {
                 this.logger.info(output ? output : `success to stop all of the apps: ${cmdAppStop}`);
-                return device.runShellCommandAdbKit(cmdAppStart);
+                if (this.appKey) {
+                    return device.runShellCommandAdbKit(cmdAppStart).then((output) => {
+                        this.logger.info(output ? output : `success to start the app: ${cmdAppStart}`);
+                    });
+                }
+                return;
             })
-            .then((output) => {
-                this.logger.info(output ? output : `success to start the app: ${cmdAppStart}`);
+            .then(() => {
+                this.logger.info('setup succeeded. ready to test.');
             })
             .catch((e) => {
                 this.logger.error(e);
