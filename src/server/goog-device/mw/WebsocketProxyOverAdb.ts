@@ -215,9 +215,9 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             .catch((e) => {
                 let mm = '';
                 if (e.stack && e.stack.includes('/adbkit/lib/adb/')) {
-                    mm = `[${this.TAG}] Failed to start service: Device is offline - adb is not working.`;
+                    mm = `[${this.TAG}] 장비가 일시적으로 오프라인 상태입니다. 5분 뒤 다시 시도해주세요.`;
                 } else {
-                    const mm = `[${this.TAG}] Failed to start service: ${e.message}`;
+                    const mm = `[${this.TAG}] 서비스 시작 실패: ${e.message}`;
 
                     console.error(Utils.getTimeISOString(), udid, e.stack);
                     Sentry.captureException(e, (scope) => {
