@@ -263,7 +263,7 @@ export class FileListingClient extends ManagerClient<ParamsFileListing, never> i
             throw Error('Incorrect action');
         }
         const pathParam = params.get('path');
-        const path = pathParam || '/data/local/tmp';
+        const path = pathParam || '/storage/emulated/0/apps';
         return { ...typedParams, action, udid: Util.parseString(params, 'udid', true), path };
     }
 
