@@ -103,9 +103,10 @@ body.stream {
 
 .device-view {
     z-index: 1;
-    position: fixed;
+    float: right;
+    /* position: fixed;
     left: 50%;
-    transform: translate(-50%, 0);
+    transform: translate(-50%, 0); */
     display: inline-block;
 }
 
