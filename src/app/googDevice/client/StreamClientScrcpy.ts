@@ -183,7 +183,6 @@ export class StreamClientScrcpy
     public onClientsStats = (stats: ClientsStats): void => {
         this.deviceName = stats.deviceName;
         this.clientId = stats.clientId;
-        this.setTitle(`Stream ${this.deviceName}`);
     };
 
     public onDisplayInfo = (infoArray: DisplayCombinedInfo[]): void => {
@@ -265,6 +264,7 @@ export class StreamClientScrcpy
         if (!udid) {
             throw Error(`Invalid udid value: "${udid}"`);
         }
+        this.setTitle(`Stream ${udid}`);
 
         this.fitToScreen = fitToScreen;
         if (!player) {
