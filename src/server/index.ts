@@ -28,11 +28,11 @@ async function loadGoogModules() {
     const { DeviceTracker } = await import('./goog-device/mw/DeviceTracker');
     const { WebsocketProxyOverAdb } = await import('./goog-device/mw/WebsocketProxyOverAdb');
 
-    if (config.runLocalGoogTracker) {
+    if (config.getRunLocalGoogTracker()) {
         mw2List.push(DeviceTracker);
     }
 
-    if (config.announceLocalGoogTracker) {
+    if (config.getAnnounceLocalGoogTracker()) {
         HostTracker.registerLocalTracker(DeviceTracker);
     }
 
@@ -70,11 +70,11 @@ async function loadApplModules() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (global as any)._global_npmlog = npmlog;
 
-    if (config.runLocalApplTracker) {
+    if (config.getRunLocalApplTracker()) {
         mw2List.push(DeviceTracker);
     }
 
-    if (config.announceLocalApplTracker) {
+    if (config.getAnnounceLocalApplTracker()) {
         HostTracker.registerLocalTracker(DeviceTracker);
     }
 

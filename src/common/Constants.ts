@@ -4,7 +4,7 @@ export const SERVER_VERSION = '1.19-ws5';
 
 export const SERVER_TYPE = 'web';
 
-export const LOG_LEVEL = 'ERROR';
+export const LOG_LEVEL = 'DEBUG';
 
 let SCRCPY_LISTENS_ON_ALL_INTERFACES;
 /// #if SCRCPY_LISTENS_ON_ALL_INTERFACES

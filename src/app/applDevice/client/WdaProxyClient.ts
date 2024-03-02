@@ -3,6 +3,7 @@ import { MessageRunWdaResponse } from '../../../types/MessageRunWdaResponse';
 import { Message } from '../../../types/Message';
 import { ControlCenterCommand } from '../../../common/ControlCenterCommand';
 import { ParamsWdaProxy } from '../../../types/ParamsWdaProxy';
+import { ParsedUrlQuery } from 'querystring';
 import { ACTION } from '../../../common/Action';
 import Util from '../../Util';
 import { ChannelCode } from '../../../common/ChannelCode';
@@ -85,7 +86,7 @@ export class WdaProxyClient
     private commands: string[] = [];
     private hasSession = false;
     private messageId = 0;
-    private wait: Map<number, { resolve: (m: Message) => void; reject: (error: any) => void }> = new Map();
+    private wait: Map<number, { resolve: (m: Message) => void; reject: () => void }> = new Map();
 
     constructor(params: ParamsWdaProxy) {
         super(params);
@@ -93,18 +94,18 @@ export class WdaProxyClient
         this.udid = params.udid;
     }
 
-    public static parseParameters(params: URLSearchParams): ParamsWdaProxy {
+    public parseParameters(params: ParsedUrlQuery): ParamsWdaProxy {
         const typedParams = super.parseParameters(params);
         const { action } = typedParams;
         if (action !== ACTION.PROXY_WDA) {
             throw Error('Incorrect action');
         }
-        return { ...typedParams, action, udid: Util.parseString(params, 'udid', true) };
+        return { ...typedParams, action, udid: Util.parseStringEnv(params.udid) };
     }
 
-    protected onSocketClose(event: CloseEvent): void {
+    protected onSocketClose(e: CloseEvent): void {
         this.emit('connected', false);
-        console.log(TAG, `Connection closed: ${event.reason}`);
+        console.log(TAG, `Connection closed: ${e.reason}`);
         if (!this.stopped) {
             setTimeout(() => {
                 this.openNewConnection();
@@ -112,8 +113,8 @@ export class WdaProxyClient
         }
     }
 
-    protected onSocketMessage(event: MessageEvent): void {
-        new Response(event.data)
+    protected onSocketMessage(e: MessageEvent): void {
+        new Response(e.data)
             .text()
             .then((text: string) => {
                 const json = JSON.parse(text) as Message;
@@ -122,6 +123,11 @@ export class WdaProxyClient
                 if (p) {
                     this.wait.delete(id);
                     p.resolve(json);
+                    // TODO: HBsmith
+                    if (json['type'] === 'run-wda') {
+                        this.emit('wda-status', json as MessageRunWdaResponse);
+                    }
+                    //
                     return;
                 }
                 switch (json['type']) {
@@ -134,7 +140,7 @@ export class WdaProxyClient
             })
             .catch((error: Error) => {
                 console.error(TAG, error.message);
-                console.log(TAG, event.data);
+                console.log(TAG, e.data);
             });
     }
 
@@ -206,9 +212,7 @@ export class WdaProxyClient
     }
 
     public async sendKeys(keys: string): Promise<void> {
-        return this.requestWebDriverAgent(WDAMethod.SEND_KEYS, {
-            keys,
-        });
+        return this.requestWebDriverAgent(WDAMethod.SEND_KEYS, { keys });
     }
 
     public async pressButton(name: string): Promise<void> {
@@ -216,6 +220,70 @@ export class WdaProxyClient
             name,
         });
     }
+
+    // TODO: HBsmith
+    public async pressCustomButton(type: string): Promise<void> {
+        switch (type) {
+            case 'unlock':
+                return this.requestWebDriverAgent(WDAMethod.UNLOCK);
+            case 'sendText':
+                const keys = prompt('텍스트를 입력해 주세요');
+                if (!keys) {
+                    return;
+                }
+                return this.requestWebDriverAgent(WDAMethod.SEND_KEYS, { keys });
+            case 'terminateApp':
+                return this.requestWebDriverAgent(WDAMethod.TERMINATE_APP);
+            case 'swipeUp': {
+                if (!this.screenInfo) {
+                    return;
+                }
+                const { videoSize } = this.screenInfo;
+                const pointX = videoSize.width / 2;
+                const pointY = videoSize.height / 2;
+
+                const from = new Position(new Point(pointX, pointY + 200), videoSize);
+                const to = new Position(new Point(pointX, pointY - 200), videoSize);
+
+                return this.performScroll(from, to, false);
+            }
+            case 'swipeDown': {
+                if (!this.screenInfo) {
+                    return;
+                }
+                const { videoSize } = this.screenInfo;
+                const pointX = videoSize.width / 2;
+                const pointY = videoSize.height / 2;
+
+                const from = new Position(new Point(pointX, pointY - 200), videoSize);
+                const to = new Position(new Point(pointX, pointY + 200), videoSize);
+
+                return this.performScroll(from, to, false);
+            }
+            case 'lock': {
+                return this.requestWebDriverAgent(WDAMethod.LOCK);
+            }
+            case 'reboot': {
+                const cc = prompt('재부팅하시겠습니까? "확인"을 입력해 주세요');
+                if (cc !== '확인') {
+                    return;
+                }
+                alert('재부팅 중입니다. 5분 뒤 다시 접속해주세요.');
+                window.close();
+                return this.requestWebDriverAgent(WDAMethod.REBOOT);
+            }
+            case 'launchApp':
+            case 'removeApp': {
+                const bundleId = prompt('앱키를 입력해주세요.');
+                if (!bundleId) {
+                    return;
+                }
+                const tt = type === 'launchApp' ? WDAMethod.LAUNCH_APP : WDAMethod.REMOVE_APP;
+                return this.requestWebDriverAgent(tt, { bundleId });
+            }
+        }
+    }
+    //
 
     public async performClick(position: Position): Promise<void> {
         if (!this.screenInfo) {
@@ -232,7 +300,22 @@ export class WdaProxyClient
         });
     }
 
-    public async performScroll(from: Position, to: Position): Promise<void> {
+    public async performTapLong(position: Position): Promise<void> {
+        if (!this.screenInfo) {
+            return;
+        }
+        const screenWidth = this.screenWidth || (await this.getScreenWidth());
+        const point = WdaProxyClient.calculatePhysicalPoint(this.screenInfo, screenWidth, position);
+        if (!point) {
+            return;
+        }
+        return this.requestWebDriverAgent(WDAMethod.TAP_LONG, {
+            x: point.x,
+            y: point.y,
+        });
+    }
+
+    public async performScroll(from: Position, to: Position, holdAtStart: boolean): Promise<void> {
         if (!this.screenInfo) {
             return;
         }
@@ -251,10 +334,11 @@ export class WdaProxyClient
                 x: toPoint.x,
                 y: toPoint.y,
             },
+            holdAtStart: holdAtStart,
         });
     }
 
-    public async runWebDriverAgent(): Promise<MessageRunWdaResponse> {
+    public async runWebDriverAgent(appKey?: string, userAgent?: string): Promise<MessageRunWdaResponse> {
         const message: Message = {
             id: this.getNextId(),
             type: ControlCenterCommand.RUN_WDA,
@@ -262,6 +346,10 @@ export class WdaProxyClient
                 udid: this.udid,
             },
         };
+        // TODO: HBsmith
+        if (appKey) message.data['appKey'] = appKey;
+        if (userAgent) message.data['userAgent'] = userAgent;
+        //
         const response = await this.sendMessage(message);
         this.hasSession = true;
         return response as MessageRunWdaResponse;
@@ -281,6 +369,20 @@ export class WdaProxyClient
         };
         return this.sendMessage(message);
     }
+
+    // TODO: HBsmith
+    public async sendHeartbeat(): Promise<Message> {
+        if (!this.hasSession) {
+            throw Error('No session');
+        }
+        const message: Message = {
+            id: this.getNextId(),
+            type: ControlCenterCommand.HEARTBEAT,
+            data: {},
+        };
+        return this.sendMessage(message);
+    }
+    //
 
     protected supportMultiplexing(): boolean {
         return true;

@@ -2,7 +2,7 @@ import { FilePushStream } from './FilePushStream';
 import { CommandControlMessage, FilePushState } from '../../controlMessage/CommandControlMessage';
 import { Multiplexer } from '../../../packages/multiplexer/Multiplexer';
 import { FilePushResponseStatus } from './FilePushResponseStatus';
-import Protocol from '@dead50f7/adbkit/lib/adb/protocol';
+import Protocol from '@devicefarmer/adbkit/lib/adb/protocol';
 import { FileListingClient } from '../client/FileListingClient';
 import * as path from 'path';
 import FilePushHandler from './FilePushHandler';
@@ -55,9 +55,9 @@ export class AdbkitFilePushStream extends FilePushStream {
         let pushId = id;
         const newParams = { id, state: FilePushState.NEW };
         const channel = this.socket.createChannel(Buffer.from(Protocol.SEND));
-        const onMessage = (event: MessageEvent): void => {
+        const onMessage = (e: MessageEvent): void => {
             let offset = 0;
-            const buffer = Buffer.from(event.data);
+            const buffer = Buffer.from(e.data);
             const id = buffer.readInt16BE(offset);
             offset += 2;
             const code = buffer.readInt8(offset);
@@ -67,14 +67,11 @@ export class AdbkitFilePushStream extends FilePushStream {
             }
             this.emit('response', { id, code });
         };
-        const onClose = (event: CloseEvent): void => {
-            if (!event.wasClean) {
-                const code = 4000 - event.code;
+        const onClose = (e: CloseEvent): void => {
+            if (!e.wasClean) {
+                const code = 4000 - e.code;
                 // this.emit('response', { id: pushId, code });
-                this.emit('error', {
-                    id: pushId,
-                    error: new Error(FilePushHandler.getErrorMessage(code, event.reason)),
-                });
+                this.emit('error', { id: pushId, error: new Error(FilePushHandler.getErrorMessage(code, e.reason)) });
             }
             channel.removeEventListener('message', onMessage);
             channel.removeEventListener('close', onClose);

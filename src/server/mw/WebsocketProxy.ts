@@ -11,16 +11,18 @@ export class WebsocketProxy extends Mw {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public static processRequest(ws: WS, params: RequestParameters): WebsocketProxy | undefined {
-        const { action, url } = params;
-        if (action !== ACTION.PROXY_WS) {
+        const { parsedQuery } = params;
+        if (!parsedQuery) {
             return;
         }
-        const wsString = url.searchParams.get('ws');
-        if (!wsString) {
+        if (parsedQuery.action !== ACTION.PROXY_WS) {
+            return;
+        }
+        if (typeof parsedQuery.ws !== 'string') {
             ws.close(4003, `[${this.TAG}] Invalid value "${ws}" for "ws" parameter`);
             return;
         }
-        return this.createProxy(ws, wsString);
+        return this.createProxy(ws, parsedQuery.ws);
     }
 
     public static createProxy(ws: WS | Multiplexer, remoteUrl: string): WebsocketProxy {

@@ -1,15 +1,15 @@
 import { backend, frontend } from './ws-scrcpy.common';
-import webpack from 'webpack';
+import webpack, { ConfigurationFactory } from 'webpack';
 
 const prodOpts: webpack.Configuration = {
     mode: 'production',
 };
 
-const front = () => {
-    return Object.assign({}, frontend(), prodOpts);
+const front: ConfigurationFactory = (env, args) => {
+    return Object.assign({}, frontend(env, args), prodOpts);
 };
-const back = () => {
-    return Object.assign({}, backend(), prodOpts);
+const back: ConfigurationFactory = (env, args) => {
+    return Object.assign({}, backend(env, args), prodOpts);
 };
 
 module.exports = [front, back];

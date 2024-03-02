@@ -1,6 +1,6 @@
 :root {
     --main-bg-color: hsl(0, 0%, 100%);
-    --stream-bg-color: hsl(0, 0%, 85%);
+    --stream-bg-color: hsl(0, 0%, 0%);
     --shell-bg-color: hsl(0, 0%, 0%);
     --text-shadow-color: hsl(218, 67%, 95%);
     --header-bg-color: hsl(0, 0%, 95%);
@@ -71,6 +71,12 @@ body {
     height: 100%;
     width: 100%;
     overflow: hidden;
+
+    /* TODO: HBsmith */
+    font-family: 'Muli', sans-serif;
+    font-size: 1rem;
+    font-weight: 400;
+    /* */
 }
 
 
@@ -79,7 +85,15 @@ body.shell {
 }
 
 body.stream {
-    background-color: var(--stream-bg-color);
+    /* TODO: HBsmith */
+    background-color: black !important;
+    /* */
+    display:flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    min-width: 100vh;
+    align-self: center;
 }
 
 .terminal-container {
@@ -103,10 +117,6 @@ body.stream {
 
 .device-view {
     z-index: 1;
-    float: right;
-    /* position: fixed;
-    left: 50%;
-    transform: translate(-50%, 0); */
     display: inline-block;
 }
 
@@ -125,10 +135,60 @@ body.stream {
     max-height: 100%;
     max-width: 100%;
     background-color: #000000;
+    border: 2px solid white;
 }
 
+.control-header {
+    padding: 5px;
+    height: 30px;
+    width: 100%;
+}
+
+.control-header-button {
+    float: left;
+    padding: 0 0 0 0 !important;
+    border: none;
+    background-color: transparent;
+    margin: 5px;
+    width: 20px;
+    height: 20px;
+    opacity: 1;
+}
+
+.control-header-button-img {
+    max-width: 100%;
+    max-height: 100%;
+    background-color: transparent;
+}
+
+.control-header-button:hover {
+    opacity: 0.5;
+}
+
+.control-header-device-name-text {
+    float: right;
+    border: none;
+    width: 25%;
+    height: 50px;
+    margin: 5px;
+    font-size: 20px;
+    text-align: right;
+    color: white;
+}
+
+.control-header-device-status-text {
+    float: right;
+    border: none;
+    width: 50%;
+    height: 50px;
+    margin: 5px;
+    font-size: 20px;
+    text-align: center;
+    color: white;
+}
 
 .control-buttons-list {
+    /* display: none; */
     float: right;
     width: 3.715rem;
     background-color: var(--control-buttons-bg-color);
@@ -178,4 +238,21 @@ body.stream {
 
 .control-wrapper > input[type=checkbox]:checked + label > svg {
     fill: var(--svg-checkbox-bg-color);
+}
+
+.control-footer {
+    position: fixed;
+    bottom: 0;
+    padding: 5px;
+    height: 30px;
+    width: 100%;
+}
+
+.control-footer-hash-name-text {
+    float: right;
+    width: 40%;
+    margin: 5px;
+    font-size: 20px;
+    text-align: right;
+    color: white;
 }

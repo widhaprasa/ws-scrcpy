@@ -5,15 +5,15 @@ import { ACTION } from '../../common/Action';
 import { AdbExtended } from './adb';
 import { DevtoolsInfo, RemoteBrowserInfo, RemoteTarget, VersionMetadata } from '../../types/RemoteDevtools';
 import { URL } from 'url';
-import { Forward } from '@dead50f7/adbkit/lib/Forward';
-import Entry from '@dead50f7/adbkit/lib/adb/sync/entry';
-import Stats from '@dead50f7/adbkit/lib/adb/sync/stats';
-import PullTransfer from '@dead50f7/adbkit/lib/adb/sync/pulltransfer';
+import { Forward } from '@devicefarmer/adbkit/lib/Forward';
+import Entry from '@devicefarmer/adbkit/lib/adb/sync/entry';
+import Stats from '@devicefarmer/adbkit/lib/adb/sync/stats';
+import PullTransfer from '@devicefarmer/adbkit/lib/adb/sync/pulltransfer';
 import { FileStats } from '../../types/FileStats';
-import Protocol from '@dead50f7/adbkit/lib/adb/protocol';
+import Protocol from '@devicefarmer/adbkit/lib/adb/protocol';
 import { Multiplexer } from '../../packages/multiplexer/Multiplexer';
 import { ReadStream } from 'fs';
-import PushTransfer from '@dead50f7/adbkit/lib/adb/sync/pushtransfer';
+import PushTransfer from '@devicefarmer/adbkit/lib/adb/sync/pushtransfer';
 
 type IncomingMessage = {
     statusCode?: number;
@@ -38,8 +38,8 @@ export class AdbUtils {
     public static async push(serial: string, stream: ReadStream, pathString: string): Promise<PushTransfer> {
         const client = AdbExtended.createClient();
         const transfer = await client.push(serial, stream, pathString);
-        client.on('error', (error: Error) => {
-            transfer.emit('error', error);
+        client.on('error', (e: Error) => {
+            transfer.emit('error', e);
         });
         return transfer;
     }
@@ -58,16 +58,16 @@ export class AdbUtils {
             }
             try {
                 stats = await this.stats(serial, pathString, stats, deep++);
-            } catch (error: any) {
-                if (error.message === 'Too deep') {
+            } catch (e) {
+                if (e.message === 'Too deep') {
                     if (deep === 0) {
                         console.error(`Symlink is too deep: ${pathString}`);
                         return stats;
                     }
-                    throw error;
+                    throw e;
                 }
-                if (error.code !== 'ENOENT') {
-                    console.error(error.message);
+                if (e.code !== 'ENOENT') {
+                    console.error(e.message);
                 }
             }
             return stats;
@@ -199,8 +199,8 @@ export class AdbUtils {
             request.on('socket', () => {
                 request.end();
             });
-            request.on('error', (error: Error) => {
-                reject(error);
+            request.on('error', (e: Error) => {
+                reject(e);
             });
         });
         let data = '';
@@ -323,8 +323,8 @@ export class AdbUtils {
 
         const all: Promise<string | RemoteBrowserInfo>[] = [];
         list.forEach((socket) => {
-            const v = this.getRemoteDevtoolsVersion(host, serial, socket).catch((error: Error) => {
-                console.error('getRemoteDevtoolsVersion failed:', error.message);
+            const v = this.getRemoteDevtoolsVersion(host, serial, socket).catch((e: Error) => {
+                console.error('getRemoteDevtoolsVersion failed:', e.message);
                 return {
                     'Android-Package': 'string',
                     Browser: 'string',
@@ -335,8 +335,9 @@ export class AdbUtils {
                     webSocketDebuggerUrl: 'string',
                 };
             });
-            const t = this.getRemoteDevtoolsTargets(host, serial, socket).catch((error: Error) => {
-                console.error('getRemoteDevtoolsTargets failed:', error.message);
+            const t = this.getRemoteDevtoolsTargets(host, serial, socket).catch((e: Error) => {
+                console.error('getRemoteDevtoolsTargets failed:', e.message);
+                console.error('getRemoteDevtoolsTargets failed:', e.message);
                 return [];
             });
             const p = Promise.all([v, t]).then((result) => {

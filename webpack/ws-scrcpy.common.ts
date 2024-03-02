@@ -1,10 +1,10 @@
 import nodeExternals from 'webpack-node-externals';
 import fs from 'fs';
 import path from 'path';
-import webpack from 'webpack';
+import webpack, { ConfigurationFactory } from 'webpack';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
-import GeneratePackageJsonPlugin from '@dead50f7/generate-package-json-webpack-plugin';
+import GeneratePackageJsonPlugin from 'generate-package-json-webpack-plugin';
 import { mergeWithDefaultConfig } from './build.config.utils';
 
 export const PROJECT_ROOT = path.resolve(__dirname, '..');
@@ -12,8 +12,9 @@ export const SERVER_DIST_PATH = path.join(PROJECT_ROOT, 'dist');
 export const CLIENT_DIST_PATH = path.join(PROJECT_ROOT, 'dist/public');
 const PACKAGE_JSON = path.join(PROJECT_ROOT, 'package.json');
 
-export const common = () => {
-    const override = path.join(PROJECT_ROOT, '/build.config.override.json');
+export const common: ConfigurationFactory = (env) => {
+    const buildConfig =
+        env && typeof env === 'object' && typeof env.config_override === 'string' ? env.config_override : undefined;
     return {
         module: {
             rules: [
@@ -27,7 +28,7 @@ export const common = () => {
                         { loader: 'ts-loader' },
                         {
                             loader: 'ifdef-loader',
-                            options: mergeWithDefaultConfig(override),
+                            options: mergeWithDefaultConfig(buildConfig),
                         },
                     ],
                     exclude: /node_modules/,
@@ -95,27 +96,19 @@ const front: webpack.Configuration = {
     plugins: [
         new HtmlWebpackPlugin({
             template: path.join(PROJECT_ROOT, '/src/public/index.html'),
+            favicon: path.join(PROJECT_ROOT, '/src/public/favicon.ico'),
             inject: 'head',
         }),
         new MiniCssExtractPlugin(),
-        new webpack.ProvidePlugin({
-            Buffer: ['buffer', 'Buffer'],
-        }),
     ],
-    resolve: {
-        fallback: {
-            path: 'path-browserify',
-        },
-        extensions: ['.tsx', '.ts', '.js'],
-    },
     output: {
         filename: 'bundle.js',
         path: CLIENT_DIST_PATH,
     },
 };
 
-export const frontend = () => {
-    return Object.assign({}, common(), front);
+export const frontend: ConfigurationFactory = (env, args) => {
+    return Object.assign({}, common(env, args), front);
 };
 
 const packageJson = JSON.parse(fs.readFileSync(PACKAGE_JSON).toString());
@@ -147,6 +140,6 @@ const back: webpack.Configuration = {
     target: 'node',
 };
 
-export const backend = () => {
-    return Object.assign({}, common(), back);
+export const backend: ConfigurationFactory = (env, args) => {
+    return Object.assign({}, common(env, args), back);
 };

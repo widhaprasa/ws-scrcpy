@@ -23,7 +23,7 @@ export class DeviceTracker extends Mw {
     }
 
     public static processRequest(ws: WS, params: RequestParameters): DeviceTracker | undefined {
-        if (params.action !== ACTION.GOOG_DEVICE_LIST) {
+        if (params.parsedQuery?.action !== ACTION.GOOG_DEVICE_LIST) {
             return;
         }
         return new DeviceTracker(ws);
@@ -39,8 +39,8 @@ export class DeviceTracker extends Mw {
                 this.adt.on('device', this.sendDeviceMessage);
                 this.buildAndSendMessage(this.adt.getDevices());
             })
-            .catch((error: Error) => {
-                console.error(`[${DeviceTracker.TAG}] Error: ${error.message}`);
+            .catch((e: Error) => {
+                console.error(`[${DeviceTracker.TAG}] Error: ${e.message}`);
             });
     }
 
@@ -74,8 +74,8 @@ export class DeviceTracker extends Mw {
         let command: ControlCenterCommand;
         try {
             command = ControlCenterCommand.fromJSON(event.data.toString());
-        } catch (error: any) {
-            console.error(`[${DeviceTracker.TAG}], Received message: ${event.data}. Error: ${error?.message}`);
+        } catch (e) {
+            console.error(`[${DeviceTracker.TAG}], Received message: ${event.data}. Error: ${e.message}`);
             return;
         }
         this.adt.runCommand(command).catch((e) => {

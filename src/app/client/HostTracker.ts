@@ -45,14 +45,14 @@ export class HostTracker extends ManagerClient<ParamsBase, HostTrackerEvents> {
         this.emit('disconnected', ev);
     }
 
-    protected onSocketMessage(event: MessageEvent): void {
+    protected onSocketMessage(e: MessageEvent): void {
         let message: Message;
         try {
             // TODO: rewrite to binary
-            message = JSON.parse(event.data);
-        } catch (error: any) {
+            message = JSON.parse(e.data);
+        } catch (error) {
             console.error(TAG, error.message);
-            console.log(TAG, error.data);
+            console.log(TAG, e.data);
             return;
         }
         switch (message.type) {

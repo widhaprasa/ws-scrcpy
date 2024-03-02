@@ -1,6 +1,6 @@
 import { AdbExtended } from './adb';
-import AdbKitClient from '@dead50f7/adbkit/lib/adb/client';
-import PushTransfer from '@dead50f7/adbkit/lib/adb/sync/pushtransfer';
+import AdbKitClient from '@devicefarmer/adbkit/lib/adb/client';
+import PushTransfer from '@devicefarmer/adbkit/lib/adb/sync/pushtransfer';
 import { spawn } from 'child_process';
 import { NetInterface } from '../../types/NetInterface';
 import { TypedEmitter } from '../../common/TypedEmitter';
@@ -113,9 +113,9 @@ export class Device extends TypedEmitter<DeviceEvents> {
                 console.error(this.TAG, `stderr: ${data}`);
             });
 
-            adb.on('error', (error: Error) => {
-                console.error(this.TAG, `failed to spawn adb process.\n${error.stack}`);
-                reject(error);
+            adb.on('error', (e: Error) => {
+                console.error(this.TAG, `failed to spawn adb process.\n${e.stack}`);
+                reject(e);
             });
 
             adb.on('close', (code) => {
@@ -439,9 +439,9 @@ export class Device extends TypedEmitter<DeviceEvents> {
             }
             this.descriptor.pid = -1;
             this.emitUpdate();
-        } catch (error: any) {
-            console.error(this.TAG, `Error: ${error.message}`);
-            throw error;
+        } catch (e) {
+            console.error(this.TAG, `Error: ${e.message}`);
+            throw e;
         }
     }
 
@@ -457,9 +457,9 @@ export class Device extends TypedEmitter<DeviceEvents> {
                 console.log(this.TAG, `start server: "${output}"`);
             }
             return this.getServerPid();
-        } catch (error: any) {
-            console.error(this.TAG, `Error: ${error.message}`);
-            throw error;
+        } catch (e) {
+            console.error(this.TAG, `Error: ${e.message}`);
+            throw e;
         }
     }
 }

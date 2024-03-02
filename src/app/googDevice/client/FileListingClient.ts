@@ -5,8 +5,9 @@ import GoogDeviceDescriptor from '../../../types/GoogDeviceDescriptor';
 import { BaseDeviceTracker } from '../../client/BaseDeviceTracker';
 import { ACTION } from '../../../common/Action';
 import { ParamsDeviceTracker } from '../../../types/ParamsDeviceTracker';
+import { ParsedUrlQuery } from 'querystring';
 import Util from '../../Util';
-import Protocol from '@dead50f7/adbkit/lib/adb/protocol';
+import Protocol from '@devicefarmer/adbkit/lib/adb/protocol';
 import { Entry } from '../Entry';
 import { html } from '../../ui/HtmlTag';
 import * as path from 'path';
@@ -52,7 +53,7 @@ export class FileListingClient extends ManagerClient<ParamsFileListing, never> i
     public static readonly PROPERTY_ENTRY_ID = 'data-entry-id';
     public static REMOVE_ROW_TIMEOUT = 2000;
 
-    public static start(params: ParamsFileListing): FileListingClient {
+    public static start(params: ParsedUrlQuery): FileListingClient {
         return new FileListingClient(params);
     }
 
@@ -95,7 +96,7 @@ export class FileListingClient extends ManagerClient<ParamsFileListing, never> i
     private uploads: Map<string, Upload> = new Map();
     private tableBody: HTMLElement;
     private channels: Set<Multiplexer> = new Set();
-    constructor(params: ParamsFileListing) {
+    constructor(params: ParsedUrlQuery) {
         super(params);
         this.parent = document.body;
         this.serial = this.params.udid;
@@ -256,15 +257,14 @@ export class FileListingClient extends ManagerClient<ParamsFileListing, never> i
         });
     }
 
-    public static parseParameters(params: URLSearchParams): ParamsFileListing {
+    public parseParameters(params: ParsedUrlQuery): ParamsFileListing {
         const typedParams = super.parseParameters(params);
         const { action } = typedParams;
         if (action !== ACTION.FILE_LISTING) {
             throw Error('Incorrect action');
         }
-        const pathParam = params.get('path');
-        const path = pathParam || '/storage/emulated/0/apps';
-        return { ...typedParams, action, udid: Util.parseString(params, 'udid', true), path };
+        const path = params.path ? (Array.isArray(params.path) ? params.path[0] : params.path) : '/storage/emulated/0/apps';
+        return { ...typedParams, action, udid: Util.parseStringEnv(params.udid), path };
     }
 
     protected buildDirectWebSocketUrl(): URL {
@@ -273,11 +273,11 @@ export class FileListingClient extends ManagerClient<ParamsFileListing, never> i
         return localUrl;
     }
 
-    protected onSocketClose(event: CloseEvent): void {
+    protected onSocketClose(e: CloseEvent): void {
         if (this.filePushHandler) {
             this.filePushHandler.release();
         }
-        console.error(this.name, 'socket closed', event.reason);
+        console.error(this.name, 'socket closed', e.reason);
         this.addForeground(Foreground.Connect);
     }
 
@@ -323,8 +323,8 @@ export class FileListingClient extends ManagerClient<ParamsFileListing, never> i
             pathToLoadAfter,
         };
         this.downloads.set(channel, download);
-        const onMessage = (event: MessageEvent): void => {
-            this.handleReply(channel, event);
+        const onMessage = (e: MessageEvent): void => {
+            this.handleReply(channel, e);
         };
         const onClose = (): void => {
             this.channels.delete(channel);

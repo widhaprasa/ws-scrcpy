@@ -1,7 +1,7 @@
 import { Mw } from '../../mw/Mw';
 import { AdbUtils } from '../AdbUtils';
 import Util from '../../../app/Util';
-import Protocol from '@dead50f7/adbkit/lib/adb/protocol';
+import Protocol from '@devicefarmer/adbkit/lib/adb/protocol';
 import { Multiplexer } from '../../../packages/multiplexer/Multiplexer';
 import { ChannelCode } from '../../../common/ChannelCode';
 import { FilePushReader } from '../filePush/FilePushReader';
@@ -55,8 +55,8 @@ export class FileListing extends Mw {
                 offset += 4;
                 const pathBuffer = data.slice(offset, offset + length);
                 const pathString = Util.utf8ByteArrayToString(pathBuffer);
-                FileListing.handle(cmd, serial, pathString, channel).catch((error: Error) => {
-                    console.error(`[${FileListing.TAG}]`, error.message);
+                FileListing.handle(cmd, serial, pathString, channel).catch((e: Error) => {
+                    console.error(`[${FileListing.TAG}]`, e.message);
                 });
                 break;
             case Protocol.SEND:
@@ -80,8 +80,8 @@ export class FileListing extends Mw {
             if (cmd === Protocol.RECV) {
                 return AdbUtils.pipePullFileToStream(serial, pathString, channel);
             }
-        } catch (error: any) {
-            FileListing.sendError(error?.message, channel);
+        } catch (e) {
+            FileListing.sendError(e.message, channel);
         }
     }
 

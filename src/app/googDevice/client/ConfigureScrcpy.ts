@@ -372,8 +372,8 @@ export class ConfigureScrcpy extends BaseClient<ParamsStreamScrcpy, ConfigureScr
                 codecOptions,
                 encoderName,
             });
-        } catch (error: any) {
-            console.error(this.TAG, error.message);
+        } catch (e) {
+            console.error(this.TAG, e.message);
             return null;
         }
     }
@@ -579,8 +579,8 @@ export class ConfigureScrcpy extends BaseClient<ParamsStreamScrcpy, ConfigureScr
         this.background.removeEventListener('click', this.onBackgroundClick);
     }
 
-    private onBackgroundClick = (event: MouseEvent): void => {
-        if (event.target !== event.currentTarget) {
+    private onBackgroundClick = (e: MouseEvent): void => {
+        if (e.target !== e.currentTarget) {
             return;
         }
         this.cancel();

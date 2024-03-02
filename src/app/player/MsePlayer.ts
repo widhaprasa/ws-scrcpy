@@ -3,6 +3,9 @@ import VideoConverter, { setLogger, mimeType } from 'h264-converter';
 import VideoSettings from '../VideoSettings';
 import Size from '../Size';
 import { DisplayInfo } from '../DisplayInfo';
+// TODO: HBsmith
+import HBsmithLogo from '../../public/images/hbsmith-logo.png';
+//
 
 interface QualityStats {
     timestamp: number;
@@ -24,7 +27,7 @@ export class MsePlayer extends BasePlayer {
         bitrate: 7340032,
         maxFps: 60,
         iFrameInterval: 10,
-        bounds: new Size(720, 720),
+        bounds: new Size(960, 960),
         sendFrameMeta: false,
     });
     private static DEFAULT_FRAMES_PER_FRAGMENT = 1;
@@ -40,6 +43,9 @@ export class MsePlayer extends BasePlayer {
             tag.id = id;
         }
         tag.className = 'video-layer';
+        // TODO: HBsmith
+        tag.poster = HBsmithLogo;
+        //
         return tag;
     }
 
@@ -60,7 +66,7 @@ export class MsePlayer extends BasePlayer {
     protected canPlay = false;
     private seekingSince = -1;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    protected readonly isSafari = !!(window as unknown as any)['safari'];
+    protected readonly isSafari = !!((window as unknown) as any)['safari'];
     protected readonly isChrome = navigator.userAgent.includes('Chrome');
     protected readonly isMac = navigator.platform.startsWith('Mac');
     private MAX_TIME_TO_RECOVER = 200; // ms
@@ -78,8 +84,8 @@ export class MsePlayer extends BasePlayer {
         protected tag: HTMLVideoElement = MsePlayer.createElement(),
     ) {
         super(udid, displayInfo, name, MsePlayer.storageKeyPrefix, tag);
-        tag.oncontextmenu = function (event: MouseEvent): boolean {
-            event.preventDefault();
+        tag.oncontextmenu = function (e: MouseEvent): boolean {
+            e.preventDefault();
             return false;
         };
         tag.addEventListener('error', this.onVideoError);
@@ -88,8 +94,8 @@ export class MsePlayer extends BasePlayer {
         setLogger(() => {}, console.error);
     }
 
-    onVideoError = (event: Event): void => {
-        console.error(`[${this.name}]`, event);
+    onVideoError = (e: Event): void => {
+        console.error(`[${this.name}]`, e);
     };
 
     onVideoCanPlay = (): void => {
@@ -271,7 +277,7 @@ export class MsePlayer extends BasePlayer {
                 }
                 frame = this.frames.shift();
             }
-        } catch (error: any) {
+        } catch (e) {
             console.error(`[${this.name}]`, 'Failed to clean source buffer');
         }
     };

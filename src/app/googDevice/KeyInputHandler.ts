@@ -1,6 +1,9 @@
 import { KeyCodeControlMessage } from '../controlMessage/KeyCodeControlMessage';
 import KeyEvent from './android/KeyEvent';
 import { KeyToCodeMap } from './KeyToCodeMap';
+// TODO HBsmith
+import { WindowsKeyCodeToKey } from './WindowsKeyCodeToKey';
+//
 
 export interface KeyEventListener {
     onKeyEvent: (event: KeyCodeControlMessage) => void;
@@ -9,17 +12,25 @@ export interface KeyEventListener {
 export class KeyInputHandler {
     private static readonly repeatCounter: Map<number, number> = new Map();
     private static readonly listeners: Set<KeyEventListener> = new Set();
-    private static handler = (event: Event): void => {
-        const keyboardEvent = event as KeyboardEvent;
-        const keyCode = KeyToCodeMap.get(keyboardEvent.code);
+    private static handler = (e: Event): void => {
+        const event = e as KeyboardEvent;
+        // TODO HBsmith
+        let keyCode = KeyToCodeMap.get(event.code);
+        if (!keyCode) {
+            // noinspection JSDeprecatedSymbols
+            const cc = WindowsKeyCodeToKey.get(event.keyCode);
+            if (!cc) return;
+            keyCode = KeyToCodeMap.get(cc);
+        }
         if (!keyCode) {
             return;
         }
+        //
         let action: typeof KeyEvent.ACTION_DOWN | typeof KeyEvent.ACTION_DOWN;
         let repeatCount = 0;
-        if (keyboardEvent.type === 'keydown') {
+        if (event.type === 'keydown') {
             action = KeyEvent.ACTION_DOWN;
-            if (keyboardEvent.repeat) {
+            if (event.repeat) {
                 let count = KeyInputHandler.repeatCounter.get(keyCode);
                 if (typeof count !== 'number') {
                     count = 1;
@@ -29,20 +40,20 @@ export class KeyInputHandler {
                 repeatCount = count;
                 KeyInputHandler.repeatCounter.set(keyCode, count);
             }
-        } else if (keyboardEvent.type === 'keyup') {
+        } else if (event.type === 'keyup') {
             action = KeyEvent.ACTION_UP;
             KeyInputHandler.repeatCounter.delete(keyCode);
         } else {
             return;
         }
         const metaState =
-            (keyboardEvent.getModifierState('Alt') ? KeyEvent.META_ALT_ON : 0) |
-            (keyboardEvent.getModifierState('Shift') ? KeyEvent.META_SHIFT_ON : 0) |
-            (keyboardEvent.getModifierState('Control') ? KeyEvent.META_CTRL_ON : 0) |
-            (keyboardEvent.getModifierState('Meta') ? KeyEvent.META_META_ON : 0) |
-            (keyboardEvent.getModifierState('CapsLock') ? KeyEvent.META_CAPS_LOCK_ON : 0) |
-            (keyboardEvent.getModifierState('ScrollLock') ? KeyEvent.META_SCROLL_LOCK_ON : 0) |
-            (keyboardEvent.getModifierState('NumLock') ? KeyEvent.META_NUM_LOCK_ON : 0);
+            (event.getModifierState('Alt') ? KeyEvent.META_ALT_ON : 0) |
+            (event.getModifierState('Shift') ? KeyEvent.META_SHIFT_ON : 0) |
+            (event.getModifierState('Control') ? KeyEvent.META_CTRL_ON : 0) |
+            (event.getModifierState('Meta') ? KeyEvent.META_META_ON : 0) |
+            (event.getModifierState('CapsLock') ? KeyEvent.META_CAPS_LOCK_ON : 0) |
+            (event.getModifierState('ScrollLock') ? KeyEvent.META_SCROLL_LOCK_ON : 0) |
+            (event.getModifierState('NumLock') ? KeyEvent.META_NUM_LOCK_ON : 0);
 
         const controlMessage: KeyCodeControlMessage = new KeyCodeControlMessage(
             action,
@@ -53,7 +64,7 @@ export class KeyInputHandler {
         KeyInputHandler.listeners.forEach((listener) => {
             listener.onKeyEvent(controlMessage);
         });
-        event.preventDefault();
+        e.preventDefault();
     };
     private static attachListeners(): void {
         document.body.addEventListener('keydown', this.handler);

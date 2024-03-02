@@ -24,7 +24,7 @@ export class TinyH264Player extends BaseCanvasBasedPlayer {
         bitrate: 524288,
         maxFps: 24,
         iFrameInterval: 5,
-        bounds: new Size(480, 480),
+        bounds: new Size(960, 960),
         sendFrameMeta: false,
     });
 
@@ -41,8 +41,8 @@ export class TinyH264Player extends BaseCanvasBasedPlayer {
         super(udid, displayInfo, name, TinyH264Player.storageKeyPrefix);
     }
 
-    private onWorkerMessage = (event: MessageEvent): void => {
-        const message: WorkerMessage = event.data;
+    private onWorkerMessage = (e: MessageEvent): void => {
+        const message: WorkerMessage = e.data;
         switch (message.type) {
             case 'pictureReady':
                 const { width, height, data } = message;

@@ -5,4 +5,13 @@ export enum WDAMethod {
     GET_SCREEN_WIDTH = 'GET_SCREEN_WIDTH',
     APPIUM_SETTINGS = 'APPIUM_SETTINGS',
     SEND_KEYS = 'SEND_KEYS',
+    // TODO: HBsmith
+    LOCK = 'LOCK',
+    UNLOCK = 'UNLOCK',
+    TERMINATE_APP = 'TERMINATE_APP',
+    TAP_LONG = 'TAP_LONG',
+    REBOOT = 'REBOOT',
+    REMOVE_APP = 'REMOVE_APP',
+    LAUNCH_APP = 'LAUNCH_APP',
+    //
 }

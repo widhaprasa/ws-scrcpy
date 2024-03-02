@@ -43,4 +43,12 @@ export interface Configuration {
     runGoogTracker?: boolean;
     announceGoogTracker?: boolean;
     remoteHostList?: HostsItem[];
+
+    // TODO: HBsmith
+    HMAC_IDC_KEY?: string;
+    ramielApiServerEndpoint?: string;
+    serverPort?: number;
+    sentryDSN?: string;
+    sentryProject?: string;
+    //
 }

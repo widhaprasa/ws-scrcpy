@@ -30,6 +30,10 @@ interface StreamReceiverEvents {
     encoders: string[];
     connected: void;
     disconnected: CloseEvent;
+    // TODO: HBsmith
+    deviceDisconnected: CloseEvent;
+    eventMessage: MessageEvent;
+    //
 }
 
 const TAG = '[StreamReceiver]';
@@ -125,27 +129,33 @@ export class StreamReceiver<P extends ParamsStream> extends ManagerClient<Params
     }
 
     protected onSocketClose(ev: CloseEvent): void {
+        // TODO: HBsmith
+        this.emit('deviceDisconnected', ev);
+        //
         console.log(`${TAG}. WS closed: ${ev.reason}`);
         this.emit('disconnected', ev);
     }
 
-    protected onSocketMessage(event: MessageEvent): void {
-        if (event.data instanceof ArrayBuffer) {
+    protected onSocketMessage(e: MessageEvent): void {
+        if (e.data instanceof ArrayBuffer) {
             // works only because MAGIC_BYTES_INITIAL and MAGIC_BYTES_MESSAGE have same length
-            if (event.data.byteLength > MAGIC_BYTES_INITIAL.length) {
-                const magicBytes = new Uint8Array(event.data, 0, MAGIC_BYTES_INITIAL.length);
+            if (e.data.byteLength > MAGIC_BYTES_INITIAL.length) {
+                const magicBytes = new Uint8Array(e.data, 0, MAGIC_BYTES_INITIAL.length);
                 if (StreamReceiver.EqualArrays(magicBytes, MAGIC_BYTES_INITIAL)) {
-                    this.handleInitialInfo(event.data);
+                    this.handleInitialInfo(e.data);
                     return;
                 }
                 if (StreamReceiver.EqualArrays(magicBytes, DeviceMessage.MAGIC_BYTES_MESSAGE)) {
-                    const message = DeviceMessage.fromBuffer(event.data);
+                    const message = DeviceMessage.fromBuffer(e.data);
                     this.emit('deviceMessage', message);
                     return;
                 }
             }
 
-            this.emit('video', new Uint8Array(event.data));
+            this.emit('video', new Uint8Array(e.data));
+        }
+        else {
+            this.emit('eventMessage', e);
         }
     }
 

@@ -17,6 +17,19 @@ export class ControlMessage {
     public static TYPE_ROTATE_DEVICE = 11;
     public static TYPE_CHANGE_STREAM_PARAMETERS = 101;
     public static TYPE_PUSH_FILE = 102;
+    // TODO: HBsmith
+    public static TYPE_ADB_CONTROL = 200;
+    public static TYPE_ADB_CONTROL_SWIPE_UP = 0;
+    public static TYPE_ADB_CONTROL_SWIPE_DOWN = 1;
+    public static TYPE_ADB_INSTALL_APK = 2;
+    public static TYPE_ADB_TERMINATE_APP = 3;
+    public static TYPE_ADB_REBOOT = 4;
+    public static TYPE_ADB_UNINSTALL_APK = 5;
+    public static TYPE_ADB_LAUNCH_APK = 6;
+    public static TYPE_ADB_SEND_TEXT = 7;
+
+    public static TYPE_HEARTBEAT = 201;
+    //
 
     constructor(readonly type: number) {}
 

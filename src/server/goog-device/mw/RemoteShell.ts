@@ -31,7 +31,7 @@ export class RemoteShell extends Mw {
     }
 
     public static processRequest(ws: WS, params: RequestParameters): RemoteShell | undefined {
-        if (params.action !== ACTION.SHELL) {
+        if (params.parsedQuery?.action !== ACTION.SHELL) {
             return;
         }
         return new RemoteShell(ws);
@@ -86,12 +86,12 @@ export class RemoteShell extends Mw {
         let data;
         try {
             data = JSON.parse(event.data.toString());
-        } catch (error: any) {
-            console.error(`[${RemoteShell.TAG}]`, error?.message);
+        } catch (e) {
+            console.error(`[${RemoteShell.TAG}]`, e.message);
             return;
         }
-        this.handleMessage(data as Message).catch((error: Error) => {
-            console.error(`[${RemoteShell.TAG}]`, error.message);
+        this.handleMessage(data as Message).catch((e: Error) => {
+            console.error(`[${RemoteShell.TAG}]`, e.message);
         });
     }
 

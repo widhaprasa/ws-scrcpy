@@ -1,3 +1,65 @@
+# HBsmith 참조
+안드로이드 리얼디바이스 장비 지원을 위해 NetrisTV의 ws-scrcpy를 Fork하였음.
+
+## 사용하는 포트
+- 28500: Android
+- 28100: iOS
+- 38000~40000: 프록시 포트 대역
+
+## 설치 및 설정
+- Homebrew 설치
+  ```bash
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  ```
+- 저장소 복제
+  ```bash
+  git clone git@github.com:HardBoiledSmith/ws-scrcpy.git
+  ```
+- 설정파일 복사
+  ```bash
+  cd ws-scrcpy/_provisioning/configuration/etc/ramiel/ws-scrcpy || exit -1
+  cp settings_local_sample.json settings_local.json
+  ```
+- 설정파일 수정: `vim settings_local.json`
+- 필수 설정 값 확인:
+  - `serverPort`: 서버 포트 (default: `28500`)
+  - `ramielApiServerEndpoint`: ramiel API 서버 엔트포인트. 예) `http://dv-sachiel.hbsmith.io`
+
+## 개발 정책
+- 주기적으로 원본 브렌치와 merge
+  ```bash
+  git remote add upstream https://github.com/NetrisTV/ws-scrcpy.git
+  git pull upstream master
+  # conflict 제거
+  git remote remove upstream
+  ```
+- code reformatting 사용 지양: 원본 브렌치와의 병합을 위함
+
+## 개발환경에서 지원하는 것들
+- 라인 단위 디버깅 & 소스코드 추적
+- 변경내용 감지 및 재구성은 지원하지 않음
+
+## 개발환경 구축
+- 사용 툴: Pycharm Professional + node.js
+- Node.js 설치
+  ```bash
+  brew install node@14
+  ```
+- 배포
+  ```bash
+  git clone git@github.com:HardBoiledSmith/ws-scrcpy.git
+
+  cd ws-scrcpy
+  npm install
+  ```
+- PyCharm -> 프로젝트 폴더 선택
+- 실행 환경 추가: Pycharm -> Edit Configurations -> Add New Configuration -> Node.js
+  - Name: `ws-scrcpy` (임의로 설정)
+  - Working directory: `<PATH_TO_WORKING_DIR>/ws-scrcpy`
+  - JavaScript file: `dist/index.js`
+  - Before launch -> Add -> Run npm script -> command=`run`, script=`dist:dev`
+
+
 # ws scrcpy
 
 Web client for [Genymobile/scrcpy][scrcpy] and more.

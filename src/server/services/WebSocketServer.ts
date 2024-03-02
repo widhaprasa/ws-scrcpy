@@ -1,5 +1,7 @@
 import { Server as WSServer } from 'ws';
 import WS from 'ws';
+import querystring from 'querystring';
+import url from 'url';
 import { Service } from './Service';
 import { HttpServer, ServerAndPort } from './HttpServer';
 import { MwFactory } from '../mw/Mw';
@@ -37,11 +39,11 @@ export class WebSocketServer implements Service {
                 ws.close(4001, `[${TAG}] Invalid url`);
                 return;
             }
-            const url = new URL(request.url, 'https://example.org/');
-            const action = url.searchParams.get('action') || '';
+            const parsedUrl = url.parse(request.url);
+            const parsedQuery = querystring.parse(parsedUrl.query || '');
             let processed = false;
             for (const mwFactory of this.mwFactories.values()) {
-                const service = mwFactory.processRequest(ws, { action, request, url });
+                const service = mwFactory.processRequest(ws, { request, parsedUrl, parsedQuery });
                 if (service) {
                     processed = true;
                 }

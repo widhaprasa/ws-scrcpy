@@ -2,6 +2,9 @@ import { BaseClient } from '../../client/BaseClient';
 import { ParamsStreamScrcpy } from '../../../types/ParamsStreamScrcpy';
 import { GoogMoreBox } from '../toolbox/GoogMoreBox';
 import { GoogToolBox } from '../toolbox/GoogToolBox';
+// TODO: HBsmith
+//import { DroidToolBox2 } from '../toolbox/DroidToolBox2';
+//
 import VideoSettings from '../../VideoSettings';
 import Size from '../../Size';
 import { ControlMessage } from '../../controlMessage/ControlMessage';
@@ -27,6 +30,7 @@ import { DisplayInfo } from '../../DisplayInfo';
 import { Attribute } from '../../Attribute';
 import { HostTracker } from '../../client/HostTracker';
 import { ACTION } from '../../../common/Action';
+import { ParsedUrlQuery } from 'querystring';
 import { StreamReceiverScrcpy } from './StreamReceiverScrcpy';
 import { ParamsDeviceTracker } from '../../../types/ParamsDeviceTracker';
 import { ScrcpyFilePushStream } from '../filePush/ScrcpyFilePushStream';
@@ -48,6 +52,7 @@ export class StreamClientScrcpy
     public static ACTION = 'stream';
     private static players: Map<string, PlayerClass> = new Map<string, PlayerClass>();
 
+    private udid = '';
     private controlButtons?: HTMLElement;
     private deviceName = '';
     private clientId = -1;
@@ -60,6 +65,9 @@ export class StreamClientScrcpy
     private filePushHandler?: FilePushHandler;
     private fitToScreen?: boolean;
     private readonly streamReceiver: StreamReceiverScrcpy;
+    // TODO: HBsmith
+    private readonly heartbeatTimer: NodeJS.Timeout;
+    //
 
     public static registerPlayer(playerClass: PlayerClass): void {
         if (playerClass.isSupported()) {
@@ -98,18 +106,13 @@ export class StreamClientScrcpy
     }
 
     public static start(
-        query: URLSearchParams | ParamsStreamScrcpy,
+        params: ParsedUrlQuery | ParamsStreamScrcpy,
         streamReceiver?: StreamReceiverScrcpy,
         player?: BasePlayer,
         fitToScreen?: boolean,
         videoSettings?: VideoSettings,
     ): StreamClientScrcpy {
-        if (query instanceof URLSearchParams) {
-            const params = StreamClientScrcpy.parseParameters(query);
-            return new StreamClientScrcpy(params, streamReceiver, player, fitToScreen, videoSettings);
-        } else {
-            return new StreamClientScrcpy(query, streamReceiver, player, fitToScreen, videoSettings);
-        }
+        return new StreamClientScrcpy(params, streamReceiver, player, fitToScreen, videoSettings);
     }
 
     private static createVideoSettingsWithBounds(old: VideoSettings, newBounds: Size): VideoSettings {
@@ -128,7 +131,7 @@ export class StreamClientScrcpy
     }
 
     protected constructor(
-        params: ParamsStreamScrcpy,
+        params: ParsedUrlQuery | ParamsStreamScrcpy,
         streamReceiver?: StreamReceiverScrcpy,
         player?: BasePlayer,
         fitToScreen?: boolean,
@@ -142,11 +145,35 @@ export class StreamClientScrcpy
         }
 
         const { udid, player: playerName } = this.params;
-        this.startStream({ udid, player, playerName, fitToScreen, videoSettings });
-        this.setBodyClass('stream');
+        // TODO: HBsmith
+        try {
+            this.startStream({ udid, player, playerName, fitToScreen, videoSettings });
+        } catch (error) {
+            let statusText = document.getElementById('control-header-device-status-text');
+            if (!statusText) {
+                const tempErrorView = document.createElement('div');
+                tempErrorView.className = 'control-header';
+
+                statusText = document.createElement('div');
+                statusText.className = 'control-header-device-status-text';
+                statusText.style.width = '100%';
+                tempErrorView.append(statusText);
+                document.body.appendChild(tempErrorView);
+            }
+            if (statusText) {
+                statusText.textContent = error.message;
+            }
+        } finally {
+            this.setBodyClass('stream');
+        }
+
+        this.heartbeatTimer = setInterval(() => {
+            this.sendMessage(CommandControlMessage.createHeartbeatCommand());
+        }, 60 * 1000);
+        //
     }
 
-    public static parseParameters(params: URLSearchParams): ParamsStreamScrcpy {
+    public parseParameters(params: ParsedUrlQuery): ParamsStreamScrcpy {
         const typedParams = super.parseParameters(params);
         const { action } = typedParams;
         if (action !== ACTION.STREAM_SCRCPY) {
@@ -155,9 +182,9 @@ export class StreamClientScrcpy
         return {
             ...typedParams,
             action,
-            player: Util.parseString(params, 'player', true),
-            udid: Util.parseString(params, 'udid', true),
-            ws: Util.parseString(params, 'ws', true),
+            player: Util.parseStringEnv(params.player),
+            udid: Util.parseStringEnv(params.udid),
+            ws: Util.parseStringEnv(params.ws),
         };
     }
 
@@ -183,8 +210,33 @@ export class StreamClientScrcpy
     public onClientsStats = (stats: ClientsStats): void => {
         this.deviceName = stats.deviceName;
         this.clientId = stats.clientId;
+        // this.setTitle(`Stream ${this.deviceName}`);
+
+        const headerText = document.getElementById('control-header-device-name-text');
+        if (headerText) {
+            headerText.textContent = `${this.deviceName} (${this.udid})`;
+        }
     };
 
+    // TODO: HBsmith
+    public onDeviceDisconnected = (ev: CloseEvent): void => {
+        const statusText = document.getElementById('control-header-device-status-text');
+        if (statusText) {
+            statusText.textContent = ev.reason;
+        }
+        clearInterval(this.heartbeatTimer);
+    };
+
+    public onEventMessage = (ev: MessageEvent): void => {
+        const json = JSON.parse(ev.data);
+        if (json.type === 'git-info') {
+            const gitHashText = document.getElementById('control-footer-hash-name-text');
+            if (gitHashText) {
+                gitHashText.textContent = json.data
+            }
+        }
+    };
+    //
     public onDisplayInfo = (infoArray: DisplayCombinedInfo[]): void => {
         if (!this.player) {
             return;
@@ -253,6 +305,10 @@ export class StreamClientScrcpy
         this.streamReceiver.off('clientsStats', this.onClientsStats);
         this.streamReceiver.off('displayInfo', this.onDisplayInfo);
         this.streamReceiver.off('disconnected', this.onDisconnected);
+        // TODO: HBsmith
+        this.streamReceiver.off('deviceDisconnected', this.onDeviceDisconnected);
+        this.streamReceiver.off('eventMessage', this.onEventMessage);
+        //
 
         this.filePushHandler?.release();
         this.filePushHandler = undefined;
@@ -264,6 +320,7 @@ export class StreamClientScrcpy
         if (!udid) {
             throw Error(`Invalid udid value: "${udid}"`);
         }
+        this.udid = udid;
         this.setTitle(`Stream ${udid}`);
 
         this.fitToScreen = fitToScreen;
@@ -291,6 +348,28 @@ export class StreamClientScrcpy
             videoSettings = player.getVideoSettings();
         }
 
+        /*
+        // TODO: hbsmith
+        const controlHeaderView = document.createElement('div');
+        controlHeaderView.className = 'control-header';
+
+        const droidToolBox2 = DroidToolBox2.createToolBox(this);
+        const controlButtons2 = droidToolBox2.getHolderElement();
+        controlHeaderView.appendChild(controlButtons2);
+
+        document.body.appendChild(controlHeaderView);
+
+        const controlFooterView = document.createElement('div');
+        controlFooterView.className = 'control-footer';
+
+        const controlFooterText = document.createElement('div');
+        controlFooterText.id = 'control-footer-hash-name-text';
+        controlFooterText.className = 'control-footer-hash-name-text';
+        controlFooterView.appendChild(controlFooterText);
+
+        document.body.appendChild(controlFooterView);
+        //
+        */
         const deviceView = document.createElement('div');
         deviceView.className = 'device-view';
         const stop = (ev?: string | Event) => {
@@ -344,11 +423,17 @@ export class StreamClientScrcpy
         streamReceiver.on('clientsStats', this.onClientsStats);
         streamReceiver.on('displayInfo', this.onDisplayInfo);
         streamReceiver.on('disconnected', this.onDisconnected);
+        // TODO: HBsmith
+        streamReceiver.on('deviceDisconnected', this.onDeviceDisconnected);
+        streamReceiver.on('eventMessage', this.onEventMessage);
+
+        // KeyInputHandler.addEventListener(this);
+        //
         console.log(TAG, player.getName(), udid);
     }
 
-    public sendMessage(message: ControlMessage): void {
-        this.streamReceiver.sendEvent(message);
+    public sendMessage(e: ControlMessage): void {
+        this.streamReceiver.sendEvent(e);
     }
 
     public getDeviceName(): string {
@@ -440,12 +525,12 @@ export class StreamClientScrcpy
         return;
     }
 
-    private static onConfigureStreamClick = (event: MouseEvent): void => {
-        const button = event.currentTarget as HTMLAnchorElement;
+    private static onConfigureStreamClick = (e: MouseEvent): void => {
+        const button = e.currentTarget as HTMLAnchorElement;
         const udid = Util.parseStringEnv(button.getAttribute(Attribute.UDID) || '');
         const fullName = button.getAttribute(Attribute.FULL_NAME);
         const secure = Util.parseBooleanEnv(button.getAttribute(Attribute.SECURE) || undefined) || false;
-        const hostname = Util.parseStringEnv(button.getAttribute(Attribute.HOSTNAME) || undefined) || '';
+        const hostname = Util.parseStringEnv(button.getAttribute(Attribute.HOSTNAME) || undefined);
         const port = Util.parseIntEnv(button.getAttribute(Attribute.PORT) || undefined);
         const useProxy = Util.parseBooleanEnv(button.getAttribute(Attribute.USE_PROXY) || undefined);
         if (!udid) {
@@ -465,7 +550,7 @@ export class StreamClientScrcpy
         if (!descriptor) {
             return;
         }
-        event.preventDefault();
+        e.preventDefault();
         const elements = document.getElementsByName(`${DeviceTracker.AttributePrefixInterfaceSelectFor}${fullName}`);
         if (!elements || !elements.length) {
             return;

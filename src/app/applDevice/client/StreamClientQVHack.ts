@@ -1,6 +1,7 @@
 import { StreamReceiver } from '../../client/StreamReceiver';
 import { BasePlayer, PlayerClass } from '../../player/BasePlayer';
 import { ACTION } from '../../../common/Action';
+import { ParsedUrlQuery } from 'querystring';
 import { StreamReceiverQVHack } from './StreamReceiverQVHack';
 import { StreamClient } from './StreamClient';
 import { ParamsStream } from '../../../types/ParamsStream';
@@ -11,13 +12,13 @@ export class StreamClientQVHack extends StreamClient<ParamsStream> {
     public static ACTION = ACTION.STREAM_WS_QVH;
     protected static players: Map<string, PlayerClass> = new Map<string, PlayerClass>();
 
-    public static start(params: ParamsStream): StreamClientQVHack {
+    public static start(params: ParsedUrlQuery | ParamsStream): StreamClientQVHack {
         return new StreamClientQVHack(params);
     }
 
     private readonly streamReceiver: StreamReceiver<ParamsStream>;
 
-    constructor(params: ParamsStream) {
+    constructor(params: ParsedUrlQuery | ParamsStream) {
         super(params);
 
         this.name = `[${TAG}:${this.udid}]`;
@@ -34,7 +35,7 @@ export class StreamClientQVHack extends StreamClient<ParamsStream> {
         this.setBodyClass('stream');
     }
 
-    public static get action(): string {
+    public get action(): string {
         return StreamClientQVHack.ACTION;
     }
 

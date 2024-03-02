@@ -1,6 +1,7 @@
 import { DragAndDropHandler, DragEventListener } from '../DragAndDropHandler';
 import { FilePushStream, PushResponse } from './FilePushStream';
 import { FilePushResponseStatus } from './FilePushResponseStatus';
+import { CommandControlMessage } from '../../controlMessage/CommandControlMessage';
 
 type Resolve = (response: PushResponse) => void;
 
@@ -50,10 +51,9 @@ export default class FilePushHandler implements DragEventListener {
         this.sendUpdate({ pushId, fileName, message: `error: "${msg}"`, progress: -1, error: true, finished: true });
     }
 
-    private static async getStreamReader(file: File): Promise<{
-        reader: ReadableStreamDefaultReader<Uint8Array>;
-        result: ReadableStreamDefaultReadResult<Uint8Array>;
-    }> {
+    private static async getStreamReader(
+        file: File,
+    ): Promise<{ reader: ReadableStreamDefaultReader<Uint8Array>; result: ReadableStreamReadResult<Uint8Array> }> {
         const blob = await new Response(file).blob();
         const reader = blob.stream().getReader() as ReadableStreamDefaultReader<Uint8Array>;
         const result = await reader.read();
@@ -105,6 +105,10 @@ export default class FilePushHandler implements DragEventListener {
                         error: false,
                         finished: true,
                     });
+                    // TODO: HBsmith
+                    const message = CommandControlMessage.createAdbInstallCommand(fileName);
+                    this.filePushStream.sendEvent(message);
+                    //
                 }
                 console.log(TAG, `File "${fileName}" uploaded in ${Date.now() - start}ms`);
                 return;
