@@ -77,6 +77,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             ws.close(4003, `[${this.TAG}] Invalid value "${path}" for "path" parameter`);
             return;
         }
+        /*
         // TODO: HBsmith
         let appKey = '';
         let userAgent = '';
@@ -91,6 +92,19 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
 
         return this.createProxyOverAdb(ws, udid, remote, path, appKey, userAgent);
         //
+        */
+
+        const service = new WebsocketProxyOverAdb(ws, udid);
+        AdbUtils.forward(udid, remote)
+            .then((port) => {
+                return service.init(`ws://127.0.0.1:${port}${path ? path : ''}`);
+            })
+            .catch((e) => {
+                const msg = `[${this.TAG}] Failed to start service: ${e.message}`;
+                console.error(msg);
+                ws.close(4005, msg);
+            });
+        return service;
     }
 
     // TODO: HBsmith

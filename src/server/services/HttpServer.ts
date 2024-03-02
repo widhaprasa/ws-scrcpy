@@ -8,7 +8,7 @@ import { Config } from '../Config';
 import { TypedEmitter } from '../../common/TypedEmitter';
 // TODO: HBsmith
 import * as Sentry from '@sentry/node';
-// import axios from 'axios';
+import axios from 'axios';
 //
 
 const DEFAULT_STATIC_DIR = path.join(__dirname, './public');
@@ -75,8 +75,7 @@ export class HttpServer extends TypedEmitter<HttpServerEvents> implements Servic
     }
 
     // TODO: HBsmith
-    public async CheckPermission(_req: express.Request, _res: express.Response, next: express.NextFunction) {
-        /*
+    public async CheckPermission(req: express.Request, res: express.Response, next: express.NextFunction) {
         if (req.hostname === 'localhost') {
             console.log(Utils.getTimeISOString(), 'Checking permission has been bypassed: host is', req.hostname);
         } else if (req.url === '/') {
@@ -177,7 +176,6 @@ export class HttpServer extends TypedEmitter<HttpServerEvents> implements Servic
                 return;
             }
         }
-        */
 
         next();
     }
@@ -200,9 +198,11 @@ export class HttpServer extends TypedEmitter<HttpServerEvents> implements Servic
         this.mainApp = app;
         //
         if (HttpServer.SERVE_STATIC && HttpServer.PUBLIC_DIR) {
+            /*
             // TODO: HBsmith
             this.mainApp.use(this.CheckPermission);
             //
+            */
             this.mainApp.use(express.static(HttpServer.PUBLIC_DIR));
 
             /// #if USE_WDA_MJPEG_SERVER
