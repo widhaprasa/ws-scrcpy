@@ -76,6 +76,7 @@ export class HttpServer extends TypedEmitter<HttpServerEvents> implements Servic
 
     // TODO: HBsmith
     public async CheckPermission(req: express.Request, res: express.Response, next: express.NextFunction) {
+        /*
         if (req.hostname === 'localhost') {
             console.log(Utils.getTimeISOString(), 'Checking permission has been bypassed: host is', req.hostname);
         } else if (req.url === '/') {
@@ -176,6 +177,7 @@ export class HttpServer extends TypedEmitter<HttpServerEvents> implements Servic
                 return;
             }
         }
+        */
 
         next();
     }
