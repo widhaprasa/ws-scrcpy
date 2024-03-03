@@ -92,7 +92,7 @@ body.stream {
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: center;
-    min-width: 100vh;
+    /* min-width: 100vh; */
     align-self: center;
 }
 
