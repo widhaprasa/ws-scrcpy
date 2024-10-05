@@ -227,27 +227,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             .then(() => {
                 return service.setUpGitInfo();
             })
-            .catch((e) => {
-                let mm = '';
-                if (e.stack && e.stack.includes('/adbkit/lib/adb/')) {
-                    mm = `[${this.TAG}] 장비가 일시적으로 오프라인 상태입니다. 5분 뒤 다시 시도해주세요.`;
-                } else {
-                    const mm = `[${this.TAG}] 서비스 시작 실패: ${e.message}`;
-
-                    console.error(Utils.getTimeISOString(), udid, e.stack);
-                    Sentry.captureException(e, (scope) => {
-                        scope.setTag('ramiel_device_type', 'Android');
-                        scope.setTag('ramiel_device_id', udid);
-                        scope.setTag('ramiel_message', e.ramiel_message || mm);
-                        if (e.ramiel_contexts) {
-                            scope.setContext('Ramiel', e.ramiel_contexts);
-                        }
-                        scope.setExtra('ramiel_stack', e.stack);
-                        return scope;
-                    });
-                }
-                ws.close(4005, mm);
-                WebsocketProxyOverAdb.deleteSession(udid, userAgent || '');
+            .catch((_) => {
             });
         //
         return service;
@@ -379,14 +359,14 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                     case ControlMessage.TYPE_ADB_SEND_TEXT: {
                         const bb = event.data.slice(6);
                         const text = bb.toString();
-                        const kk = 'com.android.adbkeyboard/.AdbIME';
+                        const kk = 'io.hbsmith.bardiel/.AdbIME';
 
                         let cc = 'ime list -a -s';
                         device
                             .runShellCommandAdbKit(cc)
                             .then((rr) => {
-                                const tt = /com.android.adbkeyboard\/.AdbIME/;
-                                if (!tt.test(rr)) throw Error('Failed to get ime: com.android.adbkeyboard.AdbIME');
+                                const tt = /io.hbsmith.bardiel\/.AdbIME/;
+                                if (!tt.test(rr)) throw Error('Failed to get ime: io.hbsmith.bardiel.AdbIME');
 
                                 cc = `ime enable ${kk}`;
                                 return device.runShellCommandAdbKit(cc);
@@ -423,6 +403,43 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                                     this.captureException(ee, 'Failed to set default ime');
                                 });
                             });
+                        return;
+                    }
+                    case ControlMessage.TYPE_ADB_PREPARE_SEND_TEXT: {
+                        const kk = 'io.hbsmith.bardiel/.AdbIME';
+                        device
+                            .runShellCommandAdbKit('ime list -a -s')
+                            .then((rr) => {
+                                const tt = /io.hbsmith.bardiel\/.AdbIME/;
+                                if (!tt.test(rr)) throw Error('Failed to get ime: io.hbsmith.bardiel.AdbIME');
+
+                                return device.runShellCommandAdbKit(`ime enable ${kk}`);
+                            })
+                            .then((rr) => {
+                                const tt = /enabled/;
+                                if (!tt.test(rr)) throw Error('Failed to enable ime');
+
+                                return device.runShellCommandAdbKit(`ime set ${kk}`);
+                            })
+                            .then((rr) => {
+                                const tt = /selected/;
+                                if (!tt.test(rr)) throw Error('Failed to set ime');
+
+                                return Utils.sleep(1000);
+                            })
+                            .catch((ee) => {
+                                this.captureException(ee, 'Failed to prepare sendText');
+                            });
+                        return;
+                    }
+                    case ControlMessage.TYPE_ADB_RESET_KEYBOARD: {
+                        let cc;
+                        if (!this.defaultIME) cc = 'ime reset';
+                        else cc = `ime set ${this.defaultIME}`;
+
+                        device.runShellCommandAdbKit(cc).catch((ee) => {
+                            this.captureException(ee, 'Failed to reset default ime');
+                        });
                         return;
                     }
                 }
@@ -468,12 +485,19 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             return;
         }
 
+        this.sendMessage({
+            id: -1,
+            type: 'set-up-test',
+            data: '',
+        });
+
         const cmdGetIME = 'settings get secure default_input_method';
         const cmdMenu = `input keyevent ${KeyEvent.KEYCODE_MENU}`;
         const cmdHome = `input keyevent ${KeyEvent.KEYCODE_HOME}`;
         const cmdAppStop =
             'for pp in $(dumpsys window a | grep "/" | cut -d "{" -f2 | cut -d "/" -f1 | cut -d " " -f2); do am force-stop "${pp}"; done';
         const cmdAppStart = `monkey -p '${this.appKey}' -c android.intent.category.LAUNCHER 1`;
+        const cmdAppSmsStart = 'am startservice -n sooft.smsf/.model.service.SFFirebaseMessagingService';
 
         return device
             .runShellCommandAdbKit(cmdGetIME)
@@ -500,6 +524,17 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             })
             .then((output) => {
                 this.logger.info(output ? output : `success to stop all of the apps: ${cmdAppStop}`);
+
+                // TODO: sooft.smsf is a optional app for sms relay
+                device
+                    .runShellCommandAdbKit(cmdAppSmsStart)
+                    .then(() => {
+                        this.logger.info('sooft.smsf service is started');
+                    })
+                    .catch(() => {
+                        this.logger.info('sooft.smsf service is skipped');
+                    });
+
                 if (this.appKey) {
                     return device.runShellCommandAdbKit(cmdAppStart).then((output) => {
                         this.logger.info(output ? output : `success to start the app: ${cmdAppStart}`);
