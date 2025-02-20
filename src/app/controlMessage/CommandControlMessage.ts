@@ -1,4 +1,4 @@
-import { ControlMessage } from './ControlMessage';
+import {ControlMessage} from './ControlMessage';
 import VideoSettings from '../VideoSettings';
 import Util from '../Util';
 
@@ -73,7 +73,7 @@ export class CommandControlMessage extends ControlMessage {
     }
 
     public static createPushFileCommand(params: FilePushParams): CommandControlMessage {
-        const { id, fileName, fileSize, chunk, state } = params;
+        const {id, fileName, fileSize, chunk, state} = params;
 
         if (state === FilePushState.START) {
             return this.createPushFileStartCommand(id, fileName as string, fileSize as number);
@@ -190,7 +190,7 @@ export class CommandControlMessage extends ControlMessage {
             offset += 2;
             fileName = Util.utf8ByteArrayToString(buffer.slice(offset, offset + textLength));
         }
-        return { id, state, chunk, fileName, fileSize };
+        return {id, state, chunk, fileName, fileSize};
     }
 
     // TODO: HBsmith
@@ -221,6 +221,61 @@ export class CommandControlMessage extends ControlMessage {
         return event;
     }
 
+    public static createAdbUninstallAppCommand(appKey: string): CommandControlMessage {
+        const event = new CommandControlMessage(ControlMessage.TYPE_ADB_CONTROL);
+        const textBytes: Uint8Array = Util.stringToUtf8ByteArray(appKey);
+        const textLength = textBytes ? textBytes.length : 0;
+        let offset = 0;
+        const buffer = Buffer.alloc(1 + 1 + 4 + textLength);
+        offset = buffer.writeUInt8(event.type, offset);
+        offset = buffer.writeUInt8(ControlMessage.TYPE_ADB_UNINSTALL_APK, offset);
+        offset = buffer.writeInt32BE(textLength, offset);
+        if (textBytes) {
+            textBytes.forEach((byte: number, index: number) => {
+                buffer.writeUInt8(byte, index + offset);
+            });
+        }
+        event.buffer = buffer;
+        return event;
+    }
+
+    public static createAdbLaunchAppCommand(appKey: string): CommandControlMessage {
+        const event = new CommandControlMessage(ControlMessage.TYPE_ADB_CONTROL);
+        const textBytes: Uint8Array = Util.stringToUtf8ByteArray(appKey);
+        const textLength = textBytes ? textBytes.length : 0;
+        let offset = 0;
+        const buffer = Buffer.alloc(1 + 1 + 4 + textLength);
+        offset = buffer.writeUInt8(event.type, offset);
+        offset = buffer.writeUInt8(ControlMessage.TYPE_ADB_LAUNCH_APK, offset);
+        offset = buffer.writeInt32BE(textLength, offset);
+        if (textBytes) {
+            textBytes.forEach((byte: number, index: number) => {
+                buffer.writeUInt8(byte, index + offset);
+            });
+        }
+        event.buffer = buffer;
+        return event;
+    }
+
+    public static createAdbSendTextCommand(text: string): CommandControlMessage {
+        const event = new CommandControlMessage(ControlMessage.TYPE_ADB_CONTROL);
+        const textBytes: Uint8Array = Util.stringToUtf8ByteArray(text);
+        const textLength = textBytes ? textBytes.length : 0;
+        let offset = 0;
+        const buffer = Buffer.alloc(1 + 1 + 4 + textLength);
+        offset = buffer.writeUInt8(event.type, offset);
+        offset = buffer.writeUInt8(ControlMessage.TYPE_ADB_SEND_TEXT, offset);
+        offset = buffer.writeInt32BE(textLength, offset);
+        if (textBytes) {
+            textBytes.forEach((byte: number, index: number) => {
+                buffer.writeUInt8(byte, index + offset);
+            });
+        }
+        event.buffer = buffer;
+        return event;
+    }
+
+
     public static createHeartbeatCommand(): CommandControlMessage {
         const event = new CommandControlMessage(ControlMessage.TYPE_HEARTBEAT);
         const buffer = new Buffer(1 + 1);
@@ -229,6 +284,7 @@ export class CommandControlMessage extends ControlMessage {
         event.buffer = buffer;
         return event;
     }
+
     //
 
     private buffer?: Buffer;

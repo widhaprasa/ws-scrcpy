@@ -21,6 +21,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
     private udid = '';
     private appKey = '';
     private userAgent = '';
+    private defaultIME = '';
     private apiSessionCreated = false;
     private logger: Logger;
     private lastHeartbeat: number = Date.now();
@@ -256,6 +257,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
 
                 switch (value) {
                     case ControlMessage.TYPE_ADB_INSTALL_APK: {
+                        this.sendMessage({ id: -1, type: 'status', data: '앱 설치 시작' });
                         const bb = event.data.slice(6);
                         const fileName = bb.toString();
                         const pathToApk = `/data/local/tmp/${fileName}`;
@@ -274,6 +276,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                             .then((rr) => {
                                 if (rr === 'Success') {
                                     this.logger.info(`success to install test apk: ${fileName}`);
+                                    this.sendMessage({ id: -1, type: 'status', data: '앱 설치 완료' });
                                     return device.runShellCommandAdbKit(`rm -f '${pathToApk}'`);
                                 }
                                 return;
@@ -282,6 +285,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                     }
                     case ControlMessage.TYPE_ADB_CONTROL_SWIPE_DOWN:
                     case ControlMessage.TYPE_ADB_CONTROL_SWIPE_UP: {
+                        this.sendMessage({ id: -1, type: 'status', data: '스크롤 시작' });
                         let isLandscape = false;
                         device
                             .runShellCommandAdbKit('dumpsys window displays | grep mCurrentRotation | tail -1')
@@ -311,35 +315,163 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                                     .runShellCommandAdbKit(`input swipe ${xx} ${y1} ${xx} ${y2} 2000`)
                                     .then(() => {
                                         this.logger.info(`Success to swipe: ${xx} ${y1} ${xx} ${y2} 2000`);
+                                        this.sendMessage({ id: -1, type: 'status', data: '스크롤 완료' });
                                     });
                             })
                             .catch((e) => {
-                                e.ramiel_message = 'Failed to swipe';
-                                throw e;
+                                this.captureException(e, 'Failed to swipe');
                             });
                         return;
                     }
                     case ControlMessage.TYPE_ADB_REBOOT: {
+                        this.sendMessage({ id: -1, type: 'status', data: '재부팅 시작. 5분 뒤 재접속 바랍니다.' });
                         device.runShellCommandAdbKit('reboot').catch((e) => {
-                            e.ramiel_message = 'Failed to reboot';
-                            throw e;
+                            this.captureException(e, 'Failed to reboot');
                         });
                         return;
                     }
                     case ControlMessage.TYPE_ADB_TERMINATE_APP: {
+                        this.sendMessage({ id: -1, type: 'status', data: '앱 종료 시작' });
                         device
                             .runShellCommandAdbKit("dumpsys window | grep -E 'mCurrentFocus'")
                             .then((rr) => {
-                                const packageName = rr.split('/')[0].split(' ')[2];
-                                if (packageName !== 'com.sec.android.app.launcher') {
-                                    return device.runShellCommandAdbKit(`am force-stop ${packageName}`);
+                                const mm = rr.match(/mCurrentFocus=Window\{.*\}/);
+                                let pp = mm ? mm[0] : '';
+                                if (!pp) {
+                                    return;
+                                }
+                                pp = pp.split('/')[0].split(' ')[2];
+                                if (pp !== 'com.sec.android.app.launcher') {
+                                    return device.runShellCommandAdbKit(`am force-stop ${pp}`);
                                 }
                                 return;
                             })
+                            .then(() => {
+                                this.sendMessage({ id: -1, type: 'status', data: '앱 종료 완료' });
+                            })
                             .catch((e) => {
-                                e.ramiel_message = 'Failed to termination';
-                                throw e;
+                                this.captureException(e, 'Failed to termination');
                             });
+                        return;
+                    }
+                    case ControlMessage.TYPE_ADB_UNINSTALL_APK: {
+                        this.sendMessage({ id: -1, type: 'status', data: '앱 삭제 시작' });
+                        const bb = event.data.slice(6);
+                        const appKey = bb.toString();
+                        device
+                            .runShellCommandAdbKit(`pm uninstall -k --user 0 ${appKey}`)
+                            .then(() => {
+                                this.sendMessage({ id: -1, type: 'status', data: '앱 삭제 완료' });
+                            })
+                            .catch((e) => {
+                                this.captureException(e, `Failed to uninstall apk: ${appKey}`);
+                            });
+                        return;
+                    }
+                    case ControlMessage.TYPE_ADB_LAUNCH_APK: {
+                        this.sendMessage({ id: -1, type: 'status', data: '앱 시작' });
+                        const bb = event.data.slice(6);
+                        const aa = bb.toString();
+                        const cc = `monkey -p '${aa}' -c android.intent.category.LAUNCHER 1`;
+                        device
+                            .runShellCommandAdbKit(cc)
+                            .then(() => {
+                                this.sendMessage({ id: -1, type: 'status', data: '앱 시작 완료' });
+                            })
+                            .catch((e) => {
+                                this.captureException(e, `Failed to uninstall apk: ${aa}`);
+                            });
+                        return;
+                    }
+                    case ControlMessage.TYPE_ADB_SEND_TEXT: {
+                        this.sendMessage({ id: -1, type: 'status', data: '문자열 전송 시작' });
+                        const bb = event.data.slice(6);
+                        const text = bb.toString();
+                        const kk = 'io.hbsmith.bardiel/.AdbIME';
+
+                        let cc = 'ime list -a -s';
+                        device
+                            .runShellCommandAdbKit(cc)
+                            .then((rr) => {
+                                const tt = /io.hbsmith.bardiel\/.AdbIME/;
+                                if (!tt.test(rr)) throw Error('Failed to get ime: io.hbsmith.bardiel.AdbIME');
+
+                                cc = `ime enable ${kk}`;
+                                return device.runShellCommandAdbKit(cc);
+                            })
+                            .then((rr) => {
+                                const tt = /enabled/;
+                                if (!tt.test(rr)) throw Error('Failed to enable ime');
+
+                                cc = `ime set ${kk}`;
+                                return device.runShellCommandAdbKit(cc);
+                            })
+                            .then((rr) => {
+                                const tt = /selected/;
+                                if (!tt.test(rr)) throw Error('Failed to set ime');
+
+                                return Utils.sleep(1000);
+                            })
+                            .then(() => {
+                                cc = `am broadcast -a ADB_INPUT_TEXT --es msg '${text}'`;
+                                return device.runShellCommandAdbKit(cc);
+                            })
+                            .then((rr) => {
+                                const tt = /Broadcast completed/;
+                                if (!tt.test(rr)) {
+                                    this.sendMessage({ id: -1, type: 'status', data: '문자열 전송 실패' });
+                                    throw Error('Failed to send text');
+                                }
+                                this.sendMessage({ id: -1, type: 'status', data: '문자열 전송 성공' });
+                                return;
+                            })
+                            .catch((ee) => {
+                                this.captureException(ee, `Failed to send text: ${ee.message}`);
+                            })
+                            .finally(async () => {
+                                if (!this.defaultIME) cc = 'ime reset';
+                                else cc = `ime set ${this.defaultIME}`;
+                                return device.runShellCommandAdbKit(cc).catch((ee) => {
+                                    this.captureException(ee, 'Failed to set default ime');
+                                });
+                            });
+                        return;
+                    }
+                    case ControlMessage.TYPE_ADB_PREPARE_SEND_TEXT: {
+                        const kk = 'io.hbsmith.bardiel/.AdbIME';
+                        device
+                            .runShellCommandAdbKit('ime list -a -s')
+                            .then((rr) => {
+                                const tt = /io.hbsmith.bardiel\/.AdbIME/;
+                                if (!tt.test(rr)) throw Error('Failed to get ime: io.hbsmith.bardiel.AdbIME');
+
+                                return device.runShellCommandAdbKit(`ime enable ${kk}`);
+                            })
+                            .then((rr) => {
+                                const tt = /enabled/;
+                                if (!tt.test(rr)) throw Error('Failed to enable ime');
+
+                                return device.runShellCommandAdbKit(`ime set ${kk}`);
+                            })
+                            .then((rr) => {
+                                const tt = /selected/;
+                                if (!tt.test(rr)) throw Error('Failed to set ime');
+
+                                return Utils.sleep(1000);
+                            })
+                            .catch((ee) => {
+                                this.captureException(ee, 'Failed to prepare sendText');
+                            });
+                        return;
+                    }
+                    case ControlMessage.TYPE_ADB_RESET_KEYBOARD: {
+                        let cc;
+                        if (!this.defaultIME) cc = 'ime reset';
+                        else cc = `ime set ${this.defaultIME}`;
+
+                        device.runShellCommandAdbKit(cc).catch((ee) => {
+                            this.captureException(ee, 'Failed to reset default ime');
+                        });
                         return;
                     }
                 }
@@ -347,16 +479,20 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                 this.lastHeartbeat = Date.now();
             }
         } catch (e) {
-            this.logger.error(e);
-            Sentry.captureException(e, (scope) => {
-                scope.setTag('ramiel_device_type', 'Android');
-                scope.setTag('ramiel_device_id', this.udid);
-                scope.setTag('ramiel_message', e.ramiel_message);
-                scope.setExtra('ramiel_stack', e.stack);
-                return scope;
-            });
+            this.captureException(e, e.ramiel_message || 'Failed to handle message');
         }
         super.onSocketMessage(event);
+    }
+
+    private captureException(e: Error, message: string): void {
+        this.logger.error(e);
+        Sentry.captureException(e, (scope) => {
+            scope.setTag('ramiel_device_type', 'Android');
+            scope.setTag('ramiel_device_id', this.udid);
+            scope.setTag('ramiel_message', message || e.message);
+            scope.setExtra('ramiel_stack', e.stack);
+            return scope;
+        });
     }
 
     private getDevice(): Device | null {
@@ -381,14 +517,26 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             return;
         }
 
+        this.sendMessage({
+            id: -1,
+            type: 'set-up-test',
+            data: '장비 초기화 시작',
+        });
+
+        const cmdGetIME = 'settings get secure default_input_method';
         const cmdMenu = `input keyevent ${KeyEvent.KEYCODE_MENU}`;
         const cmdHome = `input keyevent ${KeyEvent.KEYCODE_HOME}`;
         const cmdAppStop =
             'for pp in $(dumpsys window a | grep "/" | cut -d "{" -f2 | cut -d "/" -f1 | cut -d " " -f2); do am force-stop "${pp}"; done';
         const cmdAppStart = `monkey -p '${this.appKey}' -c android.intent.category.LAUNCHER 1`;
+        const cmdAppSmsStart = 'am startservice -n sooft.smsf/.model.service.SFFirebaseMessagingService';
 
         return device
-            .runShellCommandAdbKit(cmdMenu)
+            .runShellCommandAdbKit(cmdGetIME)
+            .then((output) => {
+                this.defaultIME = output.trim();
+                return device.runShellCommandAdbKit(cmdMenu);
+            })
             .then((output) => {
                 this.logger.info(output ? output : `success to send 1st KEYCODE_MENU: ${cmdMenu}`);
                 return device.runShellCommandAdbKit(cmdMenu);
@@ -408,6 +556,17 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             })
             .then((output) => {
                 this.logger.info(output ? output : `success to stop all of the apps: ${cmdAppStop}`);
+
+                // TODO: sooft.smsf is a optional app for sms relay
+                device
+                    .runShellCommandAdbKit(cmdAppSmsStart)
+                    .then(() => {
+                        this.logger.info('sooft.smsf service is started');
+                    })
+                    .catch(() => {
+                        this.logger.info('sooft.smsf service is skipped');
+                    });
+
                 if (this.appKey) {
                     return device.runShellCommandAdbKit(cmdAppStart).then((output) => {
                         this.logger.info(output ? output : `success to start the app: ${cmdAppStart}`);
@@ -417,6 +576,11 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             })
             .then(() => {
                 this.logger.info('setup succeeded. ready to test.');
+                this.sendMessage({
+                    id: -1,
+                    type: 'status',
+                    data: '장비 초기화 완료',
+                });
             })
             .catch((e) => {
                 this.logger.error(e);
@@ -450,20 +614,25 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             return;
         }
 
+        const cmdSetIME = this.defaultIME ? `ime set ${this.defaultIME}` : 'ime reset';
         const cmdPower = `input keyevent ${KeyEvent.KEYCODE_POWER}`;
         const cmdAppStop =
             'for pp in $(dumpsys window a | grep "/" | cut -d "{" -f2 | cut -d "/" -f1 | cut -d " " -f2); do am force-stop "${pp}"; done';
 
         new Promise((resolve) => setTimeout(resolve, 3000))
-            .then((output) => {
-                this.logger.info(output ? output : `success to run a command: ${cmdPower}`);
-                return device.runShellCommandAdbKit(cmdAppStop);
-            })
             .then(() => {
-                return device.runShellCommandAdbKit(cmdPower);
+                return device.runShellCommandAdbKit(cmdSetIME);
+            })
+            .then((output) => {
+                this.logger.info(output ? output : `success to set default ime: ${cmdSetIME}`);
+                return device.runShellCommandAdbKit(cmdAppStop);
             })
             .then((output) => {
                 this.logger.info(output ? output : `success to stop all of running apps`);
+                return device.runShellCommandAdbKit(cmdPower);
+            })
+            .then((output) => {
+                this.logger.info(output ? output : `success to run a command: ${cmdPower}`);
             })
             .catch((e) => {
                 this.logger.error(e);

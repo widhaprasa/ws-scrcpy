@@ -92,11 +92,15 @@ export class HttpServer extends TypedEmitter<HttpServerEvents> implements Servic
                         res.status(401).send('UNAUTHORIZED');
                         return;
                     }
+                    let dd;
                     try {
-                        await axios.get(`${Config.getInstance().getRamielApiServerEndpoint()}/real-devices/${udid}/`, {
-                            headers: { Authorization: `Bearer ${accessToken}` },
-                            params: { team_name: teamName },
-                        });
+                        dd = await axios.get(
+                            `${Config.getInstance().getRamielApiServerEndpoint()}/real-devices/${udid}/`,
+                            {
+                                headers: { Authorization: `Bearer ${accessToken}` },
+                                params: { team_name: teamName },
+                            },
+                        );
                     } catch (e) {
                         if (e.response) {
                             res.status(401).send('UNAUTHORIZED');
@@ -105,15 +109,24 @@ export class HttpServer extends TypedEmitter<HttpServerEvents> implements Servic
                         }
                         return;
                     }
+                    if (dd.data.device_ip) {
+                        res.status(406).send('Not Acceptable');
+                        return;
+                    }
                 } else {
                     const api = req.query['GET'];
                     const appKey = req.query['app_key'];
                     const userAgent = req.query['user-agent'];
+                    const udid = req.query['udid'];
+                    const teamName = req.query['team-name'];
                     const timestamp = Number(req.query['timestamp']);
                     const signature = req.query['signature'];
 
                     if (Utils.getTimestamp() - timestamp > 300) {
                         res.status(400).send('timestamp');
+                        return;
+                    } else if (!udid || !teamName) {
+                        res.status(400).send('BAD REQUEST');
                         return;
                     }
 
@@ -121,14 +134,52 @@ export class HttpServer extends TypedEmitter<HttpServerEvents> implements Servic
                         GET: api,
                         timestamp: timestamp,
                         'user-agent': userAgent,
+                        udid: udid,
+                        'team-name': teamName,
+                        ...(appKey && { app_key: appKey }),
                     };
-                    if (appKey) {
-                        // @ts-ignore
-                        pp['app_key'] = appKey;
-                    }
                     const serverSignature = Utils.getSignature(pp);
                     if (serverSignature != signature) {
                         res.status(400).send('signature');
+                        return;
+                    }
+
+                    let dd;
+                    const p2 = {
+                        GET: api,
+                        timestamp: timestamp,
+                    };
+                    const ss = Utils.getSignature(p2);
+                    try {
+                        dd = await axios.get(
+                            `${Config.getInstance().getRamielApiServerEndpoint()}/real-devices/${udid}/`,
+                            {
+                                headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=utf8' },
+                                params: {
+                                    GET: api,
+                                    timestamp: timestamp,
+                                    signature: ss,
+                                },
+                            },
+                        );
+                    } catch (e) {
+                        if (e.response) {
+                            res.status(401).send('UNAUTHORIZED');
+                        } else {
+                            res.status(503).send('api server is not responding');
+                        }
+                        return;
+                    }
+
+                    const ee = [dd.data.team_name, dd.data.team2_name, dd.data.team3_name].find(
+                        (ii) => ii === teamName,
+                    );
+                    if (!ee) {
+                        res.status(403).send('FORBIDDEN');
+                        return;
+                    }
+                    if (dd.data.device_ip) {
+                        res.status(406).send('Not Acceptable');
                         return;
                     }
                 }
