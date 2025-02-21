@@ -13,7 +13,6 @@ import qs from 'qs';
 import KeyEvent from '../../../app/googDevice/android/KeyEvent';
 import { Multiplexer } from '../../../packages/multiplexer/Multiplexer';
 import { ControlMessage } from '../../../app/controlMessage/ControlMessage';
-import * as Sentry from '@sentry/node'; // TODO: HBsmith
 //
 
 export class WebsocketProxyOverAdb extends WebsocketProxy {
@@ -77,6 +76,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             ws.close(4003, `[${this.TAG}] Invalid value "${path}" for "path" parameter`);
             return;
         }
+        /*
         // TODO: HBsmith
         let appKey = '';
         let userAgent = '';
@@ -91,6 +91,19 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
 
         return this.createProxyOverAdb(ws, udid, remote, path, appKey, userAgent);
         //
+        */
+
+        const service = new WebsocketProxyOverAdb(ws, udid);
+        AdbUtils.forward(udid, remote)
+            .then((port) => {
+                return service.init(`ws://127.0.0.1:${port}${path ? path : ''}`);
+            })
+            .catch((e) => {
+                const msg = `[${this.TAG}] Failed to start service: ${e.message}`;
+                console.error(msg);
+                ws.close(4005, msg);
+            });
+        return service;
     }
 
     // TODO: HBsmith
@@ -215,23 +228,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             })
             .catch((e) => {
                 let mm = '';
-                if (e.stack && e.stack.includes('/adbkit/lib/adb/')) {
-                    mm = `[${this.TAG}] 장비가 일시적으로 오프라인 상태입니다. 5분 뒤 다시 시도해주세요.`;
-                } else {
-                    const mm = `[${this.TAG}] 서비스 시작 실패: ${e.message}`;
-
-                    console.error(Utils.getTimeISOString(), udid, e.stack);
-                    Sentry.captureException(e, (scope) => {
-                        scope.setTag('ramiel_device_type', 'Android');
-                        scope.setTag('ramiel_device_id', udid);
-                        scope.setTag('ramiel_message', e.ramiel_message || mm);
-                        if (e.ramiel_contexts) {
-                            scope.setContext('Ramiel', e.ramiel_contexts);
-                        }
-                        scope.setExtra('ramiel_stack', e.stack);
-                        return scope;
-                    });
-                }
+                console.error(Utils.getTimeISOString(), udid, e.stack);
                 ws.close(4005, mm);
                 WebsocketProxyOverAdb.deleteSession(udid, userAgent || '');
             });
@@ -257,7 +254,6 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
 
                 switch (value) {
                     case ControlMessage.TYPE_ADB_INSTALL_APK: {
-                        this.sendMessage({ id: -1, type: 'status', data: '앱 설치 시작' });
                         const bb = event.data.slice(6);
                         const fileName = bb.toString();
                         const pathToApk = `/data/local/tmp/${fileName}`;
@@ -276,7 +272,6 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                             .then((rr) => {
                                 if (rr === 'Success') {
                                     this.logger.info(`success to install test apk: ${fileName}`);
-                                    this.sendMessage({ id: -1, type: 'status', data: '앱 설치 완료' });
                                     return device.runShellCommandAdbKit(`rm -f '${pathToApk}'`);
                                 }
                                 return;
@@ -285,7 +280,6 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                     }
                     case ControlMessage.TYPE_ADB_CONTROL_SWIPE_DOWN:
                     case ControlMessage.TYPE_ADB_CONTROL_SWIPE_UP: {
-                        this.sendMessage({ id: -1, type: 'status', data: '스크롤 시작' });
                         let isLandscape = false;
                         device
                             .runShellCommandAdbKit('dumpsys window displays | grep mCurrentRotation | tail -1')
@@ -315,7 +309,6 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                                     .runShellCommandAdbKit(`input swipe ${xx} ${y1} ${xx} ${y2} 2000`)
                                     .then(() => {
                                         this.logger.info(`Success to swipe: ${xx} ${y1} ${xx} ${y2} 2000`);
-                                        this.sendMessage({ id: -1, type: 'status', data: '스크롤 완료' });
                                     });
                             })
                             .catch((e) => {
@@ -324,14 +317,12 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                         return;
                     }
                     case ControlMessage.TYPE_ADB_REBOOT: {
-                        this.sendMessage({ id: -1, type: 'status', data: '재부팅 시작. 5분 뒤 재접속 바랍니다.' });
                         device.runShellCommandAdbKit('reboot').catch((e) => {
                             this.captureException(e, 'Failed to reboot');
                         });
                         return;
                     }
                     case ControlMessage.TYPE_ADB_TERMINATE_APP: {
-                        this.sendMessage({ id: -1, type: 'status', data: '앱 종료 시작' });
                         device
                             .runShellCommandAdbKit("dumpsys window | grep -E 'mCurrentFocus'")
                             .then((rr) => {
@@ -346,45 +337,29 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                                 }
                                 return;
                             })
-                            .then(() => {
-                                this.sendMessage({ id: -1, type: 'status', data: '앱 종료 완료' });
-                            })
                             .catch((e) => {
                                 this.captureException(e, 'Failed to termination');
                             });
                         return;
                     }
                     case ControlMessage.TYPE_ADB_UNINSTALL_APK: {
-                        this.sendMessage({ id: -1, type: 'status', data: '앱 삭제 시작' });
                         const bb = event.data.slice(6);
                         const appKey = bb.toString();
-                        device
-                            .runShellCommandAdbKit(`pm uninstall -k --user 0 ${appKey}`)
-                            .then(() => {
-                                this.sendMessage({ id: -1, type: 'status', data: '앱 삭제 완료' });
-                            })
-                            .catch((e) => {
-                                this.captureException(e, `Failed to uninstall apk: ${appKey}`);
-                            });
+                        device.runShellCommandAdbKit(`pm uninstall -k --user 0 ${appKey}`).catch((e) => {
+                            this.captureException(e, `Failed to uninstall apk: ${appKey}`);
+                        });
                         return;
                     }
                     case ControlMessage.TYPE_ADB_LAUNCH_APK: {
-                        this.sendMessage({ id: -1, type: 'status', data: '앱 시작' });
                         const bb = event.data.slice(6);
                         const aa = bb.toString();
                         const cc = `monkey -p '${aa}' -c android.intent.category.LAUNCHER 1`;
-                        device
-                            .runShellCommandAdbKit(cc)
-                            .then(() => {
-                                this.sendMessage({ id: -1, type: 'status', data: '앱 시작 완료' });
-                            })
-                            .catch((e) => {
-                                this.captureException(e, `Failed to uninstall apk: ${aa}`);
-                            });
+                        device.runShellCommandAdbKit(cc).catch((e) => {
+                            this.captureException(e, `Failed to uninstall apk: ${aa}`);
+                        });
                         return;
                     }
                     case ControlMessage.TYPE_ADB_SEND_TEXT: {
-                        this.sendMessage({ id: -1, type: 'status', data: '문자열 전송 시작' });
                         const bb = event.data.slice(6);
                         const text = bb.toString();
                         const kk = 'io.hbsmith.bardiel/.AdbIME';
@@ -418,11 +393,7 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
                             })
                             .then((rr) => {
                                 const tt = /Broadcast completed/;
-                                if (!tt.test(rr)) {
-                                    this.sendMessage({ id: -1, type: 'status', data: '문자열 전송 실패' });
-                                    throw Error('Failed to send text');
-                                }
-                                this.sendMessage({ id: -1, type: 'status', data: '문자열 전송 성공' });
+                                if (!tt.test(rr)) throw Error('Failed to send text');
                                 return;
                             })
                             .catch((ee) => {
@@ -484,15 +455,8 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
         super.onSocketMessage(event);
     }
 
-    private captureException(e: Error, message: string): void {
+    private captureException(e: Error, _: string): void {
         this.logger.error(e);
-        Sentry.captureException(e, (scope) => {
-            scope.setTag('ramiel_device_type', 'Android');
-            scope.setTag('ramiel_device_id', this.udid);
-            scope.setTag('ramiel_message', message || e.message);
-            scope.setExtra('ramiel_stack', e.stack);
-            return scope;
-        });
     }
 
     private getDevice(): Device | null {
@@ -516,12 +480,6 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
         if (!device) {
             return;
         }
-
-        this.sendMessage({
-            id: -1,
-            type: 'set-up-test',
-            data: '장비 초기화 시작',
-        });
 
         const cmdGetIME = 'settings get secure default_input_method';
         const cmdMenu = `input keyevent ${KeyEvent.KEYCODE_MENU}`;
@@ -576,21 +534,9 @@ export class WebsocketProxyOverAdb extends WebsocketProxy {
             })
             .then(() => {
                 this.logger.info('setup succeeded. ready to test.');
-                this.sendMessage({
-                    id: -1,
-                    type: 'status',
-                    data: '장비 초기화 완료',
-                });
             })
             .catch((e) => {
                 this.logger.error(e);
-                Sentry.captureException(e, (scope) => {
-                    scope.setTag('ramiel_device_type', 'Android');
-                    scope.setTag('ramiel_device_id', this.udid);
-                    scope.setTag('ramiel_message', 'Failed to run setUpTest');
-                    scope.setExtra('ramiel_stack', e.stack);
-                    return scope;
-                });
             });
     }
 

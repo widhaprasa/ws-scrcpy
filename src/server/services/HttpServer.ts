@@ -210,9 +210,11 @@ export class HttpServer extends TypedEmitter<HttpServerEvents> implements Servic
         this.mainApp = app;
         //
         if (HttpServer.SERVE_STATIC && HttpServer.PUBLIC_DIR) {
+            /*
             // TODO: HBsmith
             this.mainApp.use(this.CheckPermission);
             //
+            */
             this.mainApp.use(express.static(HttpServer.PUBLIC_DIR));
 
             /// #if USE_WDA_MJPEG_SERVER

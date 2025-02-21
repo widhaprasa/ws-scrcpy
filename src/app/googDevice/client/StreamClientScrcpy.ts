@@ -3,7 +3,7 @@ import { ParamsStreamScrcpy } from '../../../types/ParamsStreamScrcpy';
 import { GoogMoreBox } from '../toolbox/GoogMoreBox';
 import { GoogToolBox } from '../toolbox/GoogToolBox';
 // TODO: HBsmith
-import { DroidToolBox2 } from '../toolbox/DroidToolBox2';
+// import { DroidToolBox2 } from '../toolbox/DroidToolBox2';
 //
 import VideoSettings from '../../VideoSettings';
 import Size from '../../Size';
@@ -210,7 +210,7 @@ export class StreamClientScrcpy
     public onClientsStats = (stats: ClientsStats): void => {
         this.deviceName = stats.deviceName;
         this.clientId = stats.clientId;
-        this.setTitle(`Stream ${this.deviceName}`);
+        // this.setTitle(`Stream ${this.deviceName}`);
 
         const headerText = document.getElementById('control-header-device-name-text');
         if (headerText) {
@@ -340,6 +340,7 @@ export class StreamClientScrcpy
             throw Error(`Invalid udid value: "${udid}"`);
         }
         this.udid = udid;
+        this.setTitle(`Stream ${udid}`);
 
         this.fitToScreen = fitToScreen;
         if (!player) {
@@ -366,6 +367,7 @@ export class StreamClientScrcpy
             videoSettings = player.getVideoSettings();
         }
 
+        /*
         // TODO: hbsmith
         const controlHeaderView = document.createElement('div');
         controlHeaderView.className = 'control-header';
@@ -386,7 +388,7 @@ export class StreamClientScrcpy
 
         document.body.appendChild(controlFooterView);
         //
-
+        */
         const deviceView = document.createElement('div');
         deviceView.className = 'device-view';
         const stop = (ev?: string | Event) => {
@@ -444,7 +446,7 @@ export class StreamClientScrcpy
         streamReceiver.on('deviceDisconnected', this.onDeviceDisconnected);
         streamReceiver.on('eventMessage', this.onEventMessage);
 
-        KeyInputHandler.addEventListener(this);
+        // KeyInputHandler.addEventListener(this);
         //
         console.log(TAG, player.getName(), udid);
     }

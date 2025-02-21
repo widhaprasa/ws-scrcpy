@@ -46,7 +46,7 @@ window.onload = async function (): Promise<void> {
     /// #endif
 
     if (action === StreamClientScrcpy.ACTION && typeof parsedQuery.udid === 'string') {
-        StreamClientScrcpy.start(parsedQuery);
+        StreamClientScrcpy.start(parsedQuery, undefined, undefined, true);
         return;
     }
 

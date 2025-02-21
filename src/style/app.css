@@ -92,7 +92,7 @@ body.stream {
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: center;
-    min-width: 100vh;
+    /* min-width: 100vh; */
     align-self: center;
 }
 
@@ -188,7 +188,7 @@ body.stream {
 }
 
 .control-buttons-list {
-    display: none;
+    /* display: none; */
     float: right;
     width: 3.715rem;
     background-color: var(--control-buttons-bg-color);
