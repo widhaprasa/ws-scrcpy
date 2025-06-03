@@ -19,11 +19,15 @@ import { AdbkitFilePushStream } from '../filePush/AdbkitFilePushStream';
 const TAG = '[FileListing]';
 
 const parentDirLinkBox = 'parentDirLinkBox';
-const baseDirLinkBox = 'baseDirLinkBox';
-const appsDirLinkBox = 'appsDirLinkBox';
+const emulated0DirLinkBox = 'emulated0DirLinkBox';
+const emulated0AppsDirLinkBox = 'emulated0AppsDirLinkBox';
+const sdcard0DirLinkBox = 'sdcard0DirLinkBox';
+const sdcard0ApssDirLinkBox = 'sdcard0AppsDirLinkBox';
 
-const basePath = '/storage/emulated/0';
-const appsPath = '/storage/emulated/0/apps';
+const emulated0Path = '/storage/emulated/0';
+const emulated0AppsPath = '/storage/emulated/0/apps';
+const sdcard0Path = '/storage/sdcard0';
+const sdcard0AppsPath = '/storage/sdcard0/apps';
 
 type Download = {
     receivedBytes: number;
@@ -72,7 +76,7 @@ export class FileListingClient extends ManagerClient<ParamsFileListing, never> i
                 {
                     action: ACTION.FILE_LISTING,
                     udid: descriptor.udid,
-                    path: `${appsPath}/`,
+                    path: `${emulated0AppsPath}`,
                 },
                 'list files',
                 params,
@@ -112,11 +116,17 @@ export class FileListingClient extends ManagerClient<ParamsFileListing, never> i
             <div id="${parentDirLinkBox}" class="quick-link-box">
                 <a class="icon up" href="#!" ${FileListingClient.PROPERTY_NAME}=".."> [parent] </a>
             </div>
-            <div id="${baseDirLinkBox}" class="quick-link-box">
-                <a class="icon dir" href="#!" ${FileListingClient.PROPERTY_NAME}="${basePath}"> [base] </a>
+            <div id="${emulated0DirLinkBox}" class="quick-link-box">
+                <a class="icon dir" href="#!" ${FileListingClient.PROPERTY_NAME}="${emulated0Path}"> [emulated/0] </a>
             </div>
-            <div id="${appsDirLinkBox}" class="quick-link-box">
-                <a class="icon dir" href="#!" ${FileListingClient.PROPERTY_NAME}="${appsPath}/"> [apps] </a>
+            <div id="${emulated0AppsDirLinkBox}" class="quick-link-box">
+                <a class="icon dir" href="#!" ${FileListingClient.PROPERTY_NAME}="${emulated0AppsPath}"> [apps] </a>
+            </div>
+            <div id="${sdcard0DirLinkBox}" class="quick-link-box">
+                <a class="icon dir" href="#!" ${FileListingClient.PROPERTY_NAME}="${sdcard0Path}"> [sdcard0] </a>
+            </div>
+            <div id="${sdcard0ApssDirLinkBox}" class="quick-link-box">
+                <a class="icon dir" href="#!" ${FileListingClient.PROPERTY_NAME}="${sdcard0AppsPath}"> [apps] </a>
             </div>
             <table>
                 <thead>
@@ -263,7 +273,7 @@ export class FileListingClient extends ManagerClient<ParamsFileListing, never> i
         if (action !== ACTION.FILE_LISTING) {
             throw Error('Incorrect action');
         }
-        const path = params.path ? (Array.isArray(params.path) ? params.path[0] : params.path) : '/storage/emulated/0/apps';
+        const path = params.path ? (Array.isArray(params.path) ? params.path[0] : params.path) : emulated0AppsPath;
         return { ...typedParams, action, udid: Util.parseStringEnv(params.udid), path };
     }
 
@@ -340,7 +350,7 @@ export class FileListingClient extends ManagerClient<ParamsFileListing, never> i
         this.tableBody.innerHTML = '';
         const header = document.getElementById('header');
         if (header) {
-            header.innerText = `Content ${this.path}`;
+            header.innerText = `Contents ${this.path}`;
         }
         this.toggleQuickLinks(this.path);
 
@@ -354,19 +364,35 @@ export class FileListingClient extends ManagerClient<ParamsFileListing, never> i
     }
 
     protected toggleQuickLinks(path: string): void {
-        const isBase = path === basePath;
         const parentEl = document.getElementById(parentDirLinkBox);
         if (parentEl) {
+            const isBase = (path === emulated0Path || path === sdcard0Path);
             parentEl.classList.toggle('hidden', isBase);
         }
-        const baseEl = document.getElementById(baseDirLinkBox);
-        if (baseEl) {
-            baseEl.classList.toggle('hidden', isBase);
+
+        let sdcard0Hidden = false;
+        let emulated0Hidden = false;
+        if (path.startsWith(emulated0Path)) {
+            sdcard0Hidden = true;
+        } else if (path.startsWith(sdcard0Path)) {
+            emulated0Hidden = true;
         }
-        const isApps = path === appsPath;
-        const appsEl = document.getElementById(appsDirLinkBox);
-        if (appsEl) {
-            appsEl.classList.toggle('hidden', isApps);
+
+        const emulated0El = document.getElementById(emulated0DirLinkBox);
+        if (emulated0El) {
+            emulated0El.classList.toggle('hidden', emulated0Hidden);
+        }
+        const emulatedApps0El = document.getElementById(emulated0AppsDirLinkBox);
+        if (emulatedApps0El) {
+            emulatedApps0El.classList.toggle('hidden', emulated0Hidden);
+        }
+        const sdcard0El = document.getElementById(sdcard0DirLinkBox);
+        if (sdcard0El) {
+            sdcard0El.classList.toggle('hidden', sdcard0Hidden);
+        }
+        const sdcard0AppsEl = document.getElementById(sdcard0ApssDirLinkBox);
+        if (sdcard0AppsEl) {
+            sdcard0AppsEl.classList.toggle('hidden', sdcard0Hidden);
         }
     }
 
@@ -400,7 +426,11 @@ export class FileListingClient extends ManagerClient<ParamsFileListing, never> i
                     console.error('FIXME: show error in UI');
                     console.error(`Error: no entity "${download.path}"`);
                     this.channels.delete(channel);
-                    this.loadContent(appsPath);
+                    if (download.path === emulated0AppsPath) {
+                        this.loadContent(sdcard0AppsPath);
+                    } else {
+                        this.loadContent(emulated0AppsPath);
+                    }
                     return;
                 }
                 const entry = new Entry(nameString, mode, size, mtime);
