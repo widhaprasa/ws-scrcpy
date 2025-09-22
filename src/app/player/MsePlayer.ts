@@ -4,7 +4,7 @@ import VideoSettings from '../VideoSettings';
 import Size from '../Size';
 import { DisplayInfo } from '../DisplayInfo';
 // TODO: HBsmith
-import HBsmithLogo from '../../public/images/hbsmith-logo.png';
+// import HBsmithLogo from '../../public/images/hbsmith-logo.png';
 //
 
 interface QualityStats {
@@ -44,7 +44,7 @@ export class MsePlayer extends BasePlayer {
         }
         tag.className = 'video-layer';
         // TODO: HBsmith
-        tag.poster = HBsmithLogo;
+        // tag.poster = HBsmithLogo;
         //
         return tag;
     }
