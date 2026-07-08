@@ -16,6 +16,7 @@ type WaitForPidParams = { tryCounter: number; processExited: boolean; lookPidFil
 
 export class ScrcpyServer {
     private static PID_FILE_PATH = '/data/local/tmp/ws_scrcpy.pid';
+
     private static async copyServer(device: Device): Promise<PushTransfer> {
         const src = path.join(FILE_DIR, FILE_NAME);
         const dst = TEMP_PATH + FILE_NAME; // don't use path.join(): will not work on win host
@@ -71,7 +72,7 @@ export class ScrcpyServer {
         }
         const serverPid: number[] = [];
         const promises = list.map((pid) => {
-            return device.runShellCommandAdbKit(`cat /proc/${pid}/cmdline`).then((output) => {
+            return device.runShellCommandAdbKit(`cat /proc/${pid}/cmdline`).then(async (output) => {
                 const args = output.split('\0');
                 if (!args.length || args[0] !== SERVER_PROCESS_NAME) {
                     return;
@@ -87,21 +88,17 @@ export class ScrcpyServer {
                 const versionString = args[1];
                 if (versionString === SERVER_VERSION) {
                     serverPid.push(pid);
-                } else {
-                    const currentVersion = new ServerVersion(versionString);
-                    if (currentVersion.isCompatible()) {
-                        const desired = new ServerVersion(SERVER_VERSION);
-                        if (desired.gt(currentVersion)) {
-                            console.log(
-                                device.TAG,
-                                `Found old server version running (PID: ${pid}, Version: ${versionString})`,
-                            );
-                            console.log(device.TAG, 'Perform kill now');
-                            device.killProcess(pid);
-                        }
-                    }
+                    return;
                 }
-                return;
+                const currentVersion = new ServerVersion(versionString);
+                if (!currentVersion.isCompatible()) {
+                    return;
+                }
+                console.log(
+                    device.TAG,
+                    `Killing mismatched server version (PID: ${pid}, Version: ${versionString}, Expected: ${SERVER_VERSION})`,
+                );
+                await device.killProcess(pid);
             });
         });
         await Promise.all(promises);
@@ -112,10 +109,12 @@ export class ScrcpyServer {
         if (!device.isConnected()) {
             return;
         }
+
         let list: number[] | string | undefined = await this.getServerPid(device);
         if (Array.isArray(list) && list.length) {
             return list;
         }
+
         await this.copyServer(device);
 
         const params: WaitForPidParams = { tryCounter: 0, processExited: false, lookPidFile: true };
