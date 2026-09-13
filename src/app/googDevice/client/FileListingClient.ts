@@ -18,16 +18,30 @@ import { AdbkitFilePushStream } from '../filePush/AdbkitFilePushStream';
 
 const TAG = '[FileListing]';
 
-const parentDirLinkBox = 'parentDirLinkBox';
-const emulated0DirLinkBox = 'emulated0DirLinkBox';
-const emulated0AppsDirLinkBox = 'emulated0AppsDirLinkBox';
-const sdcard0DirLinkBox = 'sdcard0DirLinkBox';
-const sdcard0ApssDirLinkBox = 'sdcard0AppsDirLinkBox';
+const parentDirQuickLink = 'parentDirQuickLink';
+const emulated0DirQuickLink = 'emulated0DirQuickLink';
+const emulated0AppsDirQuickLink = 'emulated0AppsDirQuickLink';
+const sdcard0DirQuickLink = 'sdcard0DirQuickLink';
+const sdcard0AppsDirQuickLink = 'sdcard0AppsDirQuickLink';
 
 const emulated0Path = '/storage/emulated/0';
 const emulated0AppsPath = '/storage/emulated/0/apps';
 const sdcard0Path = '/storage/sdcard0';
 const sdcard0AppsPath = '/storage/sdcard0/apps';
+
+function formatSize(size: number): string {
+    if (size < 1024) {
+        return `${size} B`;
+    }
+    const units = ['KB', 'MB', 'GB', 'TB'];
+    let value = size / 1024;
+    let index = 0;
+    while (value >= 1024 && index < units.length - 1) {
+        value /= 1024;
+        index++;
+    }
+    return `${value.toFixed(value >= 100 ? 0 : 1)} ${units[index]}`;
+}
 
 type Download = {
     receivedBytes: number;
@@ -94,6 +108,8 @@ export class FileListingClient extends ManagerClient<ParamsFileListing, never> i
     private enterCount = 0;
     private entries: Entry[] = [];
     private path: string;
+    private sortColumn: 'name' | 'size' | 'mtime' = 'name';
+    private sortDirection: 'asc' | 'desc' = 'asc';
     private requireClean = false;
     private requestedPath = '';
     private downloads: Map<Multiplexer, Download> = new Map();
@@ -112,41 +128,74 @@ export class FileListingClient extends ManagerClient<ParamsFileListing, never> i
         this.tableBodyId = `${Util.escapeUdid(this.serial)}_list`;
         this.wrapperId = `wrapper_${this.tableBodyId}`;
         const fragment = html`<div id="${this.wrapperId}" class="listing">
-            <h1 id="header">Contents ${this.path}</h1>
-            <div id="${parentDirLinkBox}" class="quick-link-box">
-                <a class="icon up" href="#!" ${FileListingClient.PROPERTY_NAME}=".."> [parent] </a>
+            <h1 id="header"><span class="listing-title-label">Contents</span> <span id="header-path" class="listing-path">${this.path}</span></h1>
+            <div id="${parentDirQuickLink}" class="quick-link-box">
+                <a class="icon up" href="#!" ${FileListingClient.PROPERTY_NAME}="..">parent</a>
             </div>
-            <div id="${emulated0DirLinkBox}" class="quick-link-box">
-                <a class="icon dir" href="#!" ${FileListingClient.PROPERTY_NAME}="${emulated0Path}"> [emulated/0] </a>
+            <div id="${emulated0DirQuickLink}" class="quick-link-box hidden">
+                <a class="icon dir" href="#!" ${FileListingClient.PROPERTY_NAME}="${emulated0Path}">/</a>
             </div>
-            <div id="${emulated0AppsDirLinkBox}" class="quick-link-box">
-                <a class="icon dir" href="#!" ${FileListingClient.PROPERTY_NAME}="${emulated0AppsPath}"> [apps] </a>
+            <div id="${emulated0AppsDirQuickLink}" class="quick-link-box hidden">
+                <a class="icon dir" href="#!" ${FileListingClient.PROPERTY_NAME}="${emulated0AppsPath}">/apps</a>
             </div>
-            <div id="${sdcard0DirLinkBox}" class="quick-link-box">
-                <a class="icon dir" href="#!" ${FileListingClient.PROPERTY_NAME}="${sdcard0Path}"> [sdcard0] </a>
+            <div id="${sdcard0DirQuickLink}" class="quick-link-box hidden">
+                <a class="icon dir" href="#!" ${FileListingClient.PROPERTY_NAME}="${sdcard0Path}">/</a>
             </div>
-            <div id="${sdcard0ApssDirLinkBox}" class="quick-link-box">
-                <a class="icon dir" href="#!" ${FileListingClient.PROPERTY_NAME}="${sdcard0AppsPath}"> [apps] </a>
+            <div id="${sdcard0AppsDirQuickLink}" class="quick-link-box hidden">
+                <a class="icon dir" href="#!" ${FileListingClient.PROPERTY_NAME}="${sdcard0AppsPath}">/apps</a>
             </div>
             <table>
                 <thead>
                     <tr>
-                        <th>Name</th>
-                        <th>Size</th>
-                        <th>MTime</th>
+                        <th class="sortable" data-sort="name">Name</th>
+                        <th class="sortable entry-size-header" data-sort="size">Size</th>
+                        <th class="sortable" data-sort="mtime">Modified</th>
+                        <th class="entry-actions-header"></th>
                     </tr>
                 </thead>
                 <tbody id="${this.tableBodyId}"></tbody>
             </table>
         </div>`.content;
         this.tableBody = fragment.getElementById(this.tableBodyId) as HTMLElement;
+        const thead = fragment.querySelector('thead');
+        if (thead) {
+            thead.addEventListener('click', (e) => {
+                if (!e.target) {
+                    return;
+                }
+                const th = (e.target as HTMLElement).closest('th[data-sort]');
+                if (!th) {
+                    return;
+                }
+                const column = th.getAttribute('data-sort') as 'name' | 'size' | 'mtime';
+                if (this.sortColumn === column) {
+                    this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+                } else {
+                    this.sortColumn = column;
+                    this.sortDirection = 'asc';
+                }
+                this.updateSortHeader();
+                this.sortRows();
+            });
+        }
         const wrapper = fragment.getElementById(this.wrapperId);
         if (wrapper) {
             wrapper.addEventListener('click', (e) => {
                 if (!e.target || !(e.target instanceof HTMLElement)) {
                     return;
                 }
-                const name = e.target.getAttribute(FileListingClient.PROPERTY_NAME);
+                let el = e.target.closest(`[${FileListingClient.PROPERTY_NAME}]`) as HTMLElement | null;
+                if (!el) {
+                    // Clicked elsewhere in a row (e.g. size or date cell): use the row's name link
+                    const row = e.target.closest('tr');
+                    if (row) {
+                        el = row.querySelector(`[${FileListingClient.PROPERTY_NAME}]`) as HTMLElement | null;
+                    }
+                }
+                if (!el || el.closest('.disabled')) {
+                    return;
+                }
+                const name = el.getAttribute(FileListingClient.PROPERTY_NAME);
                 if (!name) {
                     return;
                 }
@@ -154,14 +203,14 @@ export class FileListingClient extends ManagerClient<ParamsFileListing, never> i
                 e.cancelBubble = true;
                 const newPath = path.resolve(this.path, name);
                 if (newPath !== this.path) {
-                    const entryIdString = e.target.getAttribute(FileListingClient.PROPERTY_ENTRY_ID);
+                    const entryIdString = el.getAttribute(FileListingClient.PROPERTY_ENTRY_ID);
                     let entry: Entry | undefined;
                     let anchor: HTMLElement | undefined;
                     if (entryIdString) {
                         const entryId = parseInt(entryIdString, 10);
                         if (!isNaN(entryId) && this.entries[entryId]) {
                             entry = this.entries[entryId];
-                            anchor = e.target;
+                            anchor = el;
                         }
                     }
                     this.loadContent(newPath, entry, anchor);
@@ -229,7 +278,7 @@ export class FileListingClient extends ManagerClient<ParamsFileListing, never> i
             progressEl.classList.add('error');
             if (!anchor.classList.contains('error')) {
                 anchor.classList.add('error');
-                anchor.innerText = `${fileName}. ${message}`;
+                anchor.innerText = `${fileName} — ${message}`;
             }
             if (!upload.timeout) {
                 upload.timeout = window.setTimeout(() => {
@@ -241,7 +290,7 @@ export class FileListingClient extends ManagerClient<ParamsFileListing, never> i
                 }, FileListingClient.REMOVE_ROW_TIMEOUT);
             }
         } else {
-            anchor.innerText = `${fileName}. ${message}`;
+            anchor.innerText = `${fileName} — ${message}`;
             progressEl.style.width = `${progress}%`;
         }
         if (finished && !error) {
@@ -254,8 +303,12 @@ export class FileListingClient extends ManagerClient<ParamsFileListing, never> i
     }
 
     private addForeground(type: Foreground): void {
+        const icon = type === Foreground.Drop ? '⬆' : '⚠';
         const fragment = html`<div class="foreground ${type}">
-            <div class="foreground-message ${type}-message">${Message[type]}</div>
+            <div class="foreground-message ${type}-message">
+                <span class="foreground-icon">${icon}</span>
+                <span>${Message[type]}</span>
+            </div>
         </div>`.content;
         this.parent.appendChild(fragment);
     }
@@ -297,7 +350,71 @@ export class FileListingClient extends ManagerClient<ParamsFileListing, never> i
     }
 
     protected onSocketOpen(): void {
-        this.loadContent(this.path);
+        this.resolveStartPath(this.path).then((path) => {
+            this.loadContent(path);
+        });
+    }
+
+    protected statPath(path: string): Promise<number | undefined> {
+        return new Promise((resolve) => {
+            if (!this.ws || this.ws.readyState !== this.ws.OPEN || !(this.ws instanceof Multiplexer)) {
+                resolve(undefined);
+                return;
+            }
+            const cmd = Protocol.STAT;
+            const len = Buffer.byteLength(path, 'utf-8');
+            const payload = Buffer.alloc(cmd.length + 4 + len);
+            let pos = payload.write(cmd, 0);
+            pos = payload.writeUInt32LE(len, pos);
+            payload.write(path, pos);
+            const channel = this.ws.createChannel(payload);
+            const cleanup = (): void => {
+                channel.removeEventListener('message', onMessage);
+                channel.removeEventListener('close', onClose);
+            };
+            const onMessage = (e: MessageEvent): void => {
+                const data = Buffer.from(e.data);
+                const reply = data.slice(0, 4).toString('ascii');
+                if (reply === Protocol.STAT) {
+                    const mode = data.readUInt32LE(4);
+                    cleanup();
+                    resolve(mode);
+                } else if (reply === Protocol.FAIL) {
+                    cleanup();
+                    resolve(undefined);
+                }
+            };
+            const onClose = (): void => {
+                cleanup();
+                resolve(undefined);
+            };
+            channel.addEventListener('message', onMessage);
+            channel.addEventListener('close', onClose);
+        });
+    }
+
+    // Some devices expose the internal storage at /storage/emulated/0, others at
+    // /storage/sdcard0. Keep the requested path when it exists; otherwise pick the
+    // storage root that actually exists on this device (preferring its apps dir).
+    protected async resolveStartPath(requested: string): Promise<string> {
+        if (await this.statPath(requested)) {
+            return requested;
+        }
+        // Prefer the storage family of the requested path so the outcome is
+        // deterministic across reloads
+        const roots = requested.startsWith(sdcard0Path)
+            ? [sdcard0Path, emulated0Path]
+            : [emulated0Path, sdcard0Path];
+        for (const root of roots) {
+            if (await this.statPath(root)) {
+                const apps = path.join(root, 'apps');
+                if (await this.statPath(apps)) {
+                    return apps;
+                }
+                return root;
+            }
+        }
+        return requested;
     }
 
     protected loadContent(path: string, entry?: Entry, anchor?: HTMLElement, pathToLoadAfter = ''): void {
@@ -348,9 +465,9 @@ export class FileListingClient extends ManagerClient<ParamsFileListing, never> i
 
     protected clean(): void {
         this.tableBody.innerHTML = '';
-        const header = document.getElementById('header');
-        if (header) {
-            header.innerText = `Contents ${this.path}`;
+        const headerPath = document.getElementById('header-path');
+        if (headerPath) {
+            headerPath.innerText = this.path;
         }
         this.toggleQuickLinks(this.path);
 
@@ -364,10 +481,10 @@ export class FileListingClient extends ManagerClient<ParamsFileListing, never> i
     }
 
     protected toggleQuickLinks(path: string): void {
-        const parentEl = document.getElementById(parentDirLinkBox);
+        const parentEl = document.getElementById(parentDirQuickLink);
         if (parentEl) {
             const isBase = (path === emulated0Path || path === sdcard0Path);
-            parentEl.classList.toggle('hidden', isBase);
+            parentEl.classList.toggle('disabled', isBase);
         }
 
         let sdcard0Hidden = false;
@@ -378,21 +495,21 @@ export class FileListingClient extends ManagerClient<ParamsFileListing, never> i
             emulated0Hidden = true;
         }
 
-        const emulated0El = document.getElementById(emulated0DirLinkBox);
+        const emulated0El = document.getElementById(emulated0DirQuickLink);
         if (emulated0El) {
-            emulated0El.classList.toggle('hidden', emulated0Hidden);
+            emulated0El.classList.toggle('hidden', emulated0Hidden || path === emulated0Path);
         }
-        const emulatedApps0El = document.getElementById(emulated0AppsDirLinkBox);
+        const emulatedApps0El = document.getElementById(emulated0AppsDirQuickLink);
         if (emulatedApps0El) {
-            emulatedApps0El.classList.toggle('hidden', emulated0Hidden);
+            emulatedApps0El.classList.toggle('hidden', emulated0Hidden || path === emulated0AppsPath);
         }
-        const sdcard0El = document.getElementById(sdcard0DirLinkBox);
+        const sdcard0El = document.getElementById(sdcard0DirQuickLink);
         if (sdcard0El) {
-            sdcard0El.classList.toggle('hidden', sdcard0Hidden);
+            sdcard0El.classList.toggle('hidden', sdcard0Hidden || path === sdcard0Path);
         }
-        const sdcard0AppsEl = document.getElementById(sdcard0ApssDirLinkBox);
+        const sdcard0AppsEl = document.getElementById(sdcard0AppsDirQuickLink);
         if (sdcard0AppsEl) {
-            sdcard0AppsEl.classList.toggle('hidden', sdcard0Hidden);
+            sdcard0AppsEl.classList.toggle('hidden', sdcard0Hidden || path === sdcard0AppsPath);
         }
     }
 
@@ -423,14 +540,14 @@ export class FileListingClient extends ManagerClient<ParamsFileListing, never> i
                 const mtime = stat.readUInt32LE(8);
                 const nameString = path.basename(download.path);
                 if (mode === 0) {
-                    console.error('FIXME: show error in UI');
-                    console.error(`Error: no entity "${download.path}"`);
                     this.channels.delete(channel);
-                    if (download.path === emulated0AppsPath) {
-                        this.loadContent(sdcard0AppsPath);
-                    } else {
-                        this.loadContent(emulated0AppsPath);
-                    }
+                    this.resolveStartPath(download.path).then((fallback) => {
+                        if (fallback !== download.path) {
+                            this.loadContent(fallback);
+                            return;
+                        }
+                        this.showErrorRow(`Cannot access "${download.path}"`);
+                    });
                     return;
                 }
                 const entry = new Entry(nameString, mode, size, mtime);
@@ -474,6 +591,31 @@ export class FileListingClient extends ManagerClient<ParamsFileListing, never> i
         }
     }
 
+    protected showErrorRow(message: string): void {
+        this.tableBody.innerHTML = '';
+        // Unhide all quick links so the user can navigate somewhere else
+        for (const id of [
+            parentDirQuickLink,
+            emulated0DirQuickLink,
+            emulated0AppsDirQuickLink,
+            sdcard0DirQuickLink,
+            sdcard0AppsDirQuickLink,
+        ]) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.classList.remove('hidden');
+            }
+        }
+        const row = document.createElement('tr');
+        row.classList.add('entry-row');
+        const td = document.createElement('td');
+        td.colSpan = 3;
+        td.classList.add('entry-error');
+        td.innerText = message;
+        row.appendChild(td);
+        this.tableBody.appendChild(row);
+    }
+
     protected appendProgressElement(anchor: HTMLElement): HTMLElement {
         const progressElement = document.createElement('span');
         progressElement.className = 'background-progress';
@@ -498,7 +640,7 @@ export class FileListingClient extends ManagerClient<ParamsFileListing, never> i
             return;
         }
         if (entry.name === FileListingClient.PARENT_DIR) {
-            const el = document.getElementById(parentDirLinkBox);
+            const el = document.getElementById(parentDirQuickLink);
             if (el) {
                 const a = el.children[0];
                 if (a) {
@@ -509,7 +651,10 @@ export class FileListingClient extends ManagerClient<ParamsFileListing, never> i
         }
         const type = entry.isDirectory() ? 'dir' : entry.isSymbolicLink() ? 'link' : entry.isFile() ? 'file' : 'else';
         const date = entry.mtime.toLocaleString();
-        return this.addRow(false, entry.name, type, entry.size.toString(), date, entryId);
+        const row = this.addRow(false, entry.name, type, formatSize(entry.size), date, entryId);
+        row.dataset.size = String(entry.size);
+        row.dataset.mtime = String(entry.mtime.getTime());
+        return row;
     }
 
     protected addRow(push: boolean, name: string, typeClass: string, size = '', date = '', entryId = ''): HTMLElement {
@@ -528,7 +673,7 @@ export class FileListingClient extends ManagerClient<ParamsFileListing, never> i
         nameTd.appendChild(link);
         row.appendChild(nameTd);
         if (push) {
-            nameTd.colSpan = 3;
+            nameTd.colSpan = 4;
             link.classList.add('push');
         } else {
             const href = new URL(location.href);
@@ -544,6 +689,22 @@ export class FileListingClient extends ManagerClient<ParamsFileListing, never> i
             mtimeTd.classList.add('entry-time');
             mtimeTd.innerText = date;
             row.appendChild(mtimeTd);
+            const actionTd = document.createElement('td');
+            actionTd.classList.add('entry-actions');
+            if (typeClass === 'file') {
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-file';
+                deleteBtn.title = 'Delete';
+                deleteBtn.innerHTML =
+                    '<svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>';
+                deleteBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.confirmDelete(name, row);
+                });
+                actionTd.appendChild(deleteBtn);
+            }
+            row.appendChild(actionTd);
         }
         if (push || !this.tableBody.children.length) {
             this.tableBody.insertBefore(row, this.tableBody.firstChild);
@@ -551,6 +712,94 @@ export class FileListingClient extends ManagerClient<ParamsFileListing, never> i
             this.tableBody.appendChild(row);
         }
         return row;
+    }
+
+    private updateSortHeader(): void {
+        const ths = document.querySelectorAll(`#${this.wrapperId} th[data-sort]`);
+        ths.forEach((th) => {
+            const sorted = th.getAttribute('data-sort') === this.sortColumn;
+            th.classList.toggle('sorted-asc', sorted && this.sortDirection === 'asc');
+            th.classList.toggle('sorted-desc', sorted && this.sortDirection === 'desc');
+        });
+    }
+
+    private confirmDelete(name: string, row: HTMLElement): void {
+        if (!window.confirm(`Are you sure you want to delete "${name}"?`)) {
+            return;
+        }
+        if (!this.ws || this.ws.readyState !== this.ws.OPEN || !(this.ws instanceof Multiplexer)) {
+            return;
+        }
+        const fullPath = path.join(this.path, name);
+        const cmd = 'RMFL';
+        const len = Buffer.byteLength(fullPath, 'utf-8');
+        const payload = Buffer.alloc(cmd.length + 4 + len);
+        let pos = payload.write(cmd, 0);
+        pos = payload.writeUInt32LE(len, pos);
+        payload.write(fullPath, pos);
+        const channel = this.ws.createChannel(payload);
+        const onMessage = (e: MessageEvent): void => {
+            const reply = Buffer.from(e.data).slice(0, 4).toString('ascii');
+            channel.removeEventListener('message', onMessage);
+            channel.removeEventListener('close', onClose);
+            if (reply === Protocol.OKAY) {
+                row.remove();
+                this.reload();
+            } else {
+                console.error(TAG, `Failed to delete "${fullPath}": ${reply}`);
+            }
+        };
+        const onClose = (): void => {
+            channel.removeEventListener('message', onMessage);
+            channel.removeEventListener('close', onClose);
+        };
+        channel.addEventListener('message', onMessage);
+        channel.addEventListener('close', onClose);
+    }
+
+    private sortRows(): void {
+        const rows = Array.from(this.tableBody.children) as HTMLElement[];
+        const direction = this.sortDirection === 'asc' ? 1 : -1;
+        const { sortColumn } = this;
+        rows.sort((a, b) => {
+            const aLink = a.querySelector('a');
+            const bLink = b.querySelector('a');
+            if (!aLink || !bLink) {
+                return 0;
+            }
+            const aPush = aLink.classList.contains('push');
+            const bPush = bLink.classList.contains('push');
+            if (aPush !== bPush) {
+                return aPush ? -1 : 1; // uploads in progress stay on top
+            }
+            const aDir = aLink.classList.contains('dir') || aLink.classList.contains('link');
+            const bDir = bLink.classList.contains('dir') || bLink.classList.contains('link');
+            if (aDir !== bDir) {
+                return aDir ? -1 : 1; // directories always first
+            }
+            const aName = aLink.textContent || '';
+            const bName = bLink.textContent || '';
+            let cmp: number;
+            if (sortColumn === 'size') {
+                const aSize = Number(a.dataset.size);
+                const bSize = Number(b.dataset.size);
+                cmp = (isNaN(aSize) ? -1 : aSize) - (isNaN(bSize) ? -1 : bSize);
+            } else if (sortColumn === 'mtime') {
+                const aTime = Number(a.dataset.mtime);
+                const bTime = Number(b.dataset.mtime);
+                cmp = (isNaN(aTime) ? -1 : aTime) - (isNaN(bTime) ? -1 : bTime);
+            } else {
+                cmp = aName.localeCompare(bName, undefined, { numeric: true, sensitivity: 'base' });
+            }
+            if (cmp === 0) {
+                // Tie-break by name for stable order
+                cmp = aName.localeCompare(bName, undefined, { numeric: true, sensitivity: 'base' });
+            }
+            return cmp * direction;
+        });
+        rows.forEach((row) => {
+            this.tableBody.appendChild(row);
+        });
     }
 
     protected finishDownload(channel: Multiplexer): void {
@@ -562,6 +811,10 @@ export class FileListingClient extends ManagerClient<ParamsFileListing, never> i
         const el = download.progressEl;
         if (el) {
             this.cleanProgress(el);
+        }
+        if (!download.entry || !download.entry.isFile()) {
+            // A directory listing has completed: order the rows
+            this.sortRows();
         }
         let name: string;
         if (download.entry && download.entry.isFile()) {
@@ -582,13 +835,15 @@ export class FileListingClient extends ManagerClient<ParamsFileListing, never> i
     }
 
     protected cleanProgress(el: HTMLElement): void {
+        el.style.width = '100%';
         el.classList.add('finished');
-        setTimeout(() => {
+        // Let the fade-out animation play before removing the element
+        window.setTimeout(() => {
             const parent = el.parentElement;
             if (parent) {
                 parent.removeChild(el);
             }
-        });
+        }, 500);
     }
 
     public getPath(): string {

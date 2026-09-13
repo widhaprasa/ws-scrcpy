@@ -1,6 +1,7 @@
 .text-area {
     width: 100%;
-    resize: vertical;
+    resize: none;
+    overflow: auto;
 }
 
 .more-box {
@@ -40,4 +41,150 @@
 
 .spoiler > input {
     display: none;
+}
+
+.more-box .commands {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 16px 0 0;
+    padding: 0;
+}
+
+/* Uniform vertical rhythm for all rows below the commands (screen power,
+   quality stats, disconnect) */
+.more-box > p {
+    margin: 4px 0;
+}
+
+.more-box .more-box-title {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin: 0 0 8px;
+    padding: 4px 0 6px;
+    border-bottom: 1px solid var(--button-border-color);
+    font-size: 1em;
+}
+
+.more-box .more-box-title .device-serial {
+    font-family: monospace;
+    font-weight: bold;
+    color: var(--text-color);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+.more-box .more-box-title .player-name {
+    flex-shrink: 0;
+}
+
+.more-box .spoiler > label {
+    display: block;
+    margin: 0;
+    padding: 2px 4px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.more-box .spoiler > label:hover {
+    background-color: var(--control-buttons-bg-color);
+}
+
+.more-box .spoiler .box {
+    margin: 0;
+}
+
+.more-box button {
+    font-family: monospace;
+    padding: 2px 8px;
+    border-radius: 3px;
+    border: 1px solid var(--button-border-color);
+    color: var(--button-text-color);
+    background-color: transparent;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.more-box button:hover {
+    background-color: var(--control-buttons-bg-color);
+}
+
+.more-box .keys-box {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+.more-box .keys-box > label {
+    font-size: 0.9em;
+    color: var(--text-color-light);
+}
+
+.more-box .keys-row {
+    display: flex;
+    gap: 6px;
+}
+
+.more-box .keys-row .text-area {
+    flex: 1;
+    min-width: 0;
+    min-height: 5em;
+}
+
+.more-box .keys-row button {
+    align-self: flex-start;
+}
+
+.more-box .clipboard-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.more-box .clipboard-actions button {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.more-box .spoiler {
+    margin-top: 16px;
+}
+
+.more-box .section-break {
+    margin-top: 16px;
+}
+
+.more-box .disconnect-row {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.more-box .settings-actions {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+
+.more-box .settings-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.more-box .settings-row label {
+    flex: 0 0 auto;
+    min-width: 8em;
+    text-align: right;
+}
+
+.more-box .settings-row input {
+    flex: 1;
+    min-width: 0;
+    box-sizing: border-box;
+    font-family: monospace;
 }

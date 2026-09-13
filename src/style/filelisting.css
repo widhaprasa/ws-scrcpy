@@ -4,23 +4,76 @@ body.file-listing {
     width: 100%;
     height: 100%;
     overflow: auto;
+    --listing-tint-color: hsla(218, 85%, 43%, 0.12);
+    --listing-label-color: hsl(218, 60%, 45%);
+    --listing-border-color: hsl(218, 30%, 75%);
+}
+
+@media (prefers-color-scheme: dark) {
+    body.file-listing {
+        --listing-tint-color: hsla(218, 63%, 70%, 0.18);
+        --listing-label-color: hsl(218, 63%, 70%);
+        --listing-border-color: hsl(218, 20%, 40%);
+    }
 }
 
 .file-listing h1 {
-    border-bottom: 1px solid var(--button-border-color);
+    border-bottom: 1px solid var(--listing-border-color);
     margin-bottom: 10px;
     padding-bottom: 10px;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 1.1em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.file-listing .listing-title-label {
+    color: var(--listing-label-color);
+    font-weight: normal;
+    font-size: 0.9em;
+    flex-shrink: 0;
+}
+
+.file-listing .listing-path {
+    font-family: monospace;
+    font-size: 0.95em;
+    background-color: var(--listing-tint-color);
+    padding: 2px 8px;
+    border-radius: 4px;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    user-select: all;
 }
 
 .file-listing tr:hover {
     background-color: var(--controls-bg-color);
 }
 
+.file-listing .entry-row {
+    cursor: pointer;
+}
+
 .file-listing .quick-link-box {
     display: inline-block;
     margin-bottom: 10px;
-    padding-bottom: 10px;
+    padding: 0 12px 10px 0;
+}
+
+.file-listing .quick-link-box a {
+    font-family: monospace;
+}
+
+.file-listing .quick-link-box.disabled {
+    pointer-events: none;
+}
+
+.file-listing .quick-link-box.disabled a {
+    color: var(--text-color-light);
+    opacity: 0.6;
 }
 
 .file-listing .quick-link-box.hidden {
@@ -61,48 +114,159 @@ body.file-listing {
     margin: 8px;
 }
 
+.file-listing table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.file-listing th,
+.file-listing td {
+    padding: 4px 8px;
+}
+
+.file-listing thead th {
+    background-color: var(--listing-tint-color);
+    border-bottom: 1px solid var(--listing-border-color);
+    font-size: 0.9em;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-align: left;
+}
+
+.file-listing tbody::before {
+    content: '';
+    display: table-row;
+    height: 10px;
+}
+
+.file-listing th.sortable {
+    cursor: pointer;
+    user-select: none;
+}
+
+.file-listing th.sortable:hover {
+    background-color: var(--listing-tint-color-strong, var(--listing-tint-color));
+}
+
+.file-listing th.sorted-asc::after {
+    content: ' ▲';
+}
+
+.file-listing th.sorted-desc::after {
+    content: ' ▼';
+}
+
+.file-listing .entry-size {
+    text-align: right;
+}
+
+.file-listing .entry-size-header {
+    text-align: right;
+}
+
+.file-listing .entry-actions-header,
+.file-listing .entry-actions {
+    width: 1%;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.file-listing .delete-file {
+    border: none;
+    background: none;
+    padding: 2px;
+    cursor: pointer;
+    color: var(--kill-button-hover-color);
+    line-height: 0;
+}
+
+.file-listing .delete-file:hover {
+    opacity: 0.7;
+}
+
 .file-listing .foreground {
-    position: absolute;
+    position: fixed;
     top: 0;
     bottom: 0;
     left: 0;
     right: 0;
     display: flex;
+    align-items: center;
+    justify-content: center;
     z-index: 1000;
-    background-color: var(--controls-bg-color);
+    background-color: rgba(0, 0, 0, 0.35);
 }
 
 .file-listing .foreground-message {
-    flex: auto;
-    font-size: 30px;
-    color: #999;
+    font-size: 1.1em;
+    color: var(--text-color);
+    background-color: var(--main-bg-color);
+    border-radius: 8px;
+    padding: 20px 32px;
     display: flex;
-    justify-content: center;
     align-items: center;
-    margin: 20px;
+    justify-content: center;
+    gap: 10px;
     pointer-events: none;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.file-listing .foreground-icon {
+    font-size: 1.4em;
+    line-height: 1;
 }
 
 .file-listing .foreground-message.drop-target-message {
-    border: 4px dashed #ddd;
+    border: 2px dashed var(--button-border-color);
 }
 
 .file-listing .entry-name {
     position: relative;
 }
 
+.file-listing .entry-error {
+    color: var(--kill-button-hover-color);
+    padding: 8px;
+}
+
 .file-listing .background-progress {
     position: absolute;
     left: 0;
     top: 0;
-    background-color: var(--progress-background-color);
     height: 100%;
     width: 100%;
     margin: 0;
     padding: 0;
     border-spacing: 0;
+    background-image: linear-gradient(
+        90deg,
+        var(--progress-background-color) 0%,
+        var(--progress-background-color) 25%,
+        hsla(225, 100%, 50%, 0.45) 50%,
+        var(--progress-background-color) 75%,
+        var(--progress-background-color) 100%
+    );
+    background-size: 200% 100%;
+    animation: progress-shimmer 1.5s linear infinite;
+    transition: width 0.3s ease-out, opacity 0.5s ease-out;
+}
+
+@keyframes progress-shimmer {
+    0% {
+        background-position: 100% 0;
+    }
+    100% {
+        background-position: -100% 0;
+    }
 }
 
 .file-listing .background-progress.error {
+    background-image: none;
     background-color: var(--progress-background-error-color);
+    animation: none;
+}
+
+.file-listing .background-progress.finished {
+    animation: none;
+    opacity: 0;
 }

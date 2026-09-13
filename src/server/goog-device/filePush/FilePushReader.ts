@@ -146,8 +146,10 @@ export class FilePushReader {
                 }
                 this.state = State.FINISH;
                 if (this.readStream) {
+                    // Signal EOF only. Do not destroy the stream here: the push
+                    // transfer must be able to finish cleanly and emit 'end',
+                    // otherwise the finish response is never sent to the client.
                     this.readStream.push(null);
-                    this.readStream.close();
                     this.readStream = undefined;
                 }
                 break;

@@ -29,15 +29,32 @@ export class GoogMoreBox {
         const moreBox = document.createElement('div');
         moreBox.className = 'more-box';
         const nameBox = document.createElement('p');
-        nameBox.innerText = `${udid} (${playerName})`;
-        nameBox.className = 'text-with-shadow';
+        nameBox.className = 'more-box-title';
+        const serialSpan = document.createElement('span');
+        serialSpan.className = 'device-serial';
+        serialSpan.innerText = udid;
+        nameBox.appendChild(serialSpan);
+        const playerSpan = document.createElement('span');
+        playerSpan.className = 'player-name';
+        playerSpan.innerText = playerName;
+        nameBox.appendChild(playerSpan);
         moreBox.appendChild(nameBox);
         const input = (this.input = document.createElement('textarea'));
         input.classList.add('text-area');
+        input.rows = 4;
         const sendButton = document.createElement('button');
-        sendButton.innerText = 'Send as keys';
+        sendButton.innerText = 'Send';
 
-        const inputWrapper = GoogMoreBox.wrap('p', [input, sendButton], moreBox);
+        const keysBox = document.createElement('div');
+        keysBox.className = 'keys-box';
+        const keysLabel = document.createElement('label');
+        keysLabel.innerText = 'Send text as keys:';
+        keysBox.appendChild(keysLabel);
+        GoogMoreBox.wrap('div', [input, sendButton], keysBox, ['keys-row']);
+        const clipboardBox = document.createElement('div');
+        clipboardBox.className = 'clipboard-actions';
+        keysBox.appendChild(clipboardBox);
+        moreBox.appendChild(keysBox);
         sendButton.onclick = () => {
             if (input.value) {
                 client.sendMessage(new TextControlMessage(input.value));
@@ -76,23 +93,23 @@ export class GoogMoreBox {
                 bitrateInput = document.createElement('input');
                 bitrateInput.placeholder = `${preferredSettings.bitrate} bps`;
                 bitrateInput.value = videoSettings.bitrate.toString();
-                GoogMoreBox.wrap('div', [bitrateLabel, bitrateInput], innerDiv);
+                GoogMoreBox.wrap('div', [bitrateLabel, bitrateInput], innerDiv, ['settings-row']);
                 this.bitrateInput = bitrateInput;
 
                 const maxFpsLabel = document.createElement('label');
-                maxFpsLabel.innerText = 'Max fps:';
+                maxFpsLabel.innerText = 'Max FPS:';
                 maxFpsInput = document.createElement('input');
                 maxFpsInput.placeholder = `${preferredSettings.maxFps} fps`;
                 maxFpsInput.value = videoSettings.maxFps.toString();
-                GoogMoreBox.wrap('div', [maxFpsLabel, maxFpsInput], innerDiv);
+                GoogMoreBox.wrap('div', [maxFpsLabel, maxFpsInput], innerDiv, ['settings-row']);
                 this.maxFpsInput = maxFpsInput;
 
                 const iFrameIntervalLabel = document.createElement('label');
-                iFrameIntervalLabel.innerText = 'I-Frame Interval:';
+                iFrameIntervalLabel.innerText = 'I-Frame interval:';
                 iFrameIntervalInput = document.createElement('input');
                 iFrameIntervalInput.placeholder = `${preferredSettings.iFrameInterval} seconds`;
                 iFrameIntervalInput.value = videoSettings.iFrameInterval.toString();
-                GoogMoreBox.wrap('div', [iFrameIntervalLabel, iFrameIntervalInput], innerDiv);
+                GoogMoreBox.wrap('div', [iFrameIntervalLabel, iFrameIntervalInput], innerDiv, ['settings-row']);
                 this.iFrameIntervalInput = iFrameIntervalInput;
 
                 const { width, height } = videoSettings.bounds || client.getMaxSize() || GoogMoreBox.defaultSize;
@@ -104,7 +121,7 @@ export class GoogMoreBox {
                 maxWidthInput = document.createElement('input');
                 maxWidthInput.placeholder = `${pWidth} px`;
                 maxWidthInput.value = width.toString();
-                GoogMoreBox.wrap('div', [maxWidthLabel, maxWidthInput], innerDiv);
+                GoogMoreBox.wrap('div', [maxWidthLabel, maxWidthInput], innerDiv, ['settings-row']);
                 this.maxWidthInput = maxWidthInput;
 
                 const maxHeightLabel = document.createElement('label');
@@ -112,31 +129,35 @@ export class GoogMoreBox {
                 maxHeightInput = document.createElement('input');
                 maxHeightInput.placeholder = `${pHeight} px`;
                 maxHeightInput.value = height.toString();
-                GoogMoreBox.wrap('div', [maxHeightLabel, maxHeightInput], innerDiv);
+                GoogMoreBox.wrap('div', [maxHeightLabel, maxHeightInput], innerDiv, ['settings-row']);
                 this.maxHeightInput = maxHeightInput;
 
-                innerDiv.appendChild(btn);
-                const fitButton = document.createElement('button');
-                fitButton.innerText = 'Fit';
-                fitButton.onclick = this.fit;
-                innerDiv.insertBefore(fitButton, innerDiv.firstChild);
+                const actions = document.createElement('div');
+                actions.className = 'settings-actions';
                 const resetButton = document.createElement('button');
                 resetButton.innerText = 'Reset';
                 resetButton.onclick = this.reset;
-                innerDiv.insertBefore(resetButton, innerDiv.firstChild);
+                actions.appendChild(resetButton);
+                const fitButton = document.createElement('button');
+                fitButton.innerText = 'Fit';
+                fitButton.onclick = this.fit;
+                actions.appendChild(fitButton);
+                innerDiv.insertBefore(actions, innerDiv.firstChild);
+                innerDiv.appendChild(btn);
                 commands.push(spoiler);
             } else {
                 if (
                     action === CommandControlMessage.TYPE_SET_CLIPBOARD ||
                     action === CommandControlMessage.TYPE_GET_CLIPBOARD
                 ) {
-                    inputWrapper.appendChild(btn);
+                    clipboardBox.appendChild(btn);
                 } else {
                     commands.push(btn);
                 }
             }
             btn.innerText = command;
             if (action === ControlMessage.TYPE_CHANGE_STREAM_PARAMETERS) {
+                btn.innerText = 'Apply';
                 btn.onclick = () => {
                     const bitrate = parseInt(bitrateInput.value, 10);
                     const maxFps = parseInt(maxFpsInput.value, 10);
@@ -175,7 +196,7 @@ export class GoogMoreBox {
                 };
             }
         }
-        GoogMoreBox.wrap('p', commands, moreBox);
+        GoogMoreBox.wrap('div', commands, moreBox, ['commands']);
 
         const screenPowerModeId = `screen_power_mode_${udid}_${playerName}_${displayId}`;
         const screenPowerModeLabel = document.createElement('label');
@@ -184,36 +205,50 @@ export class GoogMoreBox {
         const buttonTextPrefix = 'Set screen power mode';
         const screenPowerModeCheck = document.createElement('input');
         screenPowerModeCheck.type = 'checkbox';
-        let mode = (screenPowerModeCheck.checked = false) ? 'ON' : 'OFF';
+        screenPowerModeCheck.checked = false;
         screenPowerModeCheck.id = screenPowerModeLabel.htmlFor = screenPowerModeId;
-        screenPowerModeLabel.innerText = `${labelTextPrefix} ${mode}`;
-        screenPowerModeCheck.onchange = () => {
-            mode = screenPowerModeCheck.checked ? 'ON' : 'OFF';
+        const sendScreenPowerModeButton = document.createElement('button');
+        const applyPowerMode = (checked: boolean): void => {
+            screenPowerModeCheck.checked = checked;
+            const mode = checked ? 'ON' : 'OFF';
             screenPowerModeLabel.innerText = `${labelTextPrefix} ${mode}`;
             sendScreenPowerModeButton.innerText = `${buttonTextPrefix} ${mode}`;
+            client.sendMessage(CommandControlMessage.createSetScreenPowerModeCommand(checked));
         };
-        const sendScreenPowerModeButton = document.createElement('button');
-        sendScreenPowerModeButton.innerText = `${buttonTextPrefix} ${mode}`;
+        applyPowerMode(false);
+        screenPowerModeCheck.onchange = () => {
+            applyPowerMode(screenPowerModeCheck.checked);
+        };
         sendScreenPowerModeButton.onclick = () => {
-            const message = CommandControlMessage.createSetScreenPowerModeCommand(screenPowerModeCheck.checked);
-            client.sendMessage(message);
+            applyPowerMode(!screenPowerModeCheck.checked);
         };
         GoogMoreBox.wrap('p', [screenPowerModeCheck, screenPowerModeLabel, sendScreenPowerModeButton], moreBox, [
             'flex-center',
+            'section-break',
         ]);
 
         const qualityId = `show_video_quality_${udid}_${playerName}_${displayId}`;
         const qualityLabel = document.createElement('label');
+        qualityLabel.style.display = 'none';
         const qualityCheck = document.createElement('input');
         qualityCheck.type = 'checkbox';
         qualityCheck.checked = BasePlayer.DEFAULT_SHOW_QUALITY_STATS;
         qualityCheck.id = qualityId;
         qualityLabel.htmlFor = qualityId;
         qualityLabel.innerText = 'Show quality stats';
-        GoogMoreBox.wrap('p', [qualityCheck, qualityLabel], moreBox, ['flex-center']);
-        qualityCheck.onchange = () => {
+        const qualityButtonPrefix = 'Show quality stats';
+        const qualityButton = document.createElement('button');
+        qualityButton.innerText = `${qualityButtonPrefix} ${qualityCheck.checked ? 'ON' : 'OFF'}`;
+        const toggleQualityStats = () => {
+            qualityButton.innerText = `${qualityButtonPrefix} ${qualityCheck.checked ? 'ON' : 'OFF'}`;
             player.setShowQualityStats(qualityCheck.checked);
         };
+        qualityCheck.onchange = toggleQualityStats;
+        qualityButton.onclick = () => {
+            qualityCheck.checked = !qualityCheck.checked;
+            toggleQualityStats();
+        };
+        GoogMoreBox.wrap('p', [qualityCheck, qualityLabel, qualityButton], moreBox, ['flex-center']);
 
         const stop = (ev?: string | Event) => {
             if (ev && ev instanceof Event && ev.type === 'error') {
@@ -234,7 +269,7 @@ export class GoogMoreBox {
         stopBtn.innerText = `Disconnect`;
         stopBtn.onclick = stop;
 
-        GoogMoreBox.wrap('p', [stopBtn], moreBox);
+        GoogMoreBox.wrap('p', [stopBtn], moreBox, ['disconnect-row']);
         player.on('video-view-resize', this.onViewVideoResize);
         player.on('video-settings', this.onVideoSettings);
         this.holder = moreBox;

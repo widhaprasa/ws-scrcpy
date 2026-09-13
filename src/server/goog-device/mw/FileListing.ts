@@ -1,5 +1,6 @@
 import { Mw } from '../../mw/Mw';
 import { AdbUtils } from '../AdbUtils';
+import { AdbExtended } from '../adb';
 import Util from '../../../app/Util';
 import Protocol from '@devicefarmer/adbkit/lib/adb/protocol';
 import { Multiplexer } from '../../../packages/multiplexer/Multiplexer';
@@ -62,10 +63,31 @@ export class FileListing extends Mw {
             case Protocol.SEND:
                 FilePushReader.handle(serial, channel);
                 break;
+            case 'RMFL': {
+                const length = data.readUInt32LE(offset);
+                offset += 4;
+                const pathString = Util.utf8ByteArrayToString(data.slice(offset, offset + length));
+                FileListing.deleteFile(serial, pathString, channel).catch((e: Error) => {
+                    console.error(`[${FileListing.TAG}]`, e.message);
+                    FileListing.sendError(e.message, channel);
+                });
+                break;
+            }
             default:
                 console.error(`[${FileListing.TAG}]`, `Invalid message. Wrong command (${cmd})`);
                 channel.close(4001, `Invalid message. Wrong command (${cmd})`);
                 break;
+        }
+    }
+
+    private static async deleteFile(serial: string, pathString: string, channel: Multiplexer): Promise<void> {
+        const escaped = pathString.replace(/"/g, '\\"');
+        const client = AdbExtended.createClient();
+        const stream = await client.shell(serial, `rm -f -- "${escaped}"`);
+        await AdbExtended.util.readAll(stream);
+        if (channel.readyState === channel.OPEN) {
+            channel.send(Buffer.from(Protocol.OKAY, 'ascii'));
+            channel.close();
         }
     }
 

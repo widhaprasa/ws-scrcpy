@@ -202,6 +202,7 @@ body.stream {
     height: 2.143rem;
     border: none;
     opacity: 0.75;
+    cursor: pointer;
     background-color: var(--control-buttons-bg-color);
 }
 
