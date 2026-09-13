@@ -9,6 +9,8 @@ import { ParamsStream } from '../../types/ParamsStream';
 
 const DEVICE_NAME_FIELD_LENGTH = 64;
 const MAGIC_BYTES_INITIAL = Util.stringToUtf8ByteArray('scrcpy_initial');
+const MAGIC_BYTES_AUDIO_BEGIN = Util.stringToUtf8ByteArray('scrcpy_audiobg');
+const MAGIC_BYTES_AUDIO_DATA = Util.stringToUtf8ByteArray('scrcpy_audiodt');
 
 export type ClientsStats = {
     deviceName: string;
@@ -24,6 +26,7 @@ export type DisplayCombinedInfo = {
 
 interface StreamReceiverEvents {
     video: ArrayBuffer;
+    audio: ArrayBuffer;
     deviceMessage: DeviceMessage;
     displayInfo: DisplayCombinedInfo[];
     clientsStats: ClientsStats;
@@ -148,6 +151,16 @@ export class StreamReceiver<P extends ParamsStream> extends ManagerClient<Params
                 if (StreamReceiver.EqualArrays(magicBytes, DeviceMessage.MAGIC_BYTES_MESSAGE)) {
                     const message = DeviceMessage.fromBuffer(e.data);
                     this.emit('deviceMessage', message);
+                    return;
+                }
+                if (
+                    StreamReceiver.EqualArrays(magicBytes, MAGIC_BYTES_AUDIO_BEGIN) ||
+                    StreamReceiver.EqualArrays(magicBytes, MAGIC_BYTES_AUDIO_DATA)
+                ) {
+                    // The device sends audio frames interleaved with video on the same
+                    // socket. Route them to the audio controller instead of the video
+                    // player (feeding them as video would corrupt the H264 stream).
+                    this.emit('audio', e.data);
                     return;
                 }
             }

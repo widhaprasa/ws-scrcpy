@@ -138,6 +138,12 @@ Decoding is done by browser built-in (software/hardware) media decoder.
 Requires [WebCodecs][webcodecs] support. At the moment, available only in
 [Chromium](https://www.chromestatus.com/feature/5669293909868544) and derivatives.
 
+#### Audio
+
+Device audio is streamed as OPUS frames alongside video and played back with
+[WebCodecs][webcodecs] `AudioDecoder` + `AudioWorklet`. The implementation is
+ported from [Mel0nFish/ws-scrcpy-enhanced][ws-scrcpy-enhanced].
+
 #### Remote control
 * Touch events (including multi-touch)
 * Multi-touch emulation: <kbd>CTRL</kbd> to start with center at the center of
@@ -259,11 +265,12 @@ disconnected.
 
 ## scrcpy websocket fork
 
-Currently, support of WebSocket protocol added to v1.19 of scrcpy
+Currently, support of WebSocket protocol added to v4.0-ws2 of scrcpy, based on
+[lizhiqi233-rgb/scrcpy][scrcpy-ws2]
 * [Prebuilt package](/vendor/Genymobile/scrcpy/scrcpy-server.jar)
-* [Source code][fork]
+* [Source code][scrcpy-ws2]
 
-[fork]: https://github.com/NetrisTV/scrcpy/tree/feature/websocket-v1.19.x
+[scrcpy-ws2]: https://github.com/lizhiqi233-rgb/scrcpy
 
 [scrcpy]: https://github.com/Genymobile/scrcpy
 [xevokk/h264-converter]: https://github.com/xevokk/h264-converter
@@ -276,6 +283,7 @@ Currently, support of WebSocket protocol added to v1.19 of scrcpy
 [WebDriverAgent]: https://github.com/appium/WebDriverAgent
 [qvh]: https://github.com/danielpaulus/quicktime_video_hack
 [ws-qvh]: https://github.com/NetrisTV/ws-qvh
+[ws-scrcpy-enhanced]: https://github.com/Mel0nFish/ws-scrcpy-enhanced
 
 [MSE]: https://developer.mozilla.org/en-US/docs/Web/API/Media_Source_Extensions_API
 [isTypeSupported]: https://developer.mozilla.org/en-US/docs/Web/API/MediaSource/isTypeSupported

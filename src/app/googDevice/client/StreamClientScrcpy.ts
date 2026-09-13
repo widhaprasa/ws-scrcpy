@@ -34,6 +34,7 @@ import { ParsedUrlQuery } from 'querystring';
 import { StreamReceiverScrcpy } from './StreamReceiverScrcpy';
 import { ParamsDeviceTracker } from '../../../types/ParamsDeviceTracker';
 import { ScrcpyFilePushStream } from '../filePush/ScrcpyFilePushStream';
+import { ScrcpyAudioController } from '../../audio/ScrcpyAudioController';
 
 type StartParams = {
     udid: string;
@@ -67,6 +68,8 @@ export class StreamClientScrcpy
     private readonly streamReceiver: StreamReceiverScrcpy;
     // TODO: HBsmith
     private readonly heartbeatTimer: NodeJS.Timeout;
+    //
+    private audioController?: ScrcpyAudioController;
     //
 
     public static registerPlayer(playerClass: PlayerClass): void {
@@ -207,6 +210,13 @@ export class StreamClientScrcpy
         }
     };
 
+    public onAudio = (data: ArrayBuffer): void => {
+        if (!this.audioController) {
+            return;
+        }
+        this.audioController.pushFrame(new Uint8Array(data));
+    };
+
     public onClientsStats = (stats: ClientsStats): void => {
         this.deviceName = stats.deviceName;
         this.clientId = stats.clientId;
@@ -321,12 +331,18 @@ export class StreamClientScrcpy
     public onDisconnected = (): void => {
         this.streamReceiver.off('deviceMessage', this.OnDeviceMessage);
         this.streamReceiver.off('video', this.onVideo);
+        this.streamReceiver.off('audio', this.onAudio);
         this.streamReceiver.off('clientsStats', this.onClientsStats);
         this.streamReceiver.off('displayInfo', this.onDisplayInfo);
         this.streamReceiver.off('disconnected', this.onDisconnected);
         // TODO: HBsmith
         this.streamReceiver.off('deviceDisconnected', this.onDeviceDisconnected);
         this.streamReceiver.off('eventMessage', this.onEventMessage);
+        //
+        if (this.audioController) {
+            this.audioController.release();
+            this.audioController = undefined;
+        }
         //
 
         this.filePushHandler?.release();
@@ -439,12 +455,17 @@ export class StreamClientScrcpy
         const streamReceiver = this.streamReceiver;
         streamReceiver.on('deviceMessage', this.OnDeviceMessage);
         streamReceiver.on('video', this.onVideo);
+        streamReceiver.on('audio', this.onAudio);
         streamReceiver.on('clientsStats', this.onClientsStats);
         streamReceiver.on('displayInfo', this.onDisplayInfo);
         streamReceiver.on('disconnected', this.onDisconnected);
         // TODO: HBsmith
         streamReceiver.on('deviceDisconnected', this.onDeviceDisconnected);
         streamReceiver.on('eventMessage', this.onEventMessage);
+        if (ScrcpyAudioController.isSupported()) {
+            this.audioController = new ScrcpyAudioController();
+            this.audioController.setEnabled(true);
+        }
 
         // KeyInputHandler.addEventListener(this);
         //
